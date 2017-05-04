@@ -29,7 +29,6 @@ function createClassicCootModel(atomElements,atomPositions,bondIndices)
 			finalMesh.geometry.faces[firstVertexIndex+i*2+1].color.setHex(atomColor( atomElements[ bondIndices[j] ] ) );
 		}
 	}
-	console.log(atomPositions)
 	for(var i = 0, il = bondIndices.length / 2; i < il; i++)
 	{
 		var aIndex = bondIndices[i*2+0];

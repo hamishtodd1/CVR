@@ -40,5 +40,6 @@ THREE.StereoEffect = function ( renderer ) {
 		renderer.setScissorTest( false );
 
 	};
-
+	
+	this.stereoCamera = _stereo;
 };

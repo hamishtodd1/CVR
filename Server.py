@@ -1,4 +1,5 @@
 #http://www.remwebdevelopment.com/blog/python/simple-websocket-server-in-python-144.html
+#we assume we are run in the directory with the stuff
 
 import tornado.ioloop
 import tornado.web
@@ -6,9 +7,141 @@ import tornado.websocket
 import tornado.template
 
 #---------imports that are probably specific to our setup
-import pyautogui
-import os
-os.chdir("C:\cootVRrelated\CVR") #or, you know, wherever it is
+from win32api import GetKeyState, GetSystemMetrics, GetCursorPos
+import subprocess
+
+VK_CODE = {
+   'lmb':0x01,
+   'rmb':0x02,
+   'backspace':0x08,
+   'tab':0x09,
+   'clear':0x0C,
+   'enter':0x0D,
+   'shift':0x10,
+   'ctrl':0x11,
+   'alt':0x12,
+   'pause':0x13,
+   'capsLock':0x14,
+   'esc':0x1B,
+   'spacebar':0x20,
+   'pageUp':0x21,
+   'pageDown':0x22,
+   'end':0x23,
+   'home':0x24,
+   'leftArrow':0x25,
+   'upArrow':0x26,
+   'rightArrow':0x27,
+   'downArrow':0x28,
+   'select':0x29,
+   'print':0x2A,
+   'execute':0x2B,
+   'printScreen':0x2C,
+   'ins':0x2D,
+   'del':0x2E,
+   'help':0x2F,
+   '0':0x30,
+   '1':0x31,
+   '2':0x32,
+   '3':0x33,
+   '4':0x34,
+   '5':0x35,
+   '6':0x36,
+   '7':0x37,
+   '8':0x38,
+   '9':0x39,
+   'a':0x41,
+   'b':0x42,
+   'c':0x43,
+   'd':0x44,
+   'e':0x45,
+   'f':0x46,
+   'g':0x47,
+   'h':0x48,
+   'i':0x49,
+   'j':0x4A,
+   'k':0x4B,
+   'l':0x4C,
+   'm':0x4D,
+   'n':0x4E,
+   'o':0x4F,
+   'p':0x50,
+   'q':0x51,
+   'r':0x52,
+   's':0x53,
+   't':0x54,
+   'u':0x55,
+   'v':0x56,
+   'w':0x57,
+   'x':0x58,
+   'y':0x59,
+   'z':0x5A,
+   'numpad0':0x60,
+   'numpad1':0x61,
+   'numpad2':0x62,
+   'numpad3':0x63,
+   'numpad4':0x64,
+   'numpad5':0x65,
+   'numpad6':0x66,
+   'numpad7':0x67,
+   'numpad8':0x68,
+   'numpad9':0x69,
+   'multiplyKey':0x6A,
+   'addKey':0x6B,
+   'separatorKey':0x6C,
+   'subtractKey':0x6D,
+   'decimalKey':0x6E,
+   'divideKey':0x6F,
+   'F1':0x70,
+   'F2':0x71,
+   'F3':0x72,
+   'F4':0x73,
+   'F5':0x74,
+   'F6':0x75,
+   'F7':0x76,
+   'F8':0x77,
+   'F9':0x78,
+   'F10':0x79,
+   'F11':0x7A,
+   'F12':0x7B,
+   'F13':0x7C,
+   'F14':0x7D,
+   'F15':0x7E,
+   'F16':0x7F,
+   'F17':0x80,
+   'F18':0x81,
+   'F19':0x82,
+   'F20':0x83,
+   'F21':0x84,
+   'F22':0x85,
+   'F23':0x86,
+   'F24':0x87,
+   'numLock':0x90,
+   'scrollLock':0x91,
+   'leftShift':0xA0,
+   'rightShift ':0xA1,
+   'leftControl':0xA2,
+   'rightControl':0xA3,
+   'leftMenu':0xA4,
+   'rightMenu':0xA5,
+   'browserBack':0xA6,
+   'browserForward':0xA7,
+   'browserRefresh':0xA8,
+   'browserStop':0xA9,
+   'browserSearch':0xAA,
+   'browserFavorites':0xAB,
+   '+':0xBB,
+   ',':0xBC,
+   '-':0xBD,
+   '.':0xBE,
+   '/':0xBF,
+   '`':0xC0,
+   ';':0xBA,
+   '[':0xDB,
+   '\\':0xDC,
+   ']':0xDD,
+   "'":0xDE,
+   '`':0xC0
+}
 
 class mainHandler(tornado.web.RequestHandler):
 	def get(self):
@@ -20,23 +153,64 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		return True
 
 	def open(self):
-		print('connection opened: localhost:9090, or maybe 172.20.10.124')
+		#this will not be picked up by current one but by next
+		indexFile = open('index.html', 'r')
+		modifiedIndexFile = ""
+		for line in indexFile:
+			newLine = ""
+			versionNumber = "0"
+			if line[len(line)-24:len(line)-18] != ".js?v=":
+				newLine = line
+			else:
+				newLine += line[:len(line)-18]
+				if versionNumber == "0":
+					versionNumber = int( line[ len(line)-18:len(line)-12 ] )
+					versionNumber += 1
+					versionNumber = str(versionNumber)
+				newLine += versionNumber
+				newLine += line[len(line)-12:]
+			modifiedIndexFile += newLine
+		indexFileWrite = open('index.html', 'w')
+		indexFileWrite.write(modifiedIndexFile)
+			
+		(out,err) = subprocess.Popen(["ipconfig"], stdout=subprocess.PIPE, shell=True).communicate()
+		ipconfigParsed = out.split()
+		ourIP = ipconfigParsed[90].decode("utf-8")
+		print( 'go to ' + ourIP + ':9090' )
 		'''
-		currently it's 172.20.10.124:9090
 		type in "window.location.reload(true)" on the remote debugging console if it's not reloading. Ctrl+refresh once worked too
+		Note it only works through eduroam. Probably firewall crap
 		'''
 		self.set_nodelay(True) #doesn't hurt to have this hopefully...
 		self.write_message("This is the server, connection has been accepted")
+		
+		#-------update the version numbers so that the whole thing gets refreshed
+		
 		debug = True
 		
 	def on_message(self, message):
 		#time to send the next one. TODO make it sooner
-		if message == "mousePositionPlease":
-			mouseX, mouseY = pyautogui.position()
-			self.write_message( str(mouseX) + "," + str(mouseY) )
+		if message == "loopDone":
+			self.sendButtonState('lmb')
+			self.sendButtonState('F5')
+			self.sendButtonState('o')
+			self.sendButtonState('l')
+			
+			screenWidth = GetSystemMetrics(0)
+			screenHeight = GetSystemMetrics(1)
+			mouseX, mouseY = GetCursorPos()
+			proportionalX = mouseX / screenWidth
+			proportionalY = mouseY / screenHeight
+			self.write_message( "mousePosition," + str(proportionalX) + "," + str(proportionalY) )
 		else:
 			self.write_message("Didn't understand that")
 			print('received unrecognized message:', message)
+			
+	def sendButtonState(self, buttonString):
+		buttonState = 0
+		if GetKeyState( VK_CODE[buttonString] ) < 0:
+			buttonState = 1
+		self.write_message( buttonString + "," + str( buttonState ) )
 
 	def on_close(self):
 		print('connection closed...')

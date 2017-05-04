@@ -1,4 +1,4 @@
-function makeStandardScene(){
+function makeStandardScene( loadFloor ){
 	scene.fog = new THREE.Fog( 0xffffff, 1, 600 );
 	scene.fog.color.setHSL( 0.6, 0, 1 );
 	
@@ -33,27 +33,30 @@ function makeStandardScene(){
 	
 	var OurTextureLoader = new THREE.TextureLoader();
 	OurTextureLoader.crossOrigin = true;
-	OurTextureLoader.load(
-		"http://hamishtodd1.github.io/Cardboard/Floor.png",
-		function(texture) {
-			texture.magFilter = THREE.NearestFilter;
-			texture.minFilter = THREE.LinearMipMapLinearFilter;
-			
-			var floorwidth = 250;
-			var FloorTile = new THREE.Mesh(
-					new THREE.CubeGeometry(floorwidth, floorwidth, 0),
-					new THREE.MeshBasicMaterial({}) );
-			
-			FloorTile.material.map = texture;
-			
-			FloorTile.position.y = -1;
-			
-			FloorTile.lookAt(new THREE.Vector3())
+	if(loadFloor)
+	{
+		OurTextureLoader.load(
+				"http://hamishtodd1.github.io/Cardboard/Floor.png",
+				function(texture) {
+					texture.magFilter = THREE.NearestFilter;
+					texture.minFilter = THREE.LinearMipMapLinearFilter;
+					
+					var floorwidth = 256;
+					var FloorTile = new THREE.Mesh(
+							new THREE.CubeGeometry(floorwidth, floorwidth, 0),
+							new THREE.MeshBasicMaterial({}) );
+					
+					FloorTile.material.map = texture;
+					
+					FloorTile.position.y = -1;
+					
+					FloorTile.lookAt(new THREE.Vector3())
 
-			scene.add(FloorTile);
-		},
-		function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
-	);
+					scene.add(FloorTile);
+				},
+				function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
+			);
+	}
 
 	// GROUND
 
