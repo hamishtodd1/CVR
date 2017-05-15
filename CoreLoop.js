@@ -4,55 +4,22 @@ function mainLoop(socket, cursor, models, maps) {
 	if(isMobileOrTablet)
 		ourOrientationControls.update();
 	
-//	ourObject.position.set(0,0,-FOCALPOINT_DISTANCE);
-//	camera.updateMatrixWorld();
-//	camera.localToWorld(ourObject.position);
-	
 	cursor.updateMatrixWorld();
 	camera.updateMatrixWorld();
-	if(!cursor.children.length)
+	
+	//highlight
 	{
-		for(var i = 0; i < models.length; i++)
+		if(!cursor.children.length)
 		{
-			if( models[i].material && models[i].geometry.boundingSphere && models[i].pointInBoundingSphere( cursor.getWorldPosition() ) )
-				models[i].material.emissive.r = 1;
-			else
-				models[i].material.emissive.r = 0;
+			for(var i = 0; i < models.length; i++)
+			{
+				if( models[i].material && models[i].geometry.boundingSphere && models[i].pointInBoundingSphere( cursor.getWorldPosition() ) )
+					models[i].material.emissive.r = 1;
+				else
+					models[i].material.emissive.r = 0;
+			}
 		}
 	}
-	
-//	if( cursor.grabbing )
-//	{
-//		if(!cursor.children.length)
-//		{
-//			for(var i = 0; i < models.length; i++)
-//			{
-//				if( !models[i].geometry.boundingSphere || models[i].parent.uuid === cursor.uuid )
-//					continue;
-//				
-//				if( models[i].pointInBoundingSphere(cursor.getWorldPosition() ))
-//				{
-//					THREE.SceneUtils.attach(models[i], scene, cursor );			
-//					break;
-//				}
-//			}
-//			
-//			if(!cursor.children.length)
-//			{
-//				for(var i = 0; i < maps.length; i++)
-//				{
-//					THREE.SceneUtils.attach(maps[i], scene, cursor );
-//				}
-//			}
-//		}
-//	}
-//	else
-//	{
-//		for(var i = 0; i < cursor.children.length; i++)
-//		{
-//			THREE.SceneUtils.detach(cursor.children[i], cursor, scene );
-//		}
-//	}
 	
 	if( cursor.grabbing )
 	{
@@ -73,7 +40,7 @@ function mainLoop(socket, cursor, models, maps) {
 					break;
 				}
 
-				if(!cursor.followers.length && !cursor.children.length )
+				if( !cursor.followers.length && !cursor.children.length )
 				{
 					for(var i = 0; i < maps.length; i++)
 					{
@@ -90,12 +57,17 @@ function mainLoop(socket, cursor, models, maps) {
 		{
 			THREE.SceneUtils.detach(camera.children[i], camera, scene );
 		}
-		for(var i = 0; i < cursor.children.length; i++) //still want cursor on
+		for(var i = 0; i < cursor.children.length; i++)
 		{
 			THREE.SceneUtils.detach(cursor.children[i], cursor, scene );
 		}
 		
-		//how about taking the head rotation and multiplying them all by some amount?
+		/* how about taking the head rotation and multiplying them all by some amount?
+		 * So you probably are going to the map pivoting around you. In that context, protein staying still maybe makes sense
+		 * 
+		 *  
+		 * 
+		 */
 	}
 	
 	for(var i = 0; i < cursor.followers.length; i++)
@@ -123,7 +95,7 @@ function mainLoop(socket, cursor, models, maps) {
 	socket.send("loopDone")
 	
 	requestAnimationFrame( function(){
-		mainLoop(socket, cursor, models, maps);
+		mainLoop(socket, cursor, models, maps, ourStereoEffect);
 	} );
 //	if(isMobileOrTablet)
 		ourStereoEffect.render( scene, camera ); //CC

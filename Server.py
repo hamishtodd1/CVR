@@ -143,10 +143,14 @@ VK_CODE = {
    '`':0xC0
 }
 
+(out,err) = subprocess.Popen(["ipconfig"], stdout=subprocess.PIPE, shell=True).communicate()
+ipconfigParsed = out.split()
+ourIP = ipconfigParsed[90].decode("utf-8")
+
 class mainHandler(tornado.web.RequestHandler):
 	def get(self):
 		loader = tornado.template.Loader(".")
-		self.write(loader.load("index.html").generate())
+		self.write(loader.load("daydreamControllerTesting.html").generate())
 
 class wsHandler(tornado.websocket.WebSocketHandler):
 	def check_origin(self, origin):
@@ -173,9 +177,6 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		indexFileWrite = open('index.html', 'w')
 		indexFileWrite.write(modifiedIndexFile)
 			
-		(out,err) = subprocess.Popen(["ipconfig"], stdout=subprocess.PIPE, shell=True).communicate()
-		ipconfigParsed = out.split()
-		ourIP = ipconfigParsed[90].decode("utf-8")
 		print( 'go to ' + ourIP + ':9090' )
 		'''
 		type in "window.location.reload(true)" on the remote debugging console if it's not reloading. Ctrl+refresh once worked too
@@ -193,8 +194,8 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		if message == "loopDone":
 			self.sendButtonState('lmb')
 			self.sendButtonState('F5')
-			self.sendButtonState('o')
-			self.sendButtonState('l')
+			#self.sendButtonState('o')
+			#self.sendButtonState('l')
 			
 			screenWidth = GetSystemMetrics(0)
 			screenHeight = GetSystemMetrics(1)
@@ -225,7 +226,7 @@ application = tornado.web.Application([
 #to properly reload, need to open the chrome debugger for the device, click in the right place so the window is selected apparently, and ctrl+F5
 
 #if __name__ == "__main__":
-print("go to localhost:9090") #or the thing listed as your ipv4 address under Wireless LAN adapter wifi in ipconfig
+print( 'go to ' + ourIP + ':9090' ) #or the thing listed as your ipv4 address under Wireless LAN adapter wifi in ipconfig
 application.listen(9090)
 tornado.ioloop.IOLoop.instance().start()
 	
