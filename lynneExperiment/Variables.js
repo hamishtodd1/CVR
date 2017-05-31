@@ -1,6 +1,6 @@
 //-----Mathematical constants
 var TAU = Math.PI * 2;
-var TETRAHEDRAL_ANGLE = 109.47;
+var TETRAHEDRAL_ANGLE = Math.acos( -1/3 );
 var zAxis = new THREE.Vector3(0,0,1); //also used as a placeholder normal
 var yAxis = new THREE.Vector3(0,1,0);
 var xAxis = new THREE.Vector3(1,0,0);
@@ -24,5 +24,5 @@ var OurVREffect;
 var OurVRControls;
 
 //Other
-var Scene;
+var scene;
 var Camera;

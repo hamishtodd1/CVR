@@ -16,9 +16,8 @@ socket.on('OnConnect_Message', function(msg)
 	    Camera.updateProjectionMatrix();
 	}, false );
 	
-	Scene = new THREE.Scene();
+	scene = new THREE.Scene();
 	
-	//FOV should depend on whether you're talking VR
 	Camera = new THREE.PerspectiveCamera( 50, //will be changed by VR
 			Renderer.domElement.width / Renderer.domElement.height, //window.innerWidth / window.innerHeight,
 			0.001, 700);
@@ -27,10 +26,11 @@ socket.on('OnConnect_Message', function(msg)
 		spectatorScreenIndicator.geometry.vertices.push(new THREE.Vector3());
 	spectatorScreenIndicator.visible = true;
 	Camera.add( spectatorScreenIndicator );
-	Scene.add(Camera);
+	scene.add(Camera);
 	
 	VRMODE = 0;
 	OurVREffect = new THREE.VREffect( Renderer );
+//	console.log(OurVREffect.requestAnimationFrame)
 	OurVRControls = new THREE.VRControls( Camera );
 	
 	var audioListener = new THREE.AudioListener();
@@ -49,7 +49,7 @@ socket.on('OnConnect_Message', function(msg)
 		controllers[ i ] = new THREE.Object3D();
 		controllers[ i ].Gripping = 0;
 		controllers[ i ].heldBond = -1;
-		Scene.add( controllers[ i ] );
+//		scene.add( controllers[ i ] );
 	}
 	var handModelLink = "Data/glove.obj"
 	if ( WEBVR.isAvailable() === true ) //Hah and when all browsers have VR?
@@ -66,7 +66,6 @@ socket.on('OnConnect_Message', function(msg)
 		{
 			object.children[0].geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xAxis,0.5) );
 			object.children[0].geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0.002,0.036,-0.039) );
-			object.children[0].geometry.applyMatrix( new THREE.Matrix4().makeScale(0.76,0.76,0.76) );
 		
 			controllers[ LEFT_CONTROLLER_INDEX ].add(new THREE.Mesh( object.children[0].geometry, new THREE.MeshPhongMaterial({color:0x000000}) ) )
 			controllers[ LEFT_CONTROLLER_INDEX ].indicatorSphere = new THREE.Mesh(new THREE.SphereGeometry(0.01), new THREE.MeshBasicMaterial({color:0xFF0000}));
@@ -91,26 +90,26 @@ socket.on('OnConnect_Message', function(msg)
 	 * To begin with: two coming from one, the Ca at the center
 	 * 
 	 * It can EITHER do phi or psi, not both at the same time? If you go for that, update the "gripped point"
-	 * 		
+	 * 
+	 * Want to have angle labels really
+	 * And atom labels?
+	 * A blob that is the residue
 	 */
 	
 	for(var i = 0; i < 2; i++)
 	{
-		controllers[i].rudder = new THREE.Mesh(
-				new THREE.Geometry(), 
+		var stickLength = 0.1;
+		controllers[i].angleStick = new THREE.Mesh( 
+				new THREE.CylinderGeometry( stickLength / 32, stickLength / 32, stickLength, 16 ), 
 				new THREE.MeshBasicMaterial({color:0xF0F0F0, side:THREE.DoubleSide}));
-		controllers[i].rudder.geometry.faces.push(new THREE.Face3(0,1,2));
-		controllers[i].rudder.geometry.faces.push(new THREE.Face3(0,2,3));
-		controllers[i].rudder.geometry.vertices.push( new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3() );
-		controllers[i].rudder.visible = false;
-		controllers[i].add( controllers[i].rudder );
 		
-		controllers[i].rudderTipIndicator = new THREE.Mesh(new THREE.SphereGeometry(0.01), new THREE.MeshBasicMaterial({color:0x00FF00}));
-		controllers[i].rudderTipIndicator.visible = false;
-		controllers[i].add( controllers[i].rudderTipIndicator );
+		controllers[i].angleStick.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis( zAxis, TAU / 4 ) );
+		controllers[i].angleStick.visible = false;
+
+		controllers[i].add( controllers[i].angleStick );
 	}
 	
-	var bonds = Array(3); //probably the right abstraction?
+	var bonds = Array(5); //probably the right abstraction?
 	var bondLength = 0.18; //so, this needs to be in angstroms, and then everything else is changed around that
 	var bondRadius = bondLength / 25;
 	var getEnd = function()
@@ -132,78 +131,176 @@ socket.on('OnConnect_Message', function(msg)
 		bonds[i].type = "bond"
 		bonds[i].length = bondLength;
 		bonds[i].getEnd = getEnd;
-		bonds[i].currentRudderTip = null;
 		bonds[i].rotation.order = 'ZYX'; //an interesting thing to do
+		bonds[i].isBackbone = false;
 	}
 	
 	bonds[0].add(bonds[1],bonds[2]);
-	bonds[0].position.y = -bondLength;
-	bonds[1].position.y = bondLength;
-	bonds[2].position.y = bondLength;
+	bonds[1].add(bonds[3],bonds[4]);
+	bonds[0].isBackbone = true;
+	bonds[1].isBackbone = true;
+	for(var i = 1; i < bonds.length; i++)
+	{
+		bonds[i].position.y = bondLength;
+	}
 	bonds[1].rotation.z = TAU / 8;
 	bonds[2].rotation.z =-TAU / 8;
-	Scene.add(bonds[0]);
+	bonds[3].rotation.z = TAU / 8;
+	bonds[4].rotation.z =-TAU / 8;
+//	scene.add(bonds[0]);
 	
-//	{
-//		var ramachandran = new THREE.Mesh( new THREE.PlaneGeometry(1,1,2,2), new THREE.MeshPhongMaterial({color:0x888888}) );
-//		ramachandran.horizontalSegments = 2; //gotta keep this updated
-//		console.log( ramachandran.geometry.vertices.length ); //expecting 9
-//		var indicator = new THREE.Mesh(new THREE.SphereGeometry(0.003), new THREE.MeshBasicMaterial({color:0x000000}));
-//		ramachandran.add(indicator);
-//		ramachandran.genus = 0;
-//		ramachandran.width = 1;
-////		ramachandran.indicatorOrigin = new THREE.Vector3();
-//		ramachandran.z = -0.3;
-//		
-//		Scene.add(ramachandran);
-//		
-//		var curlVector = function( pointOnLine, genus, acrossVector, upVector, lineLength ) //first arg varies between -0.5 and 0.5
-//		{
-//			var angleAround = (pointOnLine+0.5) * TAU;
-//			
-//			var acrossComponent = acrossVector.clone();
-//			acrossComponent.multiplyScalar(-Math.sin(angleAround));
-//			var upComponent = upVector.clone();
-//			upComponent.multiplyScalar(Math.cos(angleAround));
-//
-//			var atGenus0 = acrossComponent.clone();
-//			atGenus0.multiplyScalar(pointOnLine);
-//			var atGenus1 = new THREE.Vector3();
-//			atGenus1.addVectors(upComponent, acrossComponent);
-//			
-//			var currentPosition = new THREE.Vector3();
-//			currentPosition.lerpVectors( atGenus0, atGenus1, genus );
-//			currentPosition.multiplyScalar(lineLength)
-//			return currentPosition;
-//		}
-//		
-//		ramachandran.update = function(bonds)
-//		{
-//			genus += delta_t / 5;
-//			if( genus > 1 )
-//				genus = 0;
-//			
-//			var widthCurvedness = genus * 2;
-//			if( widthCurvedness > 1 )
-//				widthCurvedness = 1;
-//			var heightCurvedness = (genus-0.5) * 2;
-//			if( heightCurvedness < 0 )
-//				heightCurvedness = 0;
-//			
-//			var ringRadius = width / TAU / 2;
-//			var tubeRadius = ringRadius / 2;
-//			
-//			for(var i = 0; i < horizontalSegments + 1; i++)
-//			{
-//				var ringVector = curlVector( i / horizontalSegments - 0.5, widthCurvedness, zAxis, xAxis, ringRadius * TAU );
-//				for(var j = 0; j < horizontalSegments + 1; j++)
-//				{
-//					ringVector.add( curlVector( 0, heightCurvedness, yAxis, xAxis ) );
-//					ramachandran.geometry.vertices[ i * horizontalSegments + j ].add( ringVector );
-//				}
-//			}
-//		}
-//	}
+	function getTau( branchBond )
+	{
+		for(var i = 0; i < branchBond.children.length; i++)
+		{
+			if( branchBond.children[i].isBackbone )
+			{
+				var childAxis = yAxis.clone();
+				branchBond.children[i].updateMatrix();
+				childAxis.applyMatrix( branchBond.children[i].matrix );
+				var CAToNitrogen = yAxis.clone().negate();
+				return CAToNitrogen.angleTo( childAxis );
+			}
+		}
+	}
+	
+	function getPhi(branchBond)
+	{
+		//0 is when three backbone bonds are in a hexagon
+		if(branchBond.parent === scene)
+			return;
+		
+		var parentBondDirection = branchBond.parent.getWorldPosition();
+		branchBond.worldToLocal( parentBondDirection );
+		
+		for(var i = 0; i < branchBond.children.length; i++)
+		{
+			if( branchBond.children[i].isBackbone )
+			{
+				var childBondDirection = yAxis.clone();
+				branchBond.children[i].updateMatrix();
+				childBondDirection.applyMatrix( branchBond.children[i].matrix );
+				return getAntiClockwiseYPlaneAngle( parentBondDirection, childBondDirection )
+			}
+		}
+	}
+	
+	function getAntiClockwiseYPlaneAngle(vec1,vec2)
+	{
+		var vec1Plane = new THREE.Vector2(vex1.x, vec1.y);
+		var vec2Plane = new THREE.Vector2(vex2.x, vec2.y);
+		
+		var angle = vec2Plane.angle() - vec1Plane.angle();
+		return angle;
+	}
+	
+	var carbonAlphas = [];
+	for(var i = 0; i < 2; i++)
+		carbonAlphas
+	
+	{
+		ramachandran = new THREE.Object3D();
+		ramachandran.horizontalSegments = 40;
+		ramachandran.plot = new THREE.Mesh( 
+				new THREE.Geometry(), 
+				new THREE.MeshPhongMaterial({color:0x888888, side: THREE.DoubleSide}) );
+		ramachandran.plot.geometry.vertices = Array( Math.pow(ramachandran.horizontalSegments+1, 2 ) );
+		for(var i = 0, il = ramachandran.plot.geometry.vertices.length; i < il; i++)
+			ramachandran.plot.geometry.vertices[i] = new THREE.Vector3();
+		ramachandran.plot.geometry.faces = Array( ramachandran.horizontalSegments * ramachandran.horizontalSegments * 2 );
+		for(var i = 0; i < ramachandran.horizontalSegments; i++) //row
+		{
+			for(var j = 0; j < ramachandran.horizontalSegments; j++) //column
+			{
+				var topLeft = i * (ramachandran.horizontalSegments+1) + j;
+				var bottomLeft = (i+1) * (ramachandran.horizontalSegments+1) + j;
+				ramachandran.plot.geometry.faces[(i*ramachandran.horizontalSegments+j)*2+0] = new THREE.Face3( 
+						topLeft,
+						topLeft + 1,
+						bottomLeft );
+				ramachandran.plot.geometry.faces[(i*ramachandran.horizontalSegments+j)*2+1] = new THREE.Face3( 
+						bottomLeft,
+						topLeft + 1,
+						bottomLeft + 1 );
+			}
+		}
+		
+		ramachandran.add(ramachandran.plot);
+		ramachandran.indicator = new THREE.Mesh(new THREE.SphereGeometry(0.003), new THREE.MeshBasicMaterial({color:0x000000}));
+		ramachandran.add(ramachandran.indicator);
+		
+		ramachandran.genus = 0;
+		ramachandran.width = 1;
+		ramachandran.position.z = -0.3;
+		ramachandran.rotation.x = TAU / 4
+		ramachandran.scale.setScalar(0.1)
+		
+		scene.add(ramachandran);
+		
+		var positionOnCircle = function(arcLength, center, axis, angleZeroPosition )
+		{
+			var radiusVector = angleZeroPosition.clone();
+			radiusVector.sub( center );
+			
+			var circumference = TAU * radiusVector.length();
+			var angle = arcLength / circumference * TAU;
+			
+			var position = radiusVector.clone();
+			position.applyAxisAngle(axis,angle); //or minus that angle?
+			position.add(center);
+			
+			return position;
+		}
+		
+		//accepts numbers from a 2x2 square centered at the origin. Returns that for genus = 0, gives 2x(2/3) donut for genus = 1
+		var foldingDonutPosition = function( x, y, genus )
+		{
+			var finalOuterRadius = 2 / TAU;
+			var virtualOuterRadius = genus === 0 ? Number.MAX_SAFE_INTEGER : finalOuterRadius / genus;
+			
+			var virtualCircumferenceCenter = new THREE.Vector3(0,0,-virtualOuterRadius);
+			var circumferenceComponent = positionOnCircle( x, virtualCircumferenceCenter, yAxis, new THREE.Vector3() );
+			
+			var finalMinorRadius = finalOuterRadius / 3;
+			var virtualMinorRadius = genus === 0 ? Number.MAX_SAFE_INTEGER : finalMinorRadius / genus;
+			
+			var virtualTubeCenter = virtualCircumferenceCenter.clone();
+			virtualTubeCenter.setLength( virtualMinorRadius );
+			
+			var tubeCenterTangent = circumferenceComponent.clone().sub(virtualTubeCenter);
+			tubeCenterTangent.cross(yAxis);
+			tubeCenterTangent.normalize();
+			var tubeComponent = positionOnCircle( y, virtualTubeCenter, tubeCenterTangent, circumferenceComponent );
+			
+			return tubeComponent;
+		}
+		
+		ramachandran.desiredGenus = 1 - ramachandran.genus;
+		
+		ramachandran.update = function(bonds)
+		{
+			if( this.desiredGenus )
+				this.genus += delta_t / 7;
+			else
+				this.genus -= delta_t / 7;
+			if( this.genus > 1 )
+				this.desiredGenus = 0;
+			if( this.genus < 0 )
+				this.desiredGenus = 1;
+			
+			for(var i = 0; i <= this.horizontalSegments; i++)
+			{
+				for(var j = 0; j <= this.horizontalSegments; j++)
+					this.plot.geometry.vertices[ i * (this.horizontalSegments+1) + j ].copy(
+						foldingDonutPosition( i / this.horizontalSegments * 2 - 1, j / this.horizontalSegments * 2 - 1, this.genus ) );
+			}
+			if(!logged) console.log(this.plot.geometry.vertices)
+			logged = 1;
+			ramachandran.plot.geometry.computeFaceNormals();
+			ramachandran.plot.geometry.computeVertexNormals();
+			ramachandran.plot.geometry.verticesNeedUpdate = true;
+		}
+	}
 
 	Render( controllers, bonds );
 });
