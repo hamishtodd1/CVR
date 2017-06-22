@@ -15,7 +15,7 @@ var inputObject = {
 	cameraState: {position: new THREE.Vector3(), quaternion: new THREE.Quaternion()}
 };
 
-inputObject.updateFromAsynchronousInput = function(Controllers) //the purpose of this is to update everything
+inputObject.updateFromAsynchronousInput = function(Controllers ) //the purpose of this is to update everything
 {	
 	if(VRMODE) //including google cardboard TODO
 	{
@@ -36,6 +36,9 @@ inputObject.updateFromAsynchronousInput = function(Controllers) //the purpose of
 		for(var k = 0; k < 2 && k < gamepads.length; ++k)
 		{	
 			var affectedControllerIndex = 666;
+			if (gamepads[k] && gamepads[k].id === "OpenVR Gamepad") //because some are undefined
+				affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
+			
 			if (gamepads[k] && gamepads[k].id === "Oculus Touch (Right)") //because some are undefined
 				affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
 			if (gamepads[k] && gamepads[k].id === "Oculus Touch (Left)")
@@ -73,23 +76,9 @@ inputObject.updateFromAsynchronousInput = function(Controllers) //the purpose of
 					Controllers[affectedControllerIndex].Gripping = 0;
 			}
 		}
-	}
-	else
-	{	
-		var cameraFrustum = new THREE.Frustum().setFromMatrix(Camera.projectionMatrix);
-		var screenCornerCoords = new Float32Array(12);
-		for(var i = 0; i < 4; i++)
-		{
-			var intersectionPartner = i < 2 ? i + 2 : 3 - i;
-			var frustumCorner = cameraFrustum.planes[i].normal.clone();
-			frustumCorner.cross( cameraFrustum.planes[ intersectionPartner ].normal );
-			screenCornerCoords[i*3+0] = frustumCorner.x;
-			screenCornerCoords[i*3+1] = frustumCorner.y;
-			screenCornerCoords[i*3+2] = frustumCorner.z;
-		}
-		//Try tilting, try resizing window
-		//then you probably just need to add the camera position :o
-		socket.emit( 'screenIndicator', screenCornerCoords );
+		
+		if( gamepads[0] )
+			ramachandran.genus = gamepads[0].buttons[1].value;
 	}
 }
 
@@ -105,49 +94,6 @@ socket.on('screenIndicator', function(spectatorScreenCornerCoords)
 	}
 	Camera.children[0].geometry.verticesNeedUpdate = true;
 });
-
-//keyboard crap. Have to use "preventdefault" within ifs, otherwise certain things you'd like to do are prevented
-document.addEventListener( 'keydown', function(event)
-{
-	//arrow keys
-	if( 37 <= event.keyCode && event.keyCode <= 40)
-	{
-//		if(event.keyCode === 38)
-//			Scene.scale.multiplyScalar(0.5);
-//		if(event.keyCode === 40)
-//			Scene.scale.multiplyScalar(2);
-		
-		//tank controls
-//		var movingspeed = 0.8;
-//		var turningspeed = 0.05;
-//		
-//		var forwardvector = Camera.getWorldDirection();
-//		forwardvector.setLength(movingspeed);
-//		
-//		if(event.keyCode === 37)
-//			Camera.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(Central_Y_axis, turningspeed));
-//		if(event.keyCode === 38)
-//			Camera.position.add(forwardvector);
-//		if(event.keyCode === 39)
-//			Camera.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(Central_Y_axis,-turningspeed));
-//		if(event.keyCode === 40)
-//			Camera.position.sub(forwardvector);
-//		return;
-	}
-	
-	if(event.keyCode === 190 && WEBVR.isAvailable() === true)
-	{
-		event.preventDefault();
-		OurVREffect.setFullScreen( true );
-
-		VRMODE = 1; //OR GOOGLE CARDBOARD TODO, nobody wants to spectate as cardboard
-		
-		//bug if we do this earlier(?)
-		OurVREffect.scale = 0; //you'd think this would put your eyes in the same place but it doesn't
-		
-		return;
-	}
-}, false );
 
 
 inputObject.updatemouseposition = function(event)

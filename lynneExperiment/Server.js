@@ -20,6 +20,6 @@ io.on('connection', function(socket){
 	socket.broadcast.on('screenIndicator', function(msg){ socket.broadcast.emit('screenIndicator', msg); });
 });
 
-http.listen(3000, function(){ //3000 for local, 8000 for proper. Might need a sudo
-	console.log('Server is listening on port 3000, go there in a browser');
+http.listen(9090, function(){ //3000 for local, 8000 for proper. Might need a sudo
+	console.log('Server is listening on port 9090, go there in a browser');
 });

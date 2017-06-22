@@ -1,6 +1,79 @@
 //the first init
 socket.on('OnConnect_Message', function(msg)
-{	
+{
+	var loadingChecker = 
+	{
+		font: false,
+		allowednesses: [false,false,false]
+	}
+	loadingChecker.attemptInit = function()
+	{
+		for(var propt in this )
+		{
+			if( this[propt] === false )
+				return;
+		}
+		
+		postloadInit(allowedArray);
+	}
+	
+	var allowedArray = Array(3);
+	
+	for(var i = 0; i < 3; i++ )
+	{
+		allowedArray[i] = Array( 360 / 5 );
+		
+		loadAllowedArray(i, allowedArray[i], loadingChecker)
+	}
+	
+	new THREE.FontLoader().load(  "gentilis.js", 
+		function ( reponse )
+		{
+			gentilis = reponse;
+			loadingChecker.font = true;
+			loadingChecker.attemptInit();
+		},
+		function ( xhr ) {},
+		function ( xhr ) { console.error( "couldn't load font" ); }
+	);
+});
+
+function loadAllowedArray(k, allowedPhiPsiArray, loadingChecker)
+{
+	var tauAngle = 105 + k * 5;
+	var filename = "Data/Ala_Tau_" + tauAngle.toString() + ".txt";
+	new THREE.XHRLoader().load(
+		filename,
+		function(data)
+		{
+			var values = data.split(" "); //for some reason this handles the newlines as well
+			
+			for(var i = 0; i < allowedPhiPsiArray.length; i++)
+			{
+				allowedPhiPsiArray[i] = Array( 360 / 5 );
+			}
+			
+			for(var i = 0, il = Math.floor( values.length / 3 ); i < il; i++)
+			{
+				var phi = parseInt( values[i*3+0] );
+				var psi = parseInt( values[i*3+1] );
+				while(phi < 0)
+					phi += 360;
+				while(psi < 0)
+					psi += 360;
+				
+				allowedPhiPsiArray[phi / 5][psi / 5] = parseInt( values[i*3+2] );
+			}
+			
+			loadingChecker.allowednesses[k] = true;
+			loadingChecker.attemptInit();
+		},
+		function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load data" ); }
+	);
+}
+
+function postloadInit( allowedArray )
+{
 	var Renderer = new THREE.WebGLRenderer({ antialias: true }); //antialiasing would be nice and we're only aiming for 30fps
 	Renderer.setClearColor( 0xACDFFC );
 	Renderer.setPixelRatio( window.devicePixelRatio );
@@ -37,19 +110,13 @@ socket.on('OnConnect_Message', function(msg)
 	
 	Add_stuff_from_demo();
 	
-	new THREE.FontLoader().load(  "gentilis.js", 
-		function ( reponse ) { gentilis = reponse; },
-		function ( xhr ) {},
-		function ( xhr ) { console.error( "couldn't load font" ); }
-	);
-	
 	var controllers = Array(2);
 	for(var i = 0; i < 2; i++)
 	{
 		controllers[ i ] = new THREE.Object3D();
 		controllers[ i ].Gripping = 0;
 		controllers[ i ].heldBond = -1;
-//		scene.add( controllers[ i ] );
+		scene.add( controllers[ i ] );
 	}
 	var handModelLink = "Data/glove.obj"
 	if ( WEBVR.isAvailable() === true ) //Hah and when all browsers have VR?
@@ -59,22 +126,22 @@ socket.on('OnConnect_Message', function(msg)
 		document.body.appendChild( WEBVR.getButton( OurVREffect ) );
 		spectatorScreenIndicator.visible = true;
 		spectatorScreenIndicator.frustumCulled = false;
-		handModelLink = "Data/external_controller01_left.obj"
 	}
 	new THREE.OBJLoader().load( handModelLink,
 		function ( object ) 
 		{
-			object.children[0].geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xAxis,0.5) );
-			object.children[0].geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0.002,0.036,-0.039) );
-		
-			controllers[ LEFT_CONTROLLER_INDEX ].add(new THREE.Mesh( object.children[0].geometry, new THREE.MeshPhongMaterial({color:0x000000}) ) )
-			controllers[ LEFT_CONTROLLER_INDEX ].indicatorSphere = new THREE.Mesh(new THREE.SphereGeometry(0.01), new THREE.MeshBasicMaterial({color:0xFF0000}));
-			controllers[ LEFT_CONTROLLER_INDEX ].add( controllers[ LEFT_CONTROLLER_INDEX ].indicatorSphere );
+			object.children[0].scale.setScalar( 0.00047 );
+			object.children[0].rotation.y = TAU/2;
+			object.children[0].rotation.z =-1;
+			object.children[0].geometry.center();
 			
-			controllers[1-LEFT_CONTROLLER_INDEX].add(new THREE.Mesh( object.children[0].geometry.clone(), new THREE.MeshPhongMaterial({color:0x000000}) ) )
-			controllers[1-LEFT_CONTROLLER_INDEX].children[controllers[1-LEFT_CONTROLLER_INDEX].children.length-1].geometry.applyMatrix( new THREE.Matrix4().makeScale(-1,1,1) );
-			controllers[1-LEFT_CONTROLLER_INDEX].indicatorSphere = new THREE.Mesh(new THREE.SphereGeometry(0.01), new THREE.MeshBasicMaterial({color:0xFF0000}));
-			controllers[1-LEFT_CONTROLLER_INDEX].add( controllers[ LEFT_CONTROLLER_INDEX ].indicatorSphere );
+			controllers[ LEFT_CONTROLLER_INDEX ].add( object.children[0].clone() );
+			
+			controllers[1-LEFT_CONTROLLER_INDEX ].add( object.children[0].clone() );
+			controllers[1-LEFT_CONTROLLER_INDEX ].scale.x *= -1;
+			controllers[1-LEFT_CONTROLLER_INDEX ].children[0].material = controllers[ LEFT_CONTROLLER_INDEX ].children[0].material.clone();
+			controllers[1-LEFT_CONTROLLER_INDEX ].children[0].material.side = THREE.BackSide;
+			controllers[1-LEFT_CONTROLLER_INDEX ].children[0].material.needsUpdate = true;
 		},
 		function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );
 	
@@ -94,6 +161,17 @@ socket.on('OnConnect_Message', function(msg)
 	 * Want to have angle labels really
 	 * And atom labels?
 	 * A blob that is the residue
+	 * 
+	 * So how does Lynne want to use it? We could make a video with her in it? Greenscreen would be nice ofc
+	 * 
+	 * How about it shows, as "ghosts", the possible / allowed phis and psis given current phi and psi,
+	 * 	Eg a "cross" on the ramachandran diagram
+	 * 	and the ghosts are the color of points that appear on the ramachandran representing them
+	 * 
+	 * 
+	 * The purpose of the meeting tomorrow is to show Lynne the capabilities and then decide on what to do
+	 * 	She wants something to put in her presentations? Or just a youtube video? Silent
+	 * 
 	 */
 	
 	for(var i = 0; i < 2; i++)
@@ -109,7 +187,7 @@ socket.on('OnConnect_Message', function(msg)
 		controllers[i].add( controllers[i].angleStick );
 	}
 	
-	var bonds = Array(5); //probably the right abstraction?
+	var bonds = Array(5);
 	var bondLength = 0.18; //so, this needs to be in angstroms, and then everything else is changed around that
 	var bondRadius = bondLength / 25;
 	var getEnd = function()
@@ -122,6 +200,7 @@ socket.on('OnConnect_Message', function(msg)
 	}
 	var bondGeometry = new THREE.CylinderGeometry(bondRadius,bondRadius, bondLength, 31);
 	bondGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,bondLength/2,0));
+	bondGeometry.merge(new THREE.SphereGeometry(bondRadius*4,16,16));
 	bondGeometry.computeBoundingSphere();
 	var bondMaterial = new THREE.MeshPhongMaterial({color:0x888888});
 	
@@ -147,7 +226,7 @@ socket.on('OnConnect_Message', function(msg)
 	bonds[2].rotation.z =-TAU / 8;
 	bonds[3].rotation.z = TAU / 8;
 	bonds[4].rotation.z =-TAU / 8;
-//	scene.add(bonds[0]);
+	scene.add(bonds[0]);
 	
 	function getTau( branchBond )
 	{
@@ -194,34 +273,79 @@ socket.on('OnConnect_Message', function(msg)
 		return angle;
 	}
 	
-	var carbonAlphas = [];
-	for(var i = 0; i < 2; i++)
-		carbonAlphas
+//	var carbonAlphas = [];
+//	for(var i = 0; i < 2; i++)
+//		carbonAlphas
+	
+	{
+		function normalizedAngle(angle)
+		{
+			var returnValue = angle;
+			while(returnValue<0)
+				returnValue += TAU;
+			while(returnValue >= TAU)
+				returnValue -= TAU;
+			return returnValue;
+		}
+		angleAllowed = function(tau, phi, psi)
+		{
+			var phiIndex = normalizedAngle(phi);
+			phiIndex = Math.round(phiIndex * 360 / TAU / 5);
+			var psiIndex = normalizedAngle(psi);
+			psiIndex = Math.round(psiIndex * 360 / TAU / 5);
+			
+			var tauIndex = normalizedAngle(tau);
+			tauIndex = Math.round(tauIndex * 360 / TAU / 5 );
+			if( tauIndex <= 20 || 24 <= tauIndex )
+			{
+				console.log("received unknown tau: ", tau);
+				return 0;
+			}
+			tauIndex -= 21;
+			
+			return allowedArray[ tauIndex ][ phiIndex ][ psiIndex ];
+		}
+	}
 	
 	{
 		ramachandran = new THREE.Object3D();
-		ramachandran.horizontalSegments = 40;
+		ramachandran.horizontalSegments = 63;
 		ramachandran.plot = new THREE.Mesh( 
 				new THREE.Geometry(), 
-				new THREE.MeshPhongMaterial({color:0x888888, side: THREE.DoubleSide}) );
+				new THREE.MeshPhongMaterial({vertexColors:THREE.FaceColors, side: THREE.DoubleSide}) );
 		ramachandran.plot.geometry.vertices = Array( Math.pow(ramachandran.horizontalSegments+1, 2 ) );
 		for(var i = 0, il = ramachandran.plot.geometry.vertices.length; i < il; i++)
 			ramachandran.plot.geometry.vertices[i] = new THREE.Vector3();
 		ramachandran.plot.geometry.faces = Array( ramachandran.horizontalSegments * ramachandran.horizontalSegments * 2 );
+		allowedColor = new THREE.Color(0xFEEFC6);
+		disallowedColor = new THREE.Color(0x74BDE6);
+		var thisFaceColor
 		for(var i = 0; i < ramachandran.horizontalSegments; i++) //row
 		{
 			for(var j = 0; j < ramachandran.horizontalSegments; j++) //column
 			{
+				thisFaceColor = angleAllowed( 115/360*TAU,
+					i / ramachandran.horizontalSegments * TAU,
+					j / ramachandran.horizontalSegments * TAU) ?
+					allowedColor : disallowedColor;
+				
 				var topLeft = i * (ramachandran.horizontalSegments+1) + j;
 				var bottomLeft = (i+1) * (ramachandran.horizontalSegments+1) + j;
+				
 				ramachandran.plot.geometry.faces[(i*ramachandran.horizontalSegments+j)*2+0] = new THREE.Face3( 
-						topLeft,
-						topLeft + 1,
-						bottomLeft );
+					topLeft,
+					topLeft + 1,
+					bottomLeft,
+					new THREE.Vector3(0,0,1),
+					thisFaceColor
+				);
 				ramachandran.plot.geometry.faces[(i*ramachandran.horizontalSegments+j)*2+1] = new THREE.Face3( 
-						bottomLeft,
-						topLeft + 1,
-						bottomLeft + 1 );
+					bottomLeft,
+					topLeft + 1,
+					bottomLeft + 1,
+					new THREE.Vector3(0,0,1),
+					thisFaceColor
+				);
 			}
 		}
 		
@@ -231,9 +355,9 @@ socket.on('OnConnect_Message', function(msg)
 		
 		ramachandran.genus = 0;
 		ramachandran.width = 1;
-		ramachandran.position.z = -0.3;
-		ramachandran.rotation.x = TAU / 4
-		ramachandran.scale.setScalar(0.1)
+		ramachandran.position.z = -0.1;
+		ramachandran.position.y = -0.1;
+		ramachandran.scale.setScalar(0.09)
 		
 		scene.add(ramachandran);
 		
@@ -255,24 +379,30 @@ socket.on('OnConnect_Message', function(msg)
 		//accepts numbers from a 2x2 square centered at the origin. Returns that for genus = 0, gives 2x(2/3) donut for genus = 1
 		var foldingDonutPosition = function( x, y, genus )
 		{
-			var finalOuterRadius = 2 / TAU;
-			var virtualOuterRadius = genus === 0 ? Number.MAX_SAFE_INTEGER : finalOuterRadius / genus;
+			var innerRoundedness = genus < 0.5 ? genus * 2 : 1;
+			if(innerRoundedness<0.02)
+				innerRoundedness = 0;
+			var outerRoundedness = genus >= 0.5 ? (genus-0.5) * 2 : 0;
 			
+			var finalOuterRadius = 2 / TAU;
+			var virtualOuterRadius = outerRoundedness === 0 ? Number.MAX_SAFE_INTEGER : finalOuterRadius / outerRoundedness;
 			var virtualCircumferenceCenter = new THREE.Vector3(0,0,-virtualOuterRadius);
 			var circumferenceComponent = positionOnCircle( x, virtualCircumferenceCenter, yAxis, new THREE.Vector3() );
 			
 			var finalMinorRadius = finalOuterRadius / 3;
-			var virtualMinorRadius = genus === 0 ? Number.MAX_SAFE_INTEGER : finalMinorRadius / genus;
+			var virtualMinorRadius = innerRoundedness === 0 ? Number.MAX_SAFE_INTEGER : finalMinorRadius / innerRoundedness;
 			
 			var virtualTubeCenter = virtualCircumferenceCenter.clone();
+			virtualTubeCenter.sub(circumferenceComponent);
 			virtualTubeCenter.setLength( virtualMinorRadius );
+			virtualTubeCenter.add(circumferenceComponent);
 			
 			var tubeCenterTangent = circumferenceComponent.clone().sub(virtualTubeCenter);
 			tubeCenterTangent.cross(yAxis);
 			tubeCenterTangent.normalize();
-			var tubeComponent = positionOnCircle( y, virtualTubeCenter, tubeCenterTangent, circumferenceComponent );
 			
-			return tubeComponent;
+			var finalPosition = positionOnCircle( y / (1+2*innerRoundedness), virtualTubeCenter, tubeCenterTangent, circumferenceComponent );
+			return finalPosition;
 		}
 		
 		ramachandran.desiredGenus = 1 - ramachandran.genus;
@@ -280,27 +410,47 @@ socket.on('OnConnect_Message', function(msg)
 		ramachandran.update = function(bonds)
 		{
 			if( this.desiredGenus )
-				this.genus += delta_t / 7;
+				this.genus += delta_t / 2;
 			else
-				this.genus -= delta_t / 7;
+				this.genus -= delta_t / 2;
 			if( this.genus > 1 )
-				this.desiredGenus = 0;
+				this.genus = 1;
 			if( this.genus < 0 )
-				this.desiredGenus = 1;
+				this.genus = 0;
 			
 			for(var i = 0; i <= this.horizontalSegments; i++)
 			{
 				for(var j = 0; j <= this.horizontalSegments; j++)
 					this.plot.geometry.vertices[ i * (this.horizontalSegments+1) + j ].copy(
-						foldingDonutPosition( i / this.horizontalSegments * 2 - 1, j / this.horizontalSegments * 2 - 1, this.genus ) );
+						foldingDonutPosition( (i / this.horizontalSegments) * 2 - 1, (j / this.horizontalSegments) * 2 - 1, this.genus ) );
 			}
-			if(!logged) console.log(this.plot.geometry.vertices)
-			logged = 1;
 			ramachandran.plot.geometry.computeFaceNormals();
 			ramachandran.plot.geometry.computeVertexNormals();
 			ramachandran.plot.geometry.verticesNeedUpdate = true;
 		}
+		
+		document.addEventListener( 'keydown', function(event){
+			if( event.keyCode === 32 )
+			{
+				ramachandran.desiredGenus = 1 - ramachandran.desiredGenus;
+			}
+			
+			if(event.keyCode === 190 && WEBVR.isAvailable() === true)
+			{
+				event.preventDefault();
+				OurVREffect.setFullScreen( true );
+
+				VRMODE = 1; //OR GOOGLE CARDBOARD TODO, nobody wants to spectate as cardboard
+				
+				//bug if we do this earlier(?)
+				OurVREffect.scale = 0; //you'd think this would put your eyes in the same place but it doesn't
+				
+				return;
+			}
+		}, false );
 	}
 
 	Render( controllers, bonds );
-});
+}
+
+var angleAllowed;

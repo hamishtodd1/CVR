@@ -7,9 +7,7 @@ function Render( controllers, bonds) {
 	
 	updateBonds(controllers, bonds);
 	
-	ramachandran.update();
-	
-//	ramachandran.update(bonds);
+	ramachandran.update(bonds);
 	
 	OurVREffect.requestAnimationFrame( function(){
 		OurVREffect.render( scene, Camera );
@@ -60,7 +58,6 @@ function updateBonds(controllers, bonds)
 					if( controllers[1-i].heldBond === -1 )
 					{
 						controllers[i].heldBond = 0; //You get the non-modifying grip
-						console.log("yo")
 						THREE.SceneUtils.attach( bonds[0], scene, controllers[i] ); //0 assumed to be root
 					}
 					else
@@ -74,7 +71,7 @@ function updateBonds(controllers, bonds)
 				}
 			}
 			
-			if( controllers[i].heldBond > -1 )
+			if( controllers[i].heldBond > 0 )
 			{
 				/*
 				 * When you grab, it creates a rudder
@@ -91,50 +88,6 @@ function updateBonds(controllers, bonds)
 				 * 
 				 * We want to be able to twist twist twist
 				 */
-				
-//				controllers[i].updateMatrixWorld();
-//				
-//				var rudderTopBeginning = controllers[ i ].position.clone();
-//				bonds[ controllers[i].heldBond ].worldToLocal( rudderTopBeginning );
-//				var rudderTopEnd = controllers[ i ].currentRudderTip.clone();
-//				controllers[ i ].localToWorld( rudderTopEnd );
-//				bonds[ controllers[i].heldBond ].worldToLocal( rudderTopEnd );
-//				
-//				var rudderTop = rudderTopEnd.clone().sub( rudderTopBeginning );
-//				var intersectionScalar = -zAxis.dot( rudderTopBeginning );
-//				intersectionScalar /= zAxis.dot( rudderTop );
-//				if( intersectionScalar < 0 )
-//					intersectionScalar *= -1;
-//				var intersection = rudderTop.multiplyScalar(intersectionScalar).add(rudderTopBeginning);
-//				
-//				var angleGettingVersion = new THREE.Vector2( intersection.x, intersection.y );
-//				var antiClockwiseAngleFromY = angleGettingVersion.angle();
-//				antiClockwiseAngleFromY -= TAU / 4;
-//				if( antiClockwiseAngleFromY < 0 )
-//					antiClockwiseAngleFromY += TAU;
-//				
-//				bonds[ controllers[i].heldBond ].rotation.z += antiClockwiseAngleFromY;
-//				bonds[ controllers[i].heldBond ].updateMatrixWorld();
-//				
-//				var currentPsiDirector = zAxis.clone();
-//				var intendedPsiDirector = controllers[i].position.clone();
-//				bonds[ controllers[i].heldBond ].worldToLocal( intendedPsiDirector );
-//				intendedPsiDirector.y = 0;
-//				var psiDelta = currentPsiDirector.angleTo( intendedPsiDirector );
-//				var directionGetter = new THREE.Vector3().crossVectors( currentPsiDirector, intendedPsiDirector);
-//				if( directionGetter.angleTo( yAxis ) > 0.01 )
-//					psiDelta *= -1;
-//				
-//				bonds[ controllers[i].heldBond ].rotation.y += psiDelta;
-//				
-//				controllers[i].rudder.geometry.vertices[0].set(0,0,0);
-//				controllers[i].rudder.geometry.vertices[1].copy( bonds[ controllers[i].heldBond ].getWorldPosition() );
-//				controllers[i].worldToLocal( controllers[i].rudder.geometry.vertices[1] );
-//				controllers[i].rudder.geometry.vertices[2].copy( bonds[ controllers[i].heldBond ].getEnd() );
-//				controllers[i].worldToLocal( controllers[i].rudder.geometry.vertices[2] );
-//				controllers[i].rudder.geometry.vertices[3].copy( controllers[i].currentRudderTip );
-//				
-//				controllers[i].rudder.geometry.verticesNeedUpdate = true;
 				
 				var yRotationDelta = controllers[i].rotation.y - controllers[i].lastYRotation;
 				var zRotationDelta = controllers[i].rotation.z - controllers[i].lastZRotation;
