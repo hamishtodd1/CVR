@@ -1,6 +1,6 @@
-function mainLoop(socket, cursor, models, maps) {
+function mobileLoop(socket, cursor, models, maps) {
 	delta_t = ourclock.getDelta();
-	
+
 	if(isMobileOrTablet)
 		ourOrientationControls.update();
 	
@@ -13,7 +13,7 @@ function mainLoop(socket, cursor, models, maps) {
 		{
 			for(var i = 0; i < models.length; i++)
 			{
-				if( models[i].material && models[i].geometry.boundingSphere && models[i].pointInBoundingSphere( cursor.getWorldPosition() ) )
+				if( models[i].material && models[i].pointInBoundingSphere( cursor.getWorldPosition() ) )
 					models[i].material.emissive.r = 1;
 				else
 					models[i].material.emissive.r = 0;
@@ -76,29 +76,12 @@ function mainLoop(socket, cursor, models, maps) {
 		cursor.followers[i].position.add(cursor.getWorldPosition());
 	}
 	
-	
-	for(var i = 0; i < models.length; i++)
-	{
-		if( models[i].parent.uuid === cursor.uuid)
-			continue;
-		
-		for( var j = 0; j < maps.length; j++)
-		{
-			if( models[i].position.distanceTo(maps[j].position) < 0.1 && models[i].quaternion.distanceTo(maps[j].quaternion) < TAU / 16 )
-			{
-				models[i].position.copy( maps[j].position );
-				models[i].quaternion.copy( maps[j].quaternion );
-			}
-		}
-	}
+	updateModelsAndMaps( models, maps )
 	
 	socket.send("loopDone")
 	
 	requestAnimationFrame( function(){
-		mainLoop(socket, cursor, models, maps, ourStereoEffect);
+		mobileLoop(socket, cursor, models, maps);
 	} );
-//	if(isMobileOrTablet)
-		ourStereoEffect.render( scene, camera ); //CC
-//	else
-//		Renderer.render( scene, camera );
+	ourStereoEffect.render( scene, camera );
 }

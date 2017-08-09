@@ -1,44 +1,39 @@
 //A live fish
 
-function Render( controllers, bonds) {
+function Render( controllers, bonds, ramachandran) {
 	delta_t = ourclock.getDelta();
 
-	inputObject.updateFromAsynchronousInput( controllers );
+	inputObject.updateFromAsynchronousInput( controllers,ramachandran );
 	
-	updateBonds(controllers, bonds);
+	updateBonds(controllers, bonds, ramachandran);
 	
 	ramachandran.update(bonds);
 	
 	OurVREffect.requestAnimationFrame( function(){
 		OurVREffect.render( scene, Camera );
-		Render( controllers, bonds );
+		Render( controllers, bonds, ramachandran );
 	} );
 }
 
-function updateBonds(controllers, bonds)
+function updateBonds(controllers, bonds, ramachandran)
 {
 	for(var i = 0; i < 2; i++)
 	{
 		if( !controllers[i].Gripping )
 		{
-			if( controllers[i].heldBond > -1 )
+			if( controllers[i].heldBond !== null )
 			{
-				if( controllers[i].heldBond === 0 )
-				{
-					THREE.SceneUtils.detach( bonds[0], controllers[i], scene );
-				}
-				else
-				{
-					controllers[i].angleStick.visible = false;
-				}
-				controllers[i].heldBond = -1;
+				var heldBond = controllers[i].heldBond;
+				THREE.SceneUtils.detach( heldBond, controllers[i], scene );
+				THREE.SceneUtils.attach( heldBond, scene, heldBond.parentBond );
+				controllers[i].heldBond = null;
 			}
 		}
 		else
 		{
-			if( controllers[i].heldBond === -1 )
+			if( controllers[i].heldBond === null )
 			{
-				var closestBondSoFar = -1;
+				var bondToGrab = null;
 				var lowestDistanceSoFar = 99999999;
 				for(var j = 0; j < bonds.length; j++)
 				{
@@ -49,56 +44,36 @@ function updateBonds(controllers, bonds)
 					if( distance < lowestDistanceSoFar && distance < bonds[j].geometry.boundingSphere.radius )
 					{
 						lowestDistanceSoFar = distance;
-						closestBondSoFar = j;
+						bondToGrab = bonds[j];
 					}
 				}
 				
-				if( closestBondSoFar !== -1 )
+				if( bondToGrab !== null )
 				{
-					if( controllers[1-i].heldBond === -1 )
-					{
-						controllers[i].heldBond = 0; //You get the non-modifying grip
-						THREE.SceneUtils.attach( bonds[0], scene, controllers[i] ); //0 assumed to be root
-					}
-					else
-					{
-						controllers[i].heldBond = closestBondSoFar;
-						controllers[i].angleStick.visible = true;
-						
-						controllers[i].lastYRotation = controllers[i].rotation.y;
-						controllers[i].lastZRotation = controllers[i].rotation.z;
-					}
+					controllers[i].heldBond = bondToGrab;
+					THREE.SceneUtils.detach( bondToGrab, bondToGrab.parentBond, scene );
+					THREE.SceneUtils.attach( bondToGrab, scene, controllers[i] );
 				}
 			}
 			
-			if( controllers[i].heldBond > 0 )
+			if( controllers[i].heldBond !== null )
 			{
-				/*
-				 * When you grab, it creates a rudder
-				 * 
-				 * psi (and phi) is bond.rotation.y
-				 * and call tau bond.rotation.z, so that we think of tau in the xy plane
-				 * 
-				 * Extras:
-				 * 		If none of your parents are held, all your parents get moved too, else, it's just you (and you children)
-				 * 
-				 * Once again the interesting, possibly difficulty-creating, but probably necessary thing to strive for is changing tau and psi simultaneously 
-				 * Probably just: controller rotation.z delta added to z, same with y.
-				 * But then again, there was this idea about grabbing the other one.
-				 * 
-				 * We want to be able to twist twist twist
-				 */
-				
-				var yRotationDelta = controllers[i].rotation.y - controllers[i].lastYRotation;
-				var zRotationDelta = controllers[i].rotation.z - controllers[i].lastZRotation;
-				
-				if( Math.abs( yRotationDelta ) > Math.abs( zRotationDelta ) )
-					bonds[ controllers[i].heldBond ].rotation.y += yRotationDelta;
-				else
-					bonds[ controllers[i].heldBond ].rotation.z += zRotationDelta;
-
-				controllers[i].lastYRotation = controllers[i].rotation.y;
-				controllers[i].lastZRotation = controllers[i].rotation.z;
+				if(controllers[i].heldBond.parentBond !== scene)
+				{
+					var currentStemPosition = controllers[i].heldBond.parentBond.getEndWorld();
+					var intendedStemPosition = new THREE.Vector3();
+					controllers[i].heldBond.localToWorld(intendedStemPosition);
+					bonds[0].position.add(intendedStemPosition);
+					bonds[0].position.sub(currentStemPosition);
+					
+					console.log(
+							controllers[i].heldBond.getPsi() );
+					
+					ramachandran.repositionIndicatorAndReturnAllowability( 
+							controllers[i].heldBond.getTau(), 
+							controllers[i].heldBond.getPhi(),
+							controllers[i].heldBond.getPsi() );
+				}
 			}
 		}
 	}

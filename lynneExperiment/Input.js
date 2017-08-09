@@ -15,7 +15,7 @@ var inputObject = {
 	cameraState: {position: new THREE.Vector3(), quaternion: new THREE.Quaternion()}
 };
 
-inputObject.updateFromAsynchronousInput = function(Controllers ) //the purpose of this is to update everything
+inputObject.updateFromAsynchronousInput = function(Controllers,ramachandran ) //the purpose of this is to update everything
 {	
 	if(VRMODE) //including google cardboard TODO
 	{
@@ -77,10 +77,26 @@ inputObject.updateFromAsynchronousInput = function(Controllers ) //the purpose o
 			}
 		}
 		
-		if( gamepads[0] )
-			ramachandran.genus = gamepads[0].buttons[1].value;
+		for(var i = 0; i < gamepads.length; i++)
+			if( gamepads[i] && gamepads[i].buttons[1].value !== 0 )
+				ramachandran.genus = gamepads[i].buttons[1].value;
 	}
 }
+
+document.addEventListener( 'keydown', function(event){
+	if(event.keyCode === 190 && WEBVR.isAvailable() === true)
+	{
+		event.preventDefault();
+		OurVREffect.setFullScreen( true );
+
+		VRMODE = 1; //OR GOOGLE CARDBOARD TODO, nobody wants to spectate as cardboard
+		
+		//bug if we do this earlier(?)
+		OurVREffect.scale = 0; //you'd think this would put your eyes in the same place but it doesn't
+		
+		return;
+	}
+}, false );
 
 socket.on('screenIndicator', function(spectatorScreenCornerCoords)
 {
