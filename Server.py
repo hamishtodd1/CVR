@@ -39,9 +39,35 @@ class mainHandler(tornado.web.RequestHandler):
 class wsHandler(tornado.websocket.WebSocketHandler):
 	def check_origin(self, origin):
 		return True
+		
+	def sendMap(self):
+		print("going to send map")
+		try:
+			map = map_contours(1, 0.6)
+		except NameError:
+			print("map_contours doesn't exist - we're probably not running in coot")
+		else:
+			#set_clipping_back(-10)
+			#set_clipping_front(-10)
+			#Hey Paul, what would be the size for the whole thing?
+			#also how do I keep it interactive while the script is running?
+			if map == False:
+				print( "no map loaded" )
+			mapString = 'Map,'
+			logged = 0
+			#this data processing has to be done either here or in the browser so here it is. TODO have a function in coot that gives the precise string you want
+			for i in map: #lines
+				for j in i: #line ends
+					for k in j: #coordinates
+						mapString += str(k) + ","
+						logged += 1
+						if logged == 12:
+							print(mapString)
+			print("made map, gonna send")
+			self.write_message(mapString)
 
 	def open(self):
-		#this will not be picked up by current one but by next
+		#we change all these numbers to ensure that hard refresh actually works
 		indexFile = open('index.html', 'r')
 		modifiedIndexFile = ""
 		for line in indexFile:
@@ -67,27 +93,9 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		Note it only works through eduroam. Probably firewall crap
 		'''
 		self.set_nodelay(True) #doesn't hurt to have this hopefully...
-		self.write_message("This is the server, connection has been accepted")
-		try:
-			map_contours
-		except NameError:
-			print("map_contours doesn't exist - we're probably not running in coot")
-		else:
-			print("going to send map")
-			map = map_contours(1, 0.6)
-			if map == False:
-				print( "no map loaded" )
-			mapString = 'Map,'
-			logged = 0
-			for i in map: #lines
-				for j in i: #line ends
-					for k in j: #coordinates
-						mapString += str(k) + ","
-						logged += 1
-						if logged == 12:
-							print(mapString)
-			self.write_message(mapString)
-			print("sent map")
+		
+		set_map_radius(15)
+		self.sendMap()
 		
 		#-------update the version numbers so that the whole thing gets refreshed
 		
@@ -107,6 +115,10 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			proportionalX = mouseX / screenWidth
 			proportionalY = mouseY / screenHeight
 			self.write_message( "mousePosition," + str(proportionalX) + "," + str(proportionalY) )
+		elif message == "increase radius":
+			currentRadius = get_map_radius()
+			set_map_radius(currentRadius + 4)
+			self.sendMap()
 		else:
 			self.write_message("Didn't understand that")
 			print('received unrecognized message:', message)

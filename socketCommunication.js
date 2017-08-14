@@ -1,4 +1,4 @@
-function initSocket( cursor )
+function initSocket( maps, cursor )
 {
 	if ( !("WebSocket" in window) )
 	{
@@ -26,25 +26,32 @@ function initSocket( cursor )
 	}
 	
 	socket.messageResponses["Map"] = function(messageContents)
-	{		
+	{
+		//wouldn't be hard to send map radius
+		//hey shouldn't there be coloring for how far away from you surface is?
+		//it's probably still worthwhile for user to have the slab thing, but you just control it with head
+		//have two little grabbable things which you can move towards and away from you
+		
 		var mapCoords = new Float32Array(messageContents.length-2); //-2 because "Map" at beginning and "" at end because of comma
 		for( var i = 0; i < mapCoords.length; i++ )
 		{
-			mapCoords[i] = parseFloat( messageContents[i+1] );
+			mapCoords[i] = parseFloat( messageContents[i+1] ) * angstrom;
 		}
 		
-		var map = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color:0x888888}));
-		map.geometry.addAttribute( 'position', new THREE.BufferAttribute( mapCoords, 3 ) );
-		map.geometry.applyMatrix( new THREE.Matrix4().makeScale( angstrom, angstrom, angstrom ) );
+		var mapIndex = 0; //maps.length;
+		maps[mapIndex] = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color:0x888888}));
+		maps[mapIndex].geometry.addAttribute( 'position', new THREE.BufferAttribute( mapCoords, 3 ) );
 		
-		map.updateBoundingSphere = updateBoundingSphere;
-		map.pointInBoundingSphere = pointInBoundingSphere;
+		maps[mapIndex].updateBoundingSphere = updateBoundingSphere;
+		maps[mapIndex].pointInBoundingSphere = pointInBoundingSphere;
 		
-		scene.add( map );
+		scene.add( maps[mapIndex] );
 	}
 	
-	socket.messageResponses["This is the server"] = function(messageContents)
-	{}
+	socket.messageResponses["Didn't understand that"] = function(messageContents)
+	{
+		console.error("Server didn't understand our message")
+	}
 	
 	socket.onmessage = function(msg)
 	{

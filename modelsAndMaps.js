@@ -1,21 +1,3 @@
-function updateModelsAndMaps( models, maps )
-{
-	for(var i = 0; i < models.length; i++)
-	{
-		if( models[i].parent !== scene )
-			continue;
-		
-		for( var j = 0; j < maps.length; j++)
-		{
-			if( models[i].position.distanceTo(maps[j].position) < 0.1 && models[i].quaternion.distanceTo(maps[j].quaternion) < TAU / 16 )
-			{
-				models[i].position.copy( maps[j].position );
-				models[i].quaternion.copy( maps[j].quaternion );
-			}
-		}
-	}
-}
-
 function pointInBoundingSphere( point )
 {
 	var localPosition = point.clone();
@@ -33,6 +15,8 @@ function updateBoundingSphere()
 	//update the appearance of the bounding sphere TODO including position
 	this.children[0].geometry.applyMatrix(new THREE.Matrix4().makeScale( radiusChange, radiusChange, radiusChange ));
 }
+
+
 
 function initModelsAndMaps()
 {
@@ -128,12 +112,12 @@ function createClassicCootModel(atomElements,atomPositions,bondIndices)
 	var cylinderSides = 15;
 
 	var finalMesh = new THREE.Mesh(new THREE.Geometry(), new THREE.MeshPhongMaterial( {vertexColors: THREE.FaceColors} ) )
-	var cylindersDesired = bondIndices.length;
+	var numberOfCylindersDesired = bondIndices.length;
 	
-	finalMesh.geometry.vertices = Array(cylinderSides * cylindersDesired * 2);
-	finalMesh.geometry.faces	= Array(cylinderSides * cylindersDesired * 2);
+	finalMesh.geometry.vertices = Array(cylinderSides * numberOfCylindersDesired * 2);
+	finalMesh.geometry.faces	= Array(cylinderSides * numberOfCylindersDesired * 2);
 	
-	for(var j = 0; j < cylindersDesired; j++)
+	for(var j = 0; j < numberOfCylindersDesired; j++)
 	{
 		var firstVertexIndex = j * cylinderSides * 2;
 		for(var i = 0; i < cylinderSides; i++)

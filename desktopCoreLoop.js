@@ -1,9 +1,9 @@
-function desktopLoop(socket, controllers, models, maps) {
+function desktopLoop(socket, controllers, VRInputSystem, models, maps) {
 	checkForNewGlobals();
 	
 	delta_t = ourclock.getDelta();
 	
-	getControllerInput(controllers);
+	VRInputSystem.update( socket);
 	
 	for( var j = 0; j < models.length; j++)
 	{
@@ -40,90 +40,47 @@ function desktopLoop(socket, controllers, models, maps) {
 		}
 	}
 	
-	updateModelsAndMaps( models, maps );
+	for(var i = 0; i < models.length; i++)
+	{
+		if( models[i].parent !== scene )
+			continue;
+		
+		for( var j = 0; j < maps.length; j++)
+		{
+			if( models[i].position.distanceTo(maps[j].position) < 0.1 && models[i].quaternion.distanceTo(maps[j].quaternion) < TAU / 16 )
+			{
+				models[i].position.copy( maps[j].position );
+				models[i].quaternion.copy( maps[j].quaternion );
+			}
+		}
+	}
 	
 	socket.send("loopDone");
+	
 	ourVREffect.requestAnimationFrame( function(){
 		ourVREffect.render( scene, camera );
-		desktopLoop(socket, controllers, models, maps);
+		desktopLoop(socket, controllers, VRInputSystem, models, maps);
 	} );
 }
 
 function checkForNewGlobals()
 {
-	if( numGlobalVariables !== Object.keys(window).length )
+	if( typeof numGlobalVariables === 'undefined')
 	{
-		if( numGlobalVariables ) //not the first setting
+		numGlobalVariables = Object.keys(window).length + 1;
+	}
+	else if( numGlobalVariables > Object.keys(window).length)
+	{
+		console.log("new global variable(s): ")
+		for(var i = numGlobalVariables; i < Object.keys(window).length; i++ )
 		{
-			console.log("new global variables: ")
-			for(var i = numGlobalVariables; i < Object.keys(window).length; i++ )
-			{
-				if( Object.keys(window)[i] !== location &&
-					Object.keys(window)[i] !== name &&
-					Object.keys(window)[i] !== window &&
-					Object.keys(window)[i] !== self &&
-					Object.keys(window)[i] !== document )
-					console.log( Object.keys(window)[i] ); //location, name,window, self, document are fine
-			}
+			if( Object.keys(window)[i] !== location && //these ones are ok
+				Object.keys(window)[i] !== name &&
+				Object.keys(window)[i] !== window &&
+				Object.keys(window)[i] !== self &&
+				Object.keys(window)[i] !== document )
+				console.log( Object.keys(window)[i] );
 		}
-		numGlobalVariables = Object.keys(window).length;
+		numGlobalVariables = Object.keys(window).length + 1;
 	}	
-}
-
-function getControllerInput(controllers)
-{
-	ourVRControls.update();
-	camera.position.z -= FOCALPOINT_DISTANCE;
-
-	var gamepads = navigator.getGamepads();
-    var riftTriggerButton = 1;
-    var riftGripButton = 2;
-    //pushing the thumbstick in is 0, the two buttons are 3 and 4
-	for(var k = 0; k < 2 && k < gamepads.length; ++k)
-	{
-		var affectedControllerIndex = 666;
-		if (gamepads[k] && gamepads[k].id === "Oculus Touch (Right)")
-			affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
-		if (gamepads[k] && gamepads[k].id === "Oculus Touch (Left)")
-			affectedControllerIndex = LEFT_CONTROLLER_INDEX;
-		if( affectedControllerIndex === 666 )
-			continue;
-		
-		controllers[affectedControllerIndex].position.x = gamepads[k].pose.position[0];
-		controllers[affectedControllerIndex].position.y = gamepads[k].pose.position[1];
-		controllers[affectedControllerIndex].position.z = gamepads[k].pose.position[2] - FOCALPOINT_DISTANCE;
-		controllers[affectedControllerIndex].quaternion.x = gamepads[k].pose.orientation[0];
-		controllers[affectedControllerIndex].quaternion.y = gamepads[k].pose.orientation[1];
-		controllers[affectedControllerIndex].quaternion.z = gamepads[k].pose.orientation[2];
-		controllers[affectedControllerIndex].quaternion.w = gamepads[k].pose.orientation[3];
-		controllers[affectedControllerIndex].updateMatrixWorld();
-		
-		if( gamepads[k].buttons[riftGripButton].pressed)
-			controllers[affectedControllerIndex].gripping = 1;
-		else
-			controllers[affectedControllerIndex].gripping = 0;
-		
-//		if(affectedControllerIndex === RIGHT_CONTROLLER_INDEX)
-//			ourVREffect.eyeSeparationMultiplier = gamepads[k].buttons[riftTriggerButton].value;
-		
-		controllers[affectedControllerIndex].children[0].material.emissive.r = controllers[affectedControllerIndex].gripping;
-	}
-}
-
-function getPoseMatrix (out, pose, isGamepad) {
-	orientation = pose.orientation;
-	position = pose.position;
-	if (!orientation) { orientation = [0, 0, 0, 1]; }
-	if (!position) {
-		// If this is a gamepad without a pose set it out in front of us so
-		// we can see it.
-		position = isGamepad ? [0.1, -0.1, -0.5] : [0, 0, 0];
-	}
-	if (vrDisplay.stageParameters) {
-		mat4.fromRotationTranslation(out, orientation, position);
-		mat4.multiply(out, vrDisplay.stageParameters.sittingToStandingTransform, out);
-	} else {
-		vec3.add(standingPosition, position, [0, PLAYER_HEIGHT, 0]);
-		mat4.fromRotationTranslation(out, orientation, standingPosition);
-	}
 }

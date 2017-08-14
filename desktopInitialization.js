@@ -7,34 +7,11 @@ function desktopInitialize()
 	    camera.updateProjectionMatrix();
 	}, false );
 	
-	ourVRControls = new THREE.VRControls( camera );
 	ourVREffect = new THREE.VREffect( renderer );
 //	console.log(webgl.getParameter(webgl.MAX_TEXTURE_SIZE))
 	
 	var controllers = Array(2);
-	var controllerMaterial = new THREE.MeshPhongMaterial({color:0x000000});
-	for(var i = 0; i < 2; i++)
-	{
-		controllers[ i ] = new THREE.Object3D();
-		controllers[ i ].gripping = 0;
-		controllers[ i ].add(new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() ))
-		scene.add( controllers[ i ] );
-	}
-	new THREE.OBJLoader().load( "data/external_controller01_left.obj",
-		function ( object ) 
-		{	
-			var controllerModelGeometry = object.children[0].geometry;
-		
-			controllerModelGeometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xAxis,0.5) );
-			controllerModelGeometry.applyMatrix( new THREE.Matrix4().makeTranslation(0.002,0.036,-0.039) );
-//			controllerModelGeometry.applyMatrix( new THREE.Matrix4().makeScale(0.76,0.76,0.76) );
-			
-			controllers[  LEFT_CONTROLLER_INDEX ].children[0].geometry = controllerModelGeometry;
-			
-			controllers[1-LEFT_CONTROLLER_INDEX ].children[0].geometry = controllerModelGeometry.clone();
-			controllers[1-LEFT_CONTROLLER_INDEX ].children[0].geometry.applyMatrix( new THREE.Matrix4().makeScale(-1,1,1) );
-		},
-		function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );
+	var VRInputSystem = initVRInputSystem(controllers);
 	
 	makeStandardScene(true);
 	
@@ -46,6 +23,8 @@ function desktopInitialize()
 		 * array of bonds (atom indices)
 		 * 
 		 * be sure to adopt his naming conventions
+		 * 
+		 * get rid of the below
 		 */
 		
 		var models = Array();
@@ -134,26 +113,29 @@ function desktopInitialize()
 	
 	document.addEventListener( 'keydown', function(event)
 	{
-		if(event.keyCode === 190 && WEBVR.isAvailable() === true)
+		if(event.keyCode === 190 && ( navigator.getVRDisplays !== undefined || navigator.getVRDevices !== undefined ) )
 		{
 			event.preventDefault();
-			ourVRControls.vrInputs[0].requestPresent([{ source: renderer.domElement }])
+			VRInputSystem.startGettingInput();
 			ourVREffect.setFullScreen( true );
 		}
 	}, false );
 	
-	socket = initSocket();
-	
-	socket.messageResponses["mousePosition"] = function(messageContents)
+	//socket
 	{
-	}
-	
-	socket.messageResponses["lmb"] = function(messageContents)
-	{
-	}
-	
-	socket.onopen = function()
-	{
-		desktopLoop( socket, controllers, models, maps );
+		socket = initSocket(maps);
+		
+		socket.messageResponses["mousePosition"] = function(messageContents)
+		{
+		}
+		
+		socket.messageResponses["lmb"] = function(messageContents)
+		{
+		}
+		
+		socket.onopen = function()
+		{
+			desktopLoop( socket, controllers, VRInputSystem, models, maps );
+		}
 	}
 }

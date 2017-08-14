@@ -16,10 +16,6 @@ var ourclock = new THREE.Clock( true ); //.getElapsedTime ()
 var delta_t = 0;
 var logged = 0;
 var debugging = 0;
-var testSphere = new THREE.Mesh( new THREE.SphereGeometry( 0.3, 32, 32 ), new THREE.MeshBasicMaterial( {color: 0xffff00} ) );
-var numGlobalVariables = 0;
-
-var isMobileOrTablet = false;
 
 var angstrom = 0.009;
 
@@ -46,16 +42,9 @@ new THREE.FontLoader().load(  "http://hamishtodd1.github.io/Sysmic/gentilis.js",
 
 //------renderer
 var renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setClearColor( 0xACDFFC );
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.sortObjects = false;
-renderer.shadowMap.cullFace = THREE.CullFaceBack;
 document.body.appendChild( renderer.domElement );
 
 //------varying
 mousePosition = new THREE.Vector2(); //[0,1],[0,1]
-
-//Could check the number of globals and make sure it doesn't change
-
-//var pleasantPatternGeometry = new THREE.TorusKnotGeometry( 0.3, 0.02, 300,6,5,12 );
