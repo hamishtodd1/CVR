@@ -9,13 +9,23 @@ To get the imports below (ensuring along the way that it is the python.exe insta
 	
 	map_contours(1, 0.6) #0.6 electrons per cubic angstrom, enough to see donuts in the tutorial data
 	problem was it wasn't in the right directory
+	
+SimpleXMLRPCServer
+
+	
+	
+TODO CHECK FOR FIREWALLS! So you can warn if they're there
 '''
 
 #---------specific to our setup in some way
 import os
-os.chdir("C:\cootVRrelated\CVR") #specific to our setup, obviously
+#os.chdir("C:\cootVRrelated\CVR") #specific to our setup, obviously
+os.chdir("C:\CVR") #specific to our setup, obviously
 
+#to get these, open the python console (of the coot install but not in coot)
+#the procedure is: download get-pip.py, put it in wincoot/python27. run python.exe get-pip.py. run python.exe -m pip install pypiwin32.
 from win32api import GetKeyState, GetSystemMetrics, GetCursorPos
+
 import subprocess
 
 #yo paul, when I try importing from a file in this directory, it says "no module named blah". Even though it works fine from cmd!
@@ -27,13 +37,32 @@ import tornado.web
 import tornado.websocket
 import tornado.template
 
-(out,err) = subprocess.Popen(["ipconfig"], stdout=subprocess.PIPE, shell=True).communicate()
-ipconfigParsed = out.split()
-ourIP = ipconfigParsed[90].decode("utf-8")
+#------variables
+runningInCoot = True
+try:
+	get_map_radius()
+except NameError:
+	runningInCoot = False
+	print("get_map_radius doesn't exist - we're probably not running in coot")
+
+#You want the thing at the end of "IPv4 address"
+(ipconfigUTF8,err) = subprocess.Popen(["ipconfig"], stdout=subprocess.PIPE, shell=True).communicate()
+ipconfigDecoded = ipconfigUTF8.decode("utf-8")
+ipconfigParsed = ipconfigDecoded.split("\n")
+stringPrecedingIP = "IPv4 Address. . . . . . . . . . . : "
+for line in ipconfigParsed:
+	precessionLocation = line.find(stringPrecedingIP)
+	if precessionLocation != -1:
+		ourIP = str(line[ precessionLocation + len(stringPrecedingIP):])	
+		break;
+else:
+	print("no ip found, are you connected to the internet? Or not on windows?")
+
 
 class mainHandler(tornado.web.RequestHandler):
 	def get(self):
 		loader = tornado.template.Loader(".")
+		#self.write(loader.load("daydreamControllerTesting.html").generate())
 		self.write(loader.load("index.html").generate())
 
 class wsHandler(tornado.websocket.WebSocketHandler):
@@ -42,29 +71,24 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		
 	def sendMap(self):
 		print("going to send map")
-		try:
-			map = map_contours(1, 0.6)
-		except NameError:
-			print("map_contours doesn't exist - we're probably not running in coot")
+		#Hey Paul, what would be the size for the whole thing? Answer: unit cell dimensions
+		
+		mapString = 'Map,'
+		if runningInCoot == False:
+			mapString += "0,0,0,1,1,1,2,2,2,3,3,3,"
 		else:
-			#set_clipping_back(-10)
-			#set_clipping_front(-10)
-			#Hey Paul, what would be the size for the whole thing?
-			#also how do I keep it interactive while the script is running?
+			map = map_contours(1, 0.6)
 			if map == False:
 				print( "no map loaded" )
-			mapString = 'Map,'
-			logged = 0
+				mapString += "0,0,0,1,1,1,2,2,2,3,3,3,"
+			else:
 			#this data processing has to be done either here or in the browser so here it is. TODO have a function in coot that gives the precise string you want
-			for i in map: #lines
-				for j in i: #line ends
-					for k in j: #coordinates
-						mapString += str(k) + ","
-						logged += 1
-						if logged == 12:
-							print(mapString)
-			print("made map, gonna send")
-			self.write_message(mapString)
+				for i in map: #lines
+					for j in i: #line ends
+						for k in j: #coordinates
+							mapString += str(k) + ","
+		print("made map, gonna send")
+		self.write_message(mapString)
 
 	def open(self):
 		#we change all these numbers to ensure that hard refresh actually works
@@ -87,14 +111,14 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		indexFileWrite = open('index.html', 'w')
 		indexFileWrite.write(modifiedIndexFile)
 			
-		print( 'go to ' + ourIP + ':9090' )
 		'''
 		type in "window.location.reload(true)" on the remote debugging console if it's not reloading. Ctrl+refresh once worked too
 		Note it only works through eduroam. Probably firewall crap
 		'''
 		self.set_nodelay(True) #doesn't hurt to have this hopefully...
 		
-		set_map_radius(15)
+		if runningInCoot:
+			set_map_radius(15)
 		self.sendMap()
 		
 		#-------update the version numbers so that the whole thing gets refreshed
@@ -112,12 +136,14 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			screenWidth = GetSystemMetrics(0)
 			screenHeight = GetSystemMetrics(1)
 			mouseX, mouseY = GetCursorPos()
-			proportionalX = mouseX / screenWidth
-			proportionalY = mouseY / screenHeight
+			proportionalX = float(mouseX) / float(screenWidth)
+			proportionalY = float(mouseY) / float(screenHeight)
 			self.write_message( "mousePosition," + str(proportionalX) + "," + str(proportionalY) )
+			
 		elif message == "increase radius":
-			currentRadius = get_map_radius()
-			set_map_radius(currentRadius + 4)
+			if runningInCoot:
+				currentRadius = get_map_radius()
+				set_map_radius(currentRadius + 4)
 			self.sendMap()
 		else:
 			self.write_message("Didn't understand that")
@@ -142,7 +168,8 @@ application = tornado.web.Application([
 #to properly reload, need to open the chrome debugger for the device, click in the right place so the window is selected apparently, and ctrl+F5
 
 #if __name__ == "__main__":
-print( 'go to ' + ourIP + ':9090' ) #or the thing listed as your ipv4 address under Wireless LAN adapter wifi in ipconfig
+
+print( "go to the following :9090 " + ourIP )
 application.listen(9090)
 tornado.ioloop.IOLoop.instance().start()
 	

@@ -9,23 +9,47 @@ function initRamachandran(allowedArray)
 			returnValue -= TAU;
 		return returnValue;
 	}
+	var atomRadii = {
+		"H":1,
+		"O":1.1,
+	};
 	angleAllowed = function(tau, phi, psi)
 	{
-		var phiIndex = normalizedAngle(phi);
-		phiIndex = Math.round(phiIndex * 360 / TAU / 5);
-		var psiIndex = normalizedAngle(psi);
-		psiIndex = Math.round(psiIndex * 360 / TAU / 5);
-		
-		var tauIndex = normalizedAngle(tau);
-		tauIndex = Math.round(tauIndex * 360 / TAU / 5 );
-		tauIndex -= 21;
-		if( tauIndex < 0 || allowedArray.length-1 < tauIndex )
+		//"hard sphere"? You mean this?
 		{
-//			console.log("received unknown tau: ", tau);
-			return 0;
+			
+			for(var i = 0; i < .atoms.length; i++)
+			{
+				atoms[i].updateMatrixWorld();
+				for(var j = 0; j < .atoms.length; j++)
+				{
+					atoms[j].updateMatrixWorld();
+					if( .atoms[i].getWorldPosition().distanceTo( .atoms[j].getWorldPosition() ) < atomRadii[ .atoms[i].element] + atomRadii[ .atoms[i].element] )
+					{
+						return 0;
+					}
+				}
+			}
+			return 1;
 		}
 		
-		return allowedArray[ tauIndex ][ phiIndex ][ psiIndex ];
+		{
+			var phiIndex = normalizedAngle(phi);
+			phiIndex = Math.round(phiIndex * 360 / TAU / 5);
+			var psiIndex = normalizedAngle(psi);
+			psiIndex = Math.round(psiIndex * 360 / TAU / 5);
+			
+			var tauIndex = normalizedAngle(tau);
+			tauIndex = Math.round(tauIndex * 360 / TAU / 5 );
+			tauIndex -= 21;
+			if( tauIndex < 0 || allowedArray.length-1 < tauIndex )
+			{
+//				console.log("received unknown tau: ", tau);
+				return 0;
+			}
+			
+			return allowedArray[ tauIndex ][ phiIndex ][ psiIndex ];
+		}
 	}
 	
 	var ramachandran = new THREE.Object3D();

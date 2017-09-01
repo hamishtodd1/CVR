@@ -7,6 +7,9 @@ function initVRInputSystem(controllers)
 	VRInputSystem.startGettingInput = function()
 	{
 		cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }])
+		
+		scene.add( controllers[ 0 ] );
+		scene.add( controllers[ 1 ] );
 	}
 	
 	var riftInputlerKeys = {
@@ -23,7 +26,6 @@ function initVRInputSystem(controllers)
 		controllers[ i ] = new THREE.Object3D();
 		controllers[ i ].gripping = 0;
 		controllers[ i ].add(new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() ))
-		scene.add( controllers[ i ] );
 	}
 	new THREE.OBJLoader().load( "data/external_controller01_left.obj",
 		function ( object ) 
@@ -44,7 +46,7 @@ function initVRInputSystem(controllers)
 	VRInputSystem.update = function(socket)
 	{
 		cameraRepositioner.update(); //positions the head		
-		camera.position.z -= FOCALPOINT_DISTANCE;
+//		camera.position.z -= FOCALPOINT_DISTANCE;
 
 		var gamepads = navigator.getGamepads();
 		for(var k = 0; k < 2 && k < gamepads.length; ++k)
@@ -58,7 +60,7 @@ function initVRInputSystem(controllers)
 				continue;
 			
 			controllers[affectedInputlerIndex].position.fromArray( gamepads[k].pose.position );
-			controllers[affectedInputlerIndex].position.z -= FOCALPOINT_DISTANCE;
+//			controllers[affectedInputlerIndex].position.z -= FOCALPOINT_DISTANCE;
 			controllers[affectedInputlerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
 			controllers[affectedInputlerIndex].updateMatrixWorld();
 			

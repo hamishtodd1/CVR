@@ -58,7 +58,7 @@ function desktopInitialize()
 							bondIndices.push(i,i+j);
 					}
 				}
-				var model = createClassicCootModel( geometryAtoms.elements, atomPositions,bondIndices);
+				var model = createCootModelFromElementsPositionsBondIndices( geometryAtoms.elements, atomPositions,bondIndices);
 //				model.geometry.applyMatrix( new THREE.Matrix4().setPosition( centeringVector ) );
 				model.geometry.applyMatrix(new THREE.Matrix4().makeScale(angstrom,angstrom,angstrom));
 				model.geometry.computeBoundingSphere();
@@ -120,6 +120,10 @@ function desktopInitialize()
 			ourVREffect.setFullScreen( true );
 		}
 	}, false );
+	
+	var models = Array();
+	var maps = Array();
+	initModelsAndMaps(models,maps);
 	
 	//socket
 	{

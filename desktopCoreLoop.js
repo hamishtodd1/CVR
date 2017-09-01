@@ -1,5 +1,5 @@
 function desktopLoop(socket, controllers, VRInputSystem, models, maps) {
-	checkForNewGlobals();
+//	checkForNewGlobals();
 	
 	delta_t = ourclock.getDelta();
 	
@@ -7,11 +7,11 @@ function desktopLoop(socket, controllers, VRInputSystem, models, maps) {
 	
 	for( var j = 0; j < models.length; j++)
 	{
-		if( models[j].pointInBoundingSphere( controllers[0].position ) ||
-			models[j].pointInBoundingSphere( controllers[1].position ) )
-			models[j].material.emissive.r = 0.5;
+		if( models[j].importantObject.pointInBoundingSphere( controllers[0].position ) ||
+			models[j].importantObject.pointInBoundingSphere( controllers[1].position ) )
+			models[j].importantObject.material.emissive.r = 0.5;
 		else
-			models[j].material.emissive.r = 0;
+			models[j].importantObject.material.emissive.r = 0;
 	}
 	
 	for(var i = 0; i < controllers.length; i++)
@@ -22,7 +22,7 @@ function desktopLoop(socket, controllers, VRInputSystem, models, maps) {
 			{
 				for( var j = 0; j < models.length + maps.length; j++)
 				{
-					var holdable = j < models.length ? models[j] : maps[j-models.length];
+					var holdable = j < models.length ? models[j].importantObject : maps[j-models.length];
 					if( holdable.pointInBoundingSphere( controllers[i].position ) && holdable.parent === scene )
 					{
 						THREE.SceneUtils.attach( holdable, scene, controllers[i] );

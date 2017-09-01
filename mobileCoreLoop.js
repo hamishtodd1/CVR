@@ -13,13 +13,21 @@ function mobileLoop(socket, cursor, models, maps) {
 		{
 			for(var i = 0; i < models.length; i++)
 			{
-				if( models[i].material && models[i].pointInBoundingSphere( cursor.getWorldPosition() ) )
-					models[i].material.emissive.r = 1;
+				if( models[i].importantObject.material && models[i].importantObject.pointInBoundingSphere( cursor.getWorldPosition() ) )
+					models[i].importantObject.material.emissive.b = 1;
 				else
-					models[i].material.emissive.r = 0;
+					models[i].importantObject.material.emissive.b = 0;
 			}
 		}
 	}
+	
+//	if( models[0] && models[0].importantObject.material.emissive.b)
+//	{
+//		models[0].rotation.y += 0.02;
+//	}
+	
+//	for(var i = 0; i < maps.length; i++)
+//		maps[i].rotation.y = TAU/4;
 	
 	if( cursor.grabbing )
 	{
@@ -27,10 +35,10 @@ function mobileLoop(socket, cursor, models, maps) {
 		{
 			for(var i = 0; i < models.length; i++)
 			{
-				if( !models[i].geometry.boundingSphere || models[i].parent.uuid === cursor.uuid )
+				if( !models[i].importantObject.geometry.boundingSphere || models[i].parent.uuid === cursor.uuid )
 					continue;
 				
-				if( models[i].pointInBoundingSphere(cursor.getWorldPosition() ))
+				if( models[i].importantObject.pointInBoundingSphere(cursor.getWorldPosition() ))
 				{	
 					cursor.followers.push(models[i]);
 					for(var i = 0; i < maps.length; i++)
@@ -65,8 +73,6 @@ function mobileLoop(socket, cursor, models, maps) {
 		/* how about taking the head rotation and multiplying them all by some amount?
 		 * So you probably are going to the map pivoting around you. In that context, protein staying still maybe makes sense
 		 * 
-		 *  
-		 * 
 		 */
 	}
 	
@@ -76,7 +82,7 @@ function mobileLoop(socket, cursor, models, maps) {
 		cursor.followers[i].position.add(cursor.getWorldPosition());
 	}
 	
-	updateModelsAndMaps( models, maps )
+	//fupdateModelsAndMaps( models, maps )
 	
 	socket.send("loopDone")
 	

@@ -1,3 +1,11 @@
+/*
+ * Note: you have to be in image transferring mode
+ * 
+ * TODO should be such that angstrom = 1;
+ * 
+ * 
+ */
+
 function mobileInitialize()
 {
 	//initializing cursor
@@ -79,14 +87,14 @@ function mobileInitialize()
 	}, false );
 	
 	makeStandardScene(false);
-	
-	var ModelsAndMaps = initModelsAndMaps();
-	var maps = ModelsAndMaps.ma;
-	var models = ModelsAndMaps.mo;
+
+	var models = Array();
+	var maps = Array();
+	initModelsAndMaps(models,maps);
 	
 	//socket crap
 	{
-		socket = initSocket();
+		socket = initSocket(maps);
 		socket.messageResponses["mousePosition"] = function(messageContents)
 		{
 			cursor.oldWorldPosition.copy(cursor.getWorldPosition());
