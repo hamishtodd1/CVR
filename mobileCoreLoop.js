@@ -13,21 +13,21 @@ function mobileLoop(socket, cursor, models, maps) {
 		{
 			for(var i = 0; i < models.length; i++)
 			{
-				if( models[i].importantObject.material && models[i].importantObject.pointInBoundingSphere( cursor.getWorldPosition() ) )
-					models[i].importantObject.material.emissive.b = 1;
+				if( models[i].atomsBondsMesh.material && models[i].atomsBondsMesh.pointInBoundingSphere( cursor.getWorldPosition() ) )
+					models[i].atomsBondsMesh.material.emissive.b = 0.3;
 				else
-					models[i].importantObject.material.emissive.b = 0;
+					models[i].atomsBondsMesh.material.emissive.b = 0;
 			}
 		}
 	}
 	
-//	if( models[0] && models[0].importantObject.material.emissive.b)
+//	if( models[0] && models[0].atomsBondsMesh.material.emissive.b)
 //	{
 //		models[0].rotation.y += 0.02;
 //	}
 	
 //	for(var i = 0; i < maps.length; i++)
-//		maps[i].rotation.y = TAU/4;
+//		maps[i].rotation.y += 0.02;
 	
 	if( cursor.grabbing )
 	{
@@ -35,10 +35,10 @@ function mobileLoop(socket, cursor, models, maps) {
 		{
 			for(var i = 0; i < models.length; i++)
 			{
-				if( !models[i].importantObject.geometry.boundingSphere || models[i].parent.uuid === cursor.uuid )
+				if( !models[i].atomsBondsMesh.geometry.boundingSphere || models[i].parent.uuid === cursor.uuid )
 					continue;
 				
-				if( models[i].importantObject.pointInBoundingSphere(cursor.getWorldPosition() ))
+				if( models[i].atomsBondsMesh.pointInBoundingSphere(cursor.getWorldPosition() ))
 				{	
 					cursor.followers.push(models[i]);
 					for(var i = 0; i < maps.length; i++)

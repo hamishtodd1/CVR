@@ -3,6 +3,7 @@ var TAU = Math.PI * 2;
 var zAxis = new THREE.Vector3(0,0,1); //also used as a placeholder normal
 var yAxis = new THREE.Vector3(0,1,0);
 var xAxis = new THREE.Vector3(1,0,0);
+var zeroVector = new THREE.Vector3();
 
 THREE.Quaternion.prototype.distanceTo = function(q2)
 {
@@ -27,6 +28,18 @@ THREE.Face3.prototype.getCorner = function(i)
 	}
 }
 
+THREE.EfficientSphereGeometry = function(radius)
+{
+	return new THREE.IcosahedronGeometry(radius, 1); //buffer is also available
+}
+THREE.Vector3.prototype.addArray = function(array)
+{
+	this.x += array[0];
+	this.y += array[1];
+	this.z += array[2];
+}
+
+
 //-----Fundamental
 var ourclock = new THREE.Clock( true ); //.getElapsedTime ()
 var delta_t = 0;
@@ -37,7 +50,7 @@ var angstrom = 0.009;
 
 //------We enforce these to be static
 
-var FOCALPOINT_DISTANCE = 0.7;
+var FOCALPOINT_DISTANCE = 0.5;
 var RIGHT_CONTROLLER_INDEX = 0;
 var LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
 
@@ -47,10 +60,9 @@ camera = new THREE.PerspectiveCamera( 70, //can be changed by VR effect
 		0.001, 700);
 scene.add(camera);
 
-var gentilis;
-new THREE.FontLoader().load(  "http://hamishtodd1.github.io/Sysmic/gentilis.js", 
-	function ( reponse ) {
-		gentilis = reponse;
+new THREE.FontLoader().load(  "data/gentilis.js", 
+	function ( gentilis ) {
+		THREE.defaultFont = gentilis;
 	},
 	function ( xhr ) {}, //progression function
 	function ( xhr ) { console.error( "couldn't load font" ); }

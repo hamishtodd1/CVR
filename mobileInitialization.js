@@ -90,8 +90,54 @@ function mobileInitialize()
 
 	var models = Array();
 	var maps = Array();
-	initModelsAndMaps(models,maps);
+//	initModelsAndMaps(models,maps);
 	
+	//testing. Try with shader one day
+	{
+//		var testObject = new THREE.Object3D();
+//		scene.add(testObject)
+//		var numSpheres = 20000; 
+//		//if you only submitted the changed parts to the graphics card...
+//		//how about sets of atoms? Amino acids isn't enough
+//		//the shader idea is not ridiculous.
+//		var templateSphereGeometry = new THREE.EfficientSphereGeometry(0.05 * 4 * angstrom);
+//		var templateMaterial = new THREE.MeshPhongMaterial( {vertexColors: THREE.FaceColors} )
+//		
+//		var amalgmGeometry = new THREE.Geometry();
+//		var numSphereVertices = templateSphereGeometry.vertices.length;
+//		var numSphereFaces = templateSphereGeometry.faces.length;
+//		amalgmGeometry.vertices = Array( numSphereVertices * numSpheres);
+//		amalgmGeometry.faces = Array( numSphereFaces * numSpheres );
+//		var firstVertexIndex = 0;
+//		var firstFaceIndex = 0;
+//		for(var i = 0; i < numSpheres; i++)
+//		{
+//			var X = Math.random() * 10;
+//			
+//			for(var j = 0; j < numSphereVertices; j++)
+//			{
+//				amalgmGeometry.vertices[firstVertexIndex+j] = templateSphereGeometry.vertices[j].clone();
+//				amalgmGeometry.vertices[firstVertexIndex+j].x += X;
+//			}
+//			for(var j = 0; j < numSphereFaces; j++)
+//			{
+//				amalgmGeometry.faces[firstFaceIndex + j] = templateSphereGeometry.faces[j].clone();
+//				amalgmGeometry.faces[firstFaceIndex + j].a += numSphereVertices * i;
+//				amalgmGeometry.faces[firstFaceIndex + j].b += numSphereVertices * i;
+//				amalgmGeometry.faces[firstFaceIndex + j].c += numSphereVertices * i;
+//			}
+//			
+//			if(!i%30000)
+//				console.log(i)
+//			
+//			firstVertexIndex += numSphereVertices;
+//			firstFaceIndex += numSphereFaces;
+//		}
+//		testObject.add(new THREE.Mesh(amalgmGeometry, templateMaterial))
+//		testObject.position.z = -FOCALPOINT_DISTANCE / 4;
+	}
+		
+		
 	//socket crap
 	{
 		socket = initSocket(maps);
