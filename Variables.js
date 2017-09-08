@@ -30,7 +30,7 @@ THREE.Face3.prototype.getCorner = function(i)
 
 THREE.EfficientSphereGeometry = function(radius)
 {
-	return new THREE.IcosahedronGeometry(radius, 1); //buffer is also available
+	return new THREE.IcosahedronBufferGeometry(radius, 1); //buffer is also available
 }
 THREE.Vector3.prototype.addArray = function(array)
 {
@@ -59,14 +59,6 @@ camera = new THREE.PerspectiveCamera( 70, //can be changed by VR effect
 		window.innerWidth / window.innerHeight,
 		0.001, 700);
 scene.add(camera);
-
-new THREE.FontLoader().load(  "data/gentilis.js", 
-	function ( gentilis ) {
-		THREE.defaultFont = gentilis;
-	},
-	function ( xhr ) {}, //progression function
-	function ( xhr ) { console.error( "couldn't load font" ); }
-);
 
 //------renderer
 var renderer = new THREE.WebGLRenderer({ antialias: true });

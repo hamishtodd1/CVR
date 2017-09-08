@@ -1,4 +1,4 @@
-function mobileLoop(socket, cursor, models, maps) {
+function mobileLoop(socket, cursor, models, maps, labels) {
 	delta_t = ourclock.getDelta();
 
 	if(isMobileOrTablet)
@@ -8,26 +8,18 @@ function mobileLoop(socket, cursor, models, maps) {
 	camera.updateMatrixWorld();
 	
 	//highlight
-	{
-		if(!cursor.children.length)
-		{
-			for(var i = 0; i < models.length; i++)
-			{
-				if( models[i].atomsBondsMesh.material && models[i].atomsBondsMesh.pointInBoundingSphere( cursor.getWorldPosition() ) )
-					models[i].atomsBondsMesh.material.emissive.b = 0.3;
-				else
-					models[i].atomsBondsMesh.material.emissive.b = 0;
-			}
-		}
-	}
-	
-//	if( models[0] && models[0].atomsBondsMesh.material.emissive.b)
 //	{
-//		models[0].rotation.y += 0.02;
+//		if(!cursor.children.length)
+//		{
+//			for(var i = 0; i < models.length; i++)
+//			{
+//				if( models[i].atomsBondsMesh.material && models[i].atomsBondsMesh.pointInBoundingSphere( cursor.getWorldPosition() ) )
+//					models[i].atomsBondsMesh.material.emissive.b = 0.3;
+//				else
+//					models[i].atomsBondsMesh.material.emissive.b = 0;
+//			}
+//		}
 //	}
-	
-//	for(var i = 0; i < maps.length; i++)
-//		maps[i].rotation.y += 0.02;
 	
 	if( cursor.grabbing )
 	{
@@ -35,10 +27,10 @@ function mobileLoop(socket, cursor, models, maps) {
 		{
 			for(var i = 0; i < models.length; i++)
 			{
-				if( !models[i].atomsBondsMesh.geometry.boundingSphere || models[i].parent.uuid === cursor.uuid )
+				if( !models[i].boundingSphere || models[i].parent.uuid === cursor.uuid )
 					continue;
 				
-				if( models[i].atomsBondsMesh.pointInBoundingSphere(cursor.getWorldPosition() ))
+				if( models[i].pointInBoundingSphere(cursor.getWorldPosition() ))
 				{	
 					cursor.followers.push(models[i]);
 					for(var i = 0; i < maps.length; i++)
@@ -82,12 +74,13 @@ function mobileLoop(socket, cursor, models, maps) {
 		cursor.followers[i].position.add(cursor.getWorldPosition());
 	}
 	
-	//fupdateModelsAndMaps( models, maps )
+	for(var i = 0; i < labels.length; i++)
+		labels[i].update();
 	
 	socket.send("loopDone")
 	
 	requestAnimationFrame( function(){
-		mobileLoop(socket, cursor, models, maps);
+		mobileLoop(socket, cursor, models, maps,labels);
 	} );
 	ourStereoEffect.render( scene, camera );
 }

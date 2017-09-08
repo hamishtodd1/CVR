@@ -1,13 +1,44 @@
 /*
  * Note: you have to be in image transferring mode
  * 
- * TODO should be such that angstrom = 1;
- * 
- * 
+ * What for Wired?
+ * 	Scaling, so you can tell the fun story?
+ * 	Need to have it working on the phone.
+ * 	
  */
 
 function mobileInitialize()
 {
+	models = [];
+	var maps = [];
+	var labels = [];
+	
+	var launcherObject = {
+		socketOpened: false,
+		fontLoaded: false,
+		attemptLaunch: function()
+		{
+			console.log(this)
+			if(!this.socketOpened || !this.fontLoaded)
+				return;
+			else
+				mobileLoop( socket, cursor, models, maps, labels );
+		}
+	}
+	new THREE.FontLoader().load(  "data/gentilis.js", 
+		function ( gentilis ) {
+			THREE.defaultFont = gentilis;
+			
+			console.log(THREE.defaultFont)
+			initModelsAndMaps( models, maps, labels);
+			
+			launcherObject.fontLoaded = true;
+			launcherObject.attemptLaunch();
+		},
+		function ( xhr ) {}, //progression function
+		function ( xhr ) { console.error( "couldn't load font" ); }
+	);
+	
 	//initializing cursor
 	{
 		var coneHeight = 0.1;
@@ -43,39 +74,14 @@ function mobileInitialize()
 //		ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8] = 0.442;
 	}
 	
-	if( !isMobileOrTablet )
-	{
-		document.addEventListener( 'keydown', function(event)
-			{
-				var turningSpeed = 0.05;
-
-				if(event.keyCode === 87)
-					camera.rotation.x += turningSpeed;
-				if(event.keyCode === 83)
-					camera.rotation.x -= turningSpeed;
-				
-				if(event.keyCode === 65)
-					camera.rotation.y += turningSpeed;
-				if(event.keyCode === 68)
-					camera.rotation.y -= turningSpeed;
-				
-				if(event.keyCode === 81)
-					camera.rotation.z += turningSpeed;
-				if(event.keyCode === 69)
-					camera.rotation.z -= turningSpeed;
-				
-			}, false );
-	}
-	else
-	{
-		document.addEventListener( 'mousedown', function(event)
-			{			
-				if( THREEx.FullScreen.activated() )
-					return;
-				
-				THREEx.FullScreen.request(renderer.domElement);
-			}, false );
-	}
+//	document.addEventListener( 'mousedown', function(event)
+//	{
+//		console.log("hmm?")
+//		if( THREEx.FullScreen.activated() )
+//			return;
+//		
+//		THREEx.FullScreen.request(renderer.domElement);
+//	}, false );
 
 	window.addEventListener( 'resize', function(event)
 	{
@@ -86,11 +92,7 @@ function mobileInitialize()
 		camera.updateProjectionMatrix();
 	}, false );
 	
-	makeStandardScene(false);
-
-	var models = Array();
-	var maps = Array();
-//	initModelsAndMaps(models,maps);
+	makeStandardScene(true);
 	
 	//testing. Try with shader one day
 	{
@@ -141,6 +143,13 @@ function mobileInitialize()
 	//socket crap
 	{
 		socket = initSocket(maps);
+		
+		socket.onopen = function( )
+		{
+			launcherObject.socketOpened = true;
+			launcherObject.attemptLaunch();
+		}
+		
 		socket.messageResponses["mousePosition"] = function(messageContents)
 		{
 			cursor.oldWorldPosition.copy(cursor.getWorldPosition());
@@ -184,10 +193,5 @@ function mobileInitialize()
 //			console.log(ourStereoEffect.stereoCamera.cameraL.projectionMatrix.elements[8])
 //			console.log(ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8])
 //		}
-		
-		socket.onopen = function( )
-		{
-			mobileLoop( socket, cursor, models, maps );
-		}
 	}
 }

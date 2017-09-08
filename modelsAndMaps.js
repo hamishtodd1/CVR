@@ -18,7 +18,7 @@
  * 
  * It's like a fishing rod. If you can become proficient with that then why not this...
  * 
- * Contra your doubters, refining a tool for human use is worthwhile
+ * Contra your doubters, refining a tool for human use is worthwhile. Compute time is incredibly cheap - buying server time is so-and-so/GHz. But human time is blah
  * 
  * There's a cognitive barrier and various decisions to be made about "interactivity"
  * One definition of interactivity is "things respond in 0.7 seconds". https://www.nczonline.net/blog/2009/08/11/timed-array-processing-in-javascript/ - 0.1
@@ -61,7 +61,7 @@ function pointInBoundingSphere( point )
 	var localPosition = point.clone();
 	this.updateMatrixWorld();
 	this.worldToLocal(localPosition);
-	if( localPosition.distanceTo( this.geometry.boundingSphere.center) < this.geometry.boundingSphere.radius )
+	if( localPosition.distanceTo( this.boundingSphere.center) < this.boundingSphere.radius )
 		return true;
 	else return false;
 }
@@ -74,7 +74,7 @@ function updateBoundingSphere()
 	this.children[0].geometry.applyMatrix(new THREE.Matrix4().makeScale( radiusChange, radiusChange, radiusChange ));
 }
 
-function initModelsAndMaps(models, maps)
+function initModelsAndMaps(models, maps, labels)
 {
 	var initialZ = -FOCALPOINT_DISTANCE;
 	
@@ -149,14 +149,28 @@ function initModelsAndMaps(models, maps)
 		function ( xhr ) { console.error( "couldn't load PDB" ); }
 	);
 	
-	new THREE.FileLoader().load( "data/tutorial-model-with-ligand.lst.txt",
+	var atomMaterials = Array(10);
+	for(var i = 0; i < atomMaterials.length; i++)
+		atomMaterials[i] = new THREE.MeshPhongMaterial( {color:0x0C0C0C} );
+	atomMaterials[0].color.setRGB(0.2,0.2,0.2);
+	atomMaterials[1].color.setRGB(0.8,0.8,0.2);
+	atomMaterials[2].color.setRGB(0.8,0.2,0.2);
+	atomMaterials[3].color.setRGB(0.2,0.4,0.8);
+	
+	var defaultBondRadius = 0.05;
+	
+	new THREE.FileLoader().load( "data/ribosome.txt",
 		function ( modelStringCoot )
 		{
 			var model = new THREE.Object3D();
 		
+			//twentieth of a second for 100 atoms
+			
 			var modelStringTranslated = "";
 			for( var i = 0, il = modelStringCoot.length; i < il; i++ )
 			{
+//				if( !(lowestUnusedAtom % 100000) )
+//					console.log("100000 done")
 				if( modelStringCoot[i] === '[' )
 					{}
 				else if( modelStringCoot[i] === ']' )
@@ -172,68 +186,138 @@ function initModelsAndMaps(models, maps)
 				else
 					modelStringTranslated += modelStringCoot[i];
 			}
+			console.log("string processed")
 		
-			var cootArray = eval(modelStringTranslated)
+			var cootArray = eval(modelStringTranslated);
+			var atomDataFromCoot = cootArray[0];
+			var bondDataFromCoot = cootArray[1];
+			var numberOfBonds = 0;
+			var numberOfAtoms = 0;
+			for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
+				numberOfAtoms += atomDataFromCoot.length;
+			for(var i = 0, il = bondDataFromCoot.length; i < il; i++ )
+				numberOfBonds += bondDataFromCoot[i].length;
 			
-			model.atoms = cootArray[0];
-			model.cylinderEnds = cootArray[1];
-			model.atomsBondsMesh = new THREE.Mesh(new THREE.Geometry(),new THREE.MeshPhongMaterial( {vertexColors: THREE.FaceColors} ) )
-			model.add( model.atomsBondsMesh );
+			model.atoms = Array(numberOfAtoms);
 			
-			model.updateAtomsBondsMesh = updateAtomsBondsMesh;
-			model.updateAtomsBondsMesh();
+			var templateSphereGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 4);
 			
-			model.atomsBondsMesh.geometry.applyMatrix(new THREE.Matrix4().makeScale(angstrom,angstrom,angstrom));
-			model.atomsBondsMesh.geometry.computeBoundingSphere();
-			model.atomsBondsMesh.position.copy(model.atomsBondsMesh.geometry.boundingSphere.center).negate();
-			model.atomsBondsMesh.updateBoundingSphere = updateBoundingSphere;
-			model.atomsBondsMesh.pointInBoundingSphere = pointInBoundingSphere;
+			var lowestUnusedAtom = 0;
+			for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
+			{
+				for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
+				{
+					if( !(lowestUnusedAtom % 100000) )
+						console.log("100000 done")
+						
+					model.atoms[lowestUnusedAtom] = new THREE.Mesh( templateSphereGeometry, atomMaterials[i] );
+					model.atoms[lowestUnusedAtom].position.fromArray(atomDataFromCoot[i][j][0]);
+					model.add( model.atoms[lowestUnusedAtom] )
+					
+					model.atoms[lowestUnusedAtom].labelString = atomDataFromCoot[i][j][2];
+					
+					lowestUnusedAtom++;
+				}
+			}
+			
+			{
+				var averagePosition = new THREE.Vector3();
+				for(var i = 0, il = model.atoms.length; i < il; i++)
+				{
+					averagePosition.add(model.atoms[i].position);
+				}
+				averagePosition.multiplyScalar(1/model.atoms.length);
+				console.log(averagePosition)
+				
+				var furthestDistanceSquared = -1;
+				for(var i = 0, il = model.atoms.length; i < il; i++)
+				{
+					var distSq = averagePosition.distanceToSquared(model.atoms[i].position)
+					if(distSq>furthestDistanceSquared)
+						furthestDistanceSquared = distSq;
+				}
+				
+				model.boundingSphere = new THREE.Sphere( averagePosition, Math.sqrt( furthestDistanceSquared ) );
+				model.pointInBoundingSphere = pointInBoundingSphere;
+			}
+			
+			var templateBondGeometry = new THREE.CylinderGeometry(defaultBondRadius,defaultBondRadius,1); //Baked into the geometry: a length of 1, with the correct radius.
+			for(var i = 0, il = templateBondGeometry.vertices.length; i < il; i++)
+				templateBondGeometry.vertices[i].y += 0.5;
+			for(var i = 0, il = bondDataFromCoot.length; i < il; i++) //colors
+			{
+				for(var j = 0, jl = bondDataFromCoot[i].length; j < jl; j++)
+				{
+					var newBond = new THREE.Mesh( templateBondGeometry, atomMaterials[i] );
+					newBondPosition = new THREE.Vector3().fromArray(bondDataFromCoot[i][j][0]);
+					
+					var y = new THREE.Vector3().fromArray(bondDataFromCoot[i][j][1]);
+					y.sub(newBondPosition)
+					var x = randomPerpVector(y);
+					var z = new THREE.Vector3().crossVectors(x,y);
+					x.normalize();
+					z.normalize();
+
+					newBond.matrixAutoUpdate = false;
+					newBond.matrix.makeBasis( x,y,z );
+					newBond.matrix.setPosition(newBondPosition);
+					model.add( newBond );
+				}
+			}
+			
+//			model.updateBoundingSphere = updateBoundingSphere;
+//			model.pointInBoundingSphere = pointInBoundingSphere;
+			
+			var updateLabel = function()
+			{
+				if(!this.visible)
+					return;
+				this.scale.setScalar( 20 * Math.sqrt(this.getWorldPosition().distanceTo(camera.position)));
+				
+//				var positionToLookAt = camera.position.clone();
+//				this.worldToLocal(positionToLookAt);
+//				//and something about up?
+//				this.lookAt(positionToLookAt);
+			}
+			
+			var labelMaterial = new THREE.MeshPhongMaterial( { color: 0x156289, shading: THREE.FlatShading });
+			model.toggleLabel = function(atomIndex)
+			{
+				if( this.atoms[atomIndex].label === undefined)
+				{
+					console.log(THREE.defaultFont)
+					this.atoms[atomIndex].label = new THREE.Mesh(
+						new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: defaultBondRadius * 4, height: defaultBondRadius / 4, font: THREE.defaultFont }),
+						labelMaterial );
+					
+					labels.push( this.atoms[atomIndex].label );
+					
+					this.atoms[atomIndex].label.update = updateLabel;
+					
+					this.atoms[atomIndex].add( this.atoms[atomIndex].label );
+					
+					return;
+				}
+				else
+				{
+					if( this.atoms[atomIndex].label.visible )
+						this.atoms[atomIndex].label.visible = false;
+					else
+						this.atoms[atomIndex].label.visible = true;
+				}
+			}
+			
+			model.toggleLabel(0);
 			
 			model.position.z = initialZ;
-			model.position.x = 0;
+			model.position.sub( model.boundingSphere.center.clone().multiplyScalar(angstrom) );
+			model.scale.setScalar(angstrom)
 			scene.add( model );
 			models.push( model );
 		},
 		function ( xhr ) {}, //progression function
 		function ( xhr ) { console.error( "couldn't load PDB" ); }
 	);
-}
-
-//Baked into the geometry: a length of 1, with the correct radius.
-function cylinderMatrix(endAt)
-{
-	var x = randomPerpVector(endAt);
-	var y = endAt.clone();
-	var z = new THREE.Vector3().crossVectors(x,y);
-	
-	x.normalize();
-	z.normalize();
-	
-	return new THREE.Matrix4().makeBasis( x,y,z );
-}
-
-function toggleLabel(atomIndex)
-{
-	if( this.atoms[atomIndex].label === undefined)
-	{
-		this.atoms[atomIndex].label = new THREE.Mesh(
-			new THREE.TextGeometry( this.atoms[atomIndex][2], {size: 0.1, height: signsize / 10, font: THREE.defaultFont }),
-			new THREE.MeshPhongMaterial( {
-				color: 0x156289,
-				shading: THREE.FlatShading
-			}) );
-		
-		this.atoms[atomIndex].add( this.atoms[atomIndex].label );
-		
-		return;
-	}
-	else
-	{
-		if( this.atoms[atomIndex].label.visible )
-			this.atoms[atomIndex].label.visible = false;
-		else
-			this.atoms[atomIndex].label.visible = true;
-	}
 }
 
 function updateAtomsBondsMesh()
@@ -255,20 +339,6 @@ function updateAtomsBondsMesh()
 	
 	this.atomsBondsMesh.geometry.vertices = Array(cylinderSides * numberOfCylindersDesired * 2 + numberOfSpheresDesired * nSphereVertices );
 	this.atomsBondsMesh.geometry.faces	= Array(cylinderSides * numberOfCylindersDesired * 2 + numberOfSpheresDesired * nSphereFaces );
-	
-	var cootBondColors = [
-		new THREE.Color(0.2,0.2,0.2),
-		new THREE.Color(0.8,0.8,0.2),
-		new THREE.Color(0.8,0.2,0.2),
-		new THREE.Color(0.2,0.4,0.8),
-		
-		new THREE.Color(0.8,0.8,0.8),
-		new THREE.Color(0.8,0.8,0.8),
-		new THREE.Color(0.8,0.8,0.8),
-		new THREE.Color(0.8,0.8,0.8),
-		new THREE.Color(0.8,0.8,0.8),
-		new THREE.Color(0.8,0.8,0.8),
-    ];
 	
 	var cylinderBeginning = new THREE.Vector3();
 	var cylinderEnd = new THREE.Vector3();
@@ -332,7 +402,6 @@ function updateAtomsBondsMesh()
 			firstFaceIndex += cylinderSides * 2;
 		}
 	}
-	console.log(firstVertexIndex, this.atomsBondsMesh.geometry.vertices.length)
 	for(var i = firstVertexIndex, il = this.atomsBondsMesh.geometry.vertices.length; i < il; i++)
 		this.atomsBondsMesh.geometry.vertices[i] = new THREE.Vector3();
 	for(var i = firstFaceIndex, il = this.atomsBondsMesh.geometry.faces.length; i < il; i++)
@@ -411,13 +480,14 @@ function atomColor(element)
 	}
 }
 
-function randomPerpVector(OurVector){
+//assumes ourVector is not zeroVector
+function randomPerpVector(ourVector){
 	var perpVector = new THREE.Vector3();
 	
-	if( OurVector.equals(zAxis))
-		perpVector.crossVectors(OurVector, yAxis);
+	if( ourVector.equals(zAxis))
+		perpVector.crossVectors(ourVector, yAxis);
 	else
-		perpVector.crossVectors(OurVector, zAxis);
+		perpVector.crossVectors(ourVector, zAxis);
 	
 	return perpVector;
 }

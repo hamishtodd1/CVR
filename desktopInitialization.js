@@ -35,7 +35,7 @@ function desktopInitialize()
 		
 		var initialZ = -FOCALPOINT_DISTANCE;
 		
-		var numMolecules = 0;
+		var numMolecules = 2;
 		
 		var ourPDBLoader = new THREE.PDBLoader();
 		ourPDBLoader.load( "data/" + id + ".pdb", //if you get errors about origin you may need to refresh the server
@@ -121,9 +121,9 @@ function desktopInitialize()
 		}
 	}, false );
 	
-	var models = Array();
-	var maps = Array();
-	initModelsAndMaps(models,maps);
+//	var models = Array();
+//	var maps = Array();
+//	initModelsAndMaps(models,maps);
 	
 	//socket
 	{

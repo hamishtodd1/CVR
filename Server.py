@@ -136,6 +136,17 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			screenWidth = GetSystemMetrics(0)
 			screenHeight = GetSystemMetrics(1)
 			mouseX, mouseY = GetCursorPos()
+			
+			#this is a hack for multi-monitor setups. Really you should get the other screen resolution
+			while mouseX > screenWidth:
+				mouseX -= screenWidth
+			while mouseX < 0:
+				mouseX += screenWidth
+			while mouseY > screenHeight:
+				mouseY -= screenHeight
+			while mouseY < 0:
+				mouseY += screenHeight
+				
 			proportionalX = float(mouseX) / float(screenWidth)
 			proportionalY = float(mouseY) / float(screenHeight)
 			self.write_message( "mousePosition," + str(proportionalX) + "," + str(proportionalY) )
