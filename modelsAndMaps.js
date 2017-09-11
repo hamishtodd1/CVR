@@ -29,32 +29,30 @@
 
 /*
  * Re how to store the model
-		Can't change this directly to indices because of midpoints
-		On the other hand, it would be nice to know which bonds are associated with which atoms, so that we can move them around!
-		When you change a geometry, does the whole thing have to be resubmitted to the graphics card?
-			Good idea: make the atoms disappear from the actual mesh (by setting the vertices all to one pt) and make some new ones appear in a separate object
-			Yeah it probably does.
-			
-	 * Big deal: to have a tree, with separate objects, or to have "intermediates"? Well, it's not the tree, that has been decided by the format, there is a serious disadvantage to having to process that data into a hierarchy
-	 * 
-	 * The way coot works is that you have these intermediates that are called into existence
-	 * 
-	 * Paul: "you have to decide whether to wag the tail or the dog". This is a major part of model building
-	 * 		It is fine for things to become detatched from the "next" amino acid. So, until we hear otherwise, "intermediates" seem like the right decision!
-	 * 		Working out phipsi is easier
-	 * 		How does coot do it?
-				However, you probably don't want to worry about the effect rippling up
-				Sad: we could try to do it ourselves but that would probably create reproduction issues
-			The argument in favour of atom parenting *would* be that it's terribly easy to change everything "beyond" a modified AA with one transformation (of its matrix)
-				But that's a bad argument because at least a few things above will be transformed god-knows-how. Yeah a bunch of it will end up being a matrix but still. Is Paul aware of this?
-			Look, it's about transformations. Yeah, you can manipulate things directly through vertices, but you'll want to use transformations applied to the whole lot. You already have some of these!
+	When you change a geometry, does the whole thing have to be resubmitted to the graphics card? Yeah it probably does.
+		Good idea: make the atoms disappear from the actual mesh (by setting the vertices all to one pt) and make some new ones appear in a separate object
+		
+	It's fine if there's a delay when you grab something while the "move these vertices" message is submitted to the graphics card", just so long as there isn't one while you're moving
+		
+ * 
+ * 
+ * 
+ * Paul: "you have to decide whether to wag the tail or the dog". This is a major part of model building
+ * 		It is fine for things to become detatched from the "next" amino acid. So, until we hear otherwise, "intermediates" seem like the right decision!
+ * 		Working out phipsi is easier
+ * 		How does coot do it?
+			However, you probably don't want to worry about the effect rippling up
+			Sad: we could try to do it ourselves but that would probably create reproduction issues
+		The argument in favour of atom parenting *would* be that it's terribly easy to change everything "beyond" a modified AA with one transformation (of its matrix)
+			But that's a bad argument because at least a few things above will be transformed god-knows-how. Yeah a bunch of it will end up being a matrix but still. Is Paul aware of this?
+		Look, it's about transformations. Yeah, you can manipulate things directly through vertices, but you'll want to use transformations applied to the whole lot. You already have some of these!
 
-		Shader idea:
-			Note the number of atoms and bonds you need can change, maybe undermining shader
-			Ohhh, could group according to color? But in the case of sphere refine you'd be updating many colors.
-			One instinct: surely multiplying by modelViewMatrix is something, right? If you shift all the atom positions into a separate thing in the shader, you're kinda doing something already handled by that?
-			Either way, we are going to have a single object3D with all that data, can get to work on that.
-	 */
+	Shader idea:
+		Note the number of atoms and bonds you need can change, maybe undermining shader
+		Ohhh, could group according to color? But in the case of sphere refine you'd be updating many colors.
+		One instinct: surely multiplying by modelViewMatrix is something, right? If you shift all the atom positions into a separate thing in the shader, you're kinda doing something already handled by that?
+		Either way, we are going to have a single object3D with all that data, can get to work on that.
+ */
 
 function pointInBoundingSphere( point )
 {
@@ -133,7 +131,7 @@ function initModelsAndMaps(models, maps, labels)
 				console.error("you may need to change map metadata")
 			
 			ourclock.getDelta();
-			var map = cubeMarchingSystem.createMesh(mapData);
+			map = cubeMarchingSystem.createMesh(mapData);
 			console.log( "Contouring took ", ourclock.getDelta())
 			scene.add( map );
 			map.position.z = initialZ;
@@ -159,45 +157,35 @@ function initModelsAndMaps(models, maps, labels)
 	
 	var defaultBondRadius = 0.05;
 	
-	new THREE.FileLoader().load( "data/ribosome.txt",
+	/*
+	 * tutModelWithLigand
+	 * ribosome.txt
+	 */
+	new THREE.FileLoader().load( "data/tutModelWithLigand.txt",
 		function ( modelStringCoot )
 		{
-			var model = new THREE.Object3D();
-		
-			//twentieth of a second for 100 atoms
-			
-			var modelStringTranslated = "";
-			for( var i = 0, il = modelStringCoot.length; i < il; i++ )
-			{
-//				if( !(lowestUnusedAtom % 100000) )
-//					console.log("100000 done")
-				if( modelStringCoot[i] === '[' )
-					{}
-				else if( modelStringCoot[i] === ']' )
-					{}
-				else if( modelStringCoot[i] === '(' )
-					modelStringTranslated += '[';
-				else if( modelStringCoot[i] === ')' )
-					modelStringTranslated += ']';
-				else if( modelStringCoot[i] === 'F' && modelStringCoot[i+1] === 'a' ) //because of False/false
-					modelStringTranslated += 'f';
-				else if( modelStringCoot[i] === 'T' && modelStringCoot[i+1] === 'r' )
-					modelStringTranslated += 't';
-				else
-					modelStringTranslated += modelStringCoot[i];
-			}
-			console.log("string processed")
-		
+			var modelStringTranslated = modelStringCoot.replace(/(\])|(\[)|(\()|(\))|(Fa)|(Tr)/g, function(str,p1,p2,p3,p4,p5,p6) {
+				if(p1||p2) return '';
+				
+		        if(p3) return '[';
+		        if(p4) return ']';
+		        
+		        if(p5) return 'fa';
+		        if(p6) return 'tr';
+		    });
 			var cootArray = eval(modelStringTranslated);
+			console.log("string processed fully");
+			
 			var atomDataFromCoot = cootArray[0];
 			var bondDataFromCoot = cootArray[1];
-			var numberOfBonds = 0;
+			var numberOfCylinders = 0;
 			var numberOfAtoms = 0;
 			for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
-				numberOfAtoms += atomDataFromCoot.length;
+				numberOfAtoms += atomDataFromCoot[i].length;
 			for(var i = 0, il = bondDataFromCoot.length; i < il; i++ )
-				numberOfBonds += bondDataFromCoot[i].length;
+				numberOfCylinders += bondDataFromCoot[i].length;
 			
+			var model = new THREE.Object3D();
 			model.atoms = Array(numberOfAtoms);
 			
 			var templateSphereGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 4);
@@ -207,14 +195,9 @@ function initModelsAndMaps(models, maps, labels)
 			{
 				for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
 				{
-					if( !(lowestUnusedAtom % 100000) )
-						console.log("100000 done")
-						
-					model.atoms[lowestUnusedAtom] = new THREE.Mesh( templateSphereGeometry, atomMaterials[i] );
-					model.atoms[lowestUnusedAtom].position.fromArray(atomDataFromCoot[i][j][0]);
-					model.add( model.atoms[lowestUnusedAtom] )
-					
+					model.atoms[lowestUnusedAtom] = {element:i};
 					model.atoms[lowestUnusedAtom].labelString = atomDataFromCoot[i][j][2];
+					model.atoms[lowestUnusedAtom].position = new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]);
 					
 					lowestUnusedAtom++;
 				}
@@ -227,7 +210,6 @@ function initModelsAndMaps(models, maps, labels)
 					averagePosition.add(model.atoms[i].position);
 				}
 				averagePosition.multiplyScalar(1/model.atoms.length);
-				console.log(averagePosition)
 				
 				var furthestDistanceSquared = -1;
 				for(var i = 0, il = model.atoms.length; i < il; i++)
@@ -237,77 +219,145 @@ function initModelsAndMaps(models, maps, labels)
 						furthestDistanceSquared = distSq;
 				}
 				
-				model.boundingSphere = new THREE.Sphere( averagePosition, Math.sqrt( furthestDistanceSquared ) );
+				model.boundingSphere = new THREE.Sphere( averagePosition, Math.sqrt( furthestDistanceSquared ) ); //urgh, at some point you need a think about where angstrom gets dealt with
 				model.pointInBoundingSphere = pointInBoundingSphere;
 			}
 			
-			var templateBondGeometry = new THREE.CylinderGeometry(defaultBondRadius,defaultBondRadius,1); //Baked into the geometry: a length of 1, with the correct radius.
-			for(var i = 0, il = templateBondGeometry.vertices.length; i < il; i++)
-				templateBondGeometry.vertices[i].y += 0.5;
-			for(var i = 0, il = bondDataFromCoot.length; i < il; i++) //colors
+			//------Making shit
+			model.atomsBondsMesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshPhongMaterial( {vertexColors:THREE.FaceColors} ) );
+			model.add(model.atomsBondsMesh);
+			
+			var nSphereVertices = templateSphereGeometry.vertices.length;
+			var nSphereFaces = templateSphereGeometry.faces.length;
+			var cylinderSides = 15;
+			
+			model.atomsBondsMesh.geometry.addAttribute( 'position', new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
+			model.atomsBondsMesh.geometry.addAttribute( 'color', new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
+			model.atomsBondsMesh.geometry.addAttribute( 'index', new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereFaces) ), 3) );
+			
+			console.log("model set up, got ", model.atoms.length, " atoms to make")
+			
+			var firstVertexIndex = 0;
+			var firstFaceIndex = 0;
+			for(var i = 0, il = model.atoms.length; i < il; i++ )
+			{
+				model.atoms[i].firstVertexIndex = firstVertexIndex;
+				model.atoms[i].firstFaceIndex = firstFaceIndex;
+				
+				for(var k = 0; k < nSphereVertices; k++)
+				{
+					model.atomsBondsMesh.geometry.attributes.position.setXYZ( firstVertexIndex + k, 
+							templateSphereGeometry.vertices[k].x + model.atoms[i].position.x, 
+							templateSphereGeometry.vertices[k].y + model.atoms[i].position.y, 
+							templateSphereGeometry.vertices[k].z + model.atoms[i].position.z );
+				}
+				for(var k = 0; k < nSphereFaces; k++)
+				{
+					model.atomsBondsMesh.geometry.attributes.index.setXYZ( firstVertexIndex + k, 
+							templateSphereGeometry.faces[k].a + firstVertexIndex, 
+							templateSphereGeometry.faces[k].b + firstVertexIndex, 
+							templateSphereGeometry.faces[k].c + firstVertexIndex );
+					
+//					model.atomsBondsMesh.geometry.faces[firstFaceIndex + k].color = atomColor(model.atoms.element);
+				}
+
+				firstVertexIndex += nSphereVertices;
+				firstFaceIndex += nSphereFaces;
+				
+				if( i % 4000 === 0)
+					console.log("made 4000")
+			}
+			console.log("atoms made")
+			
+			//---------Bonds. You can't update them but don't worry about them too much until Paul has the damn atom-indexed version
+			var cylinderBeginning = new THREE.Vector3();
+			var cylinderEnd = new THREE.Vector3();
+			for(var i = 0, il = bondDataFromCoot.length; i < il; i++ )
 			{
 				for(var j = 0, jl = bondDataFromCoot[i].length; j < jl; j++)
 				{
-					var newBond = new THREE.Mesh( templateBondGeometry, atomMaterials[i] );
-					newBondPosition = new THREE.Vector3().fromArray(bondDataFromCoot[i][j][0]);
+					for(var k = 0; k < cylinderSides; k++)
+					{
+						model.atomsBondsMesh.geometry.attributes.index.setXYZ(firstFaceIndex+k*2,
+							(k*2+1) + firstVertexIndex,
+							(k*2+0) + firstVertexIndex,
+							(k*2+2) % (cylinderSides*2) + firstVertexIndex );
+						//atomcolor(i)
+						
+						model.atomsBondsMesh.geometry.attributes.index.setXYZ(firstFaceIndex+k*2 + 1,
+							(k*2+1) + firstVertexIndex,
+							(k*2+2) % (cylinderSides*2) + firstVertexIndex,
+							(k*2+3) % (cylinderSides*2) + firstVertexIndex );
+						//atomcolor(i)
+					}
 					
-					var y = new THREE.Vector3().fromArray(bondDataFromCoot[i][j][1]);
-					y.sub(newBondPosition)
-					var x = randomPerpVector(y);
-					var z = new THREE.Vector3().crossVectors(x,y);
-					x.normalize();
-					z.normalize();
-
-					newBond.matrixAutoUpdate = false;
-					newBond.matrix.makeBasis( x,y,z );
-					newBond.matrix.setPosition(newBondPosition);
-					model.add( newBond );
+					cylinderBeginning.fromArray( bondDataFromCoot[i][j][0] );
+					cylinderEnd.fromArray( bondDataFromCoot[i][j][1] );
+					
+					if(i===5)
+						insertCylinderCoordinatesBuffer( cylinderBeginning, cylinderEnd, model.atomsBondsMesh.geometry.attributes.position, cylinderSides, firstVertexIndex, defaultBondRadius / 2 );
+					else	
+						insertCylinderCoordinatesBuffer( cylinderBeginning, cylinderEnd, model.atomsBondsMesh.geometry.attributes.position, cylinderSides, firstVertexIndex, defaultBondRadius );
+					
+					firstVertexIndex += cylinderSides * 2;
+					firstFaceIndex += cylinderSides * 2;
 				}
 			}
+			for(var i = firstVertexIndex*3, il = model.atomsBondsMesh.geometry.attributes.position.array.length; i < il; i++)
+				model.atomsBondsMesh.geometry.attributes.position[i] = 0;
+			for(var i = firstFaceIndex*3, il = model.atomsBondsMesh.geometry.attributes.index.array.length; i < il; i++)
+				model.atomsBondsMesh.geometry.attributes.index.array[i] = firstVertexIndex-i%3;
+			console.log("bonds made")
+			
+			model.atomsBondsMesh.geometry.computeFaceNormals();
+			model.atomsBondsMesh.geometry.computeVertexNormals();
 			
 //			model.updateBoundingSphere = updateBoundingSphere;
 //			model.pointInBoundingSphere = pointInBoundingSphere;
 			
-			var updateLabel = function()
+			//-----Labels
 			{
-				if(!this.visible)
-					return;
-				this.scale.setScalar( 20 * Math.sqrt(this.getWorldPosition().distanceTo(camera.position)));
+				var updateLabel = function()
+				{
+					if(!this.visible)
+						return;
+					this.scale.setScalar( 20 * Math.sqrt(this.getWorldPosition().distanceTo(camera.position)));
+					
+//					var positionToLookAt = camera.position.clone();
+//					this.worldToLocal(positionToLookAt);
+//					//and something about up?
+//					this.lookAt(positionToLookAt);
+				}
 				
-//				var positionToLookAt = camera.position.clone();
-//				this.worldToLocal(positionToLookAt);
-//				//and something about up?
-//				this.lookAt(positionToLookAt);
-			}
-			
-			var labelMaterial = new THREE.MeshPhongMaterial( { color: 0x156289, shading: THREE.FlatShading });
-			model.toggleLabel = function(atomIndex)
-			{
-				if( this.atoms[atomIndex].label === undefined)
+				var labelMaterial = new THREE.MeshPhongMaterial( { color: 0x156289, shading: THREE.FlatShading });
+				model.toggleLabel = function(atomIndex)
 				{
-					console.log(THREE.defaultFont)
-					this.atoms[atomIndex].label = new THREE.Mesh(
-						new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: defaultBondRadius * 4, height: defaultBondRadius / 4, font: THREE.defaultFont }),
-						labelMaterial );
-					
-					labels.push( this.atoms[atomIndex].label );
-					
-					this.atoms[atomIndex].label.update = updateLabel;
-					
-					this.atoms[atomIndex].add( this.atoms[atomIndex].label );
-					
-					return;
-				}
-				else
-				{
-					if( this.atoms[atomIndex].label.visible )
-						this.atoms[atomIndex].label.visible = false;
+					if( this.atoms[atomIndex].label === undefined)
+					{
+						this.atoms[atomIndex].label = new THREE.Mesh(
+							new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: defaultBondRadius * 4, height: defaultBondRadius / 4, font: THREE.defaultFont }),
+							labelMaterial );
+						
+						labels.push( this.atoms[atomIndex].label );
+						
+						this.atoms[atomIndex].label.update = updateLabel;
+						
+						this.atoms[atomIndex].label.position = this.atoms[atomIndex].position;
+						this.add( this.atoms[atomIndex].label );
+						
+						return;
+					}
 					else
-						this.atoms[atomIndex].label.visible = true;
+					{
+						if( this.atoms[atomIndex].label.visible )
+							this.atoms[atomIndex].label.visible = false;
+						else
+							this.atoms[atomIndex].label.visible = true;
+					}
 				}
+				
+				model.toggleLabel(0);
 			}
-			
-			model.toggleLabel(0);
 			
 			model.position.z = initialZ;
 			model.position.sub( model.boundingSphere.center.clone().multiplyScalar(angstrom) );
@@ -361,7 +411,7 @@ function updateAtomsBondsMesh()
 				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].a += firstVertexIndex;
 				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].b += firstVertexIndex;
 				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].c += firstVertexIndex;
-				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].color = cootBondColors[i];
+				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].color = atomColor(i);
 			}
 
 			firstVertexIndex += nSphereVertices;
@@ -381,13 +431,13 @@ function updateAtomsBondsMesh()
 					firstVertexIndex +  k*2+1,
 					firstVertexIndex +  k*2+0,
 					firstVertexIndex + (k*2+2) % (cylinderSides*2),
-					false, cootBondColors[i] );
+					false, atomColor(i) );
 				
 				this.atomsBondsMesh.geometry.faces[firstFaceIndex+k*2+1 ] = new THREE.Face3(
 					firstVertexIndex +  k*2+1,
 					firstVertexIndex + (k*2+2) % (cylinderSides*2),
 					firstVertexIndex + (k*2+3) % (cylinderSides*2),
-					false, cootBondColors[i] );
+					false, atomColor(i) );
 			}
 			
 			cylinderBeginning.fromArray( this.cylinderEnds[i][j][0] );
@@ -492,22 +542,38 @@ function randomPerpVector(ourVector){
 	return perpVector;
 }
 
-function insertCylinderCoordinates(A,B, verticesArray, cylinderSides, arrayStartpoint, radius ) {
+function insertCylinderCoordinates(A,B, verticesArray, cylinderSides, firstVertexIndex, radius ) {
 	var aToB = new THREE.Vector3(B.x-A.x, B.y-A.y, B.z-A.z);
 	aToB.normalize();
 	var perp = randomPerpVector(aToB);
 	perp.normalize(); 
 	for( var i = 0; i < cylinderSides; i++)
 	{
-		var radiuscomponent = perp.clone();
-		radiuscomponent.multiplyScalar(radius);
-		radiuscomponent.applyAxisAngle(aToB, i * TAU / cylinderSides);
+		var radiusComponent = perp.clone();
+		radiusComponent.multiplyScalar(radius);
+		radiusComponent.applyAxisAngle(aToB, i * TAU / cylinderSides);
 		
-		verticesArray[arrayStartpoint + i*2 ].copy(radiuscomponent);
-		verticesArray[arrayStartpoint + i*2 ].add(A);
+		verticesArray[firstVertexIndex + i*2 ].copy(radiusComponent);
+		verticesArray[firstVertexIndex + i*2 ].add(A);
 		
-		verticesArray[arrayStartpoint + i*2+1 ].copy(radiuscomponent);
-		verticesArray[arrayStartpoint + i*2+1 ].add(B);
+		verticesArray[firstVertexIndex + i*2+1 ].copy(radiusComponent);
+		verticesArray[firstVertexIndex + i*2+1 ].add(B);
+	}
+}
+
+function insertCylinderCoordinatesBuffer(A,B, buffer, cylinderSides, firstVertexIndex, radius ) {
+	var aToB = new THREE.Vector3(B.x-A.x, B.y-A.y, B.z-A.z);
+	aToB.normalize();
+	var perp = randomPerpVector(aToB);
+	perp.normalize(); 
+	for( var i = 0; i < cylinderSides; i++)
+	{
+		var radiusComponent = perp.clone();
+		radiusComponent.multiplyScalar(radius);
+		radiusComponent.applyAxisAngle(aToB, i * TAU / cylinderSides);
+		
+		buffer.setXYZ(  firstVertexIndex + i*2, radiusComponent.x + A.x,radiusComponent.y + A.y,radiusComponent.z + A.z );
+		buffer.setXYZ(firstVertexIndex + i*2+1, radiusComponent.x + B.x,radiusComponent.y + B.y,radiusComponent.z + B.z );
 	}
 }
 
@@ -515,14 +581,14 @@ function geometryToLineCoordinates(myGeometry)
 {
 	if( myGeometry.isBufferGeometry )
 	{
-		if( myGeometry.index !== null )
+		if( mygeometry.attributes.index !== null )
 		{
-			var finalMeshNumbers = new Float32Array( myGeometry.index.array.length * 18 / 3 );
-			for(var i = 0, il = myGeometry.index.array.length / 3; i < il; i++)
+			var finalMeshNumbers = new Float32Array( mygeometry.attributes.index.array.length * 18 / 3 );
+			for(var i = 0, il = mygeometry.attributes.index.array.length / 3; i < il; i++)
 				for(var j = 0; j < 3; j++)//sides
 					for(var k = 0; k < 2; k++)//side ends
 					{
-						var vertexIndex = myGeometry.index.array[ i * 3 + ( j + k ) % 3 ];
+						var vertexIndex = mygeometry.attributes.index.array[ i * 3 + ( j + k ) % 3 ];
 						for(var l = 0; l < 3; l++) //coordinates
 							finalMeshNumbers[ i * 18 + j * 6 + k * 3 + l ] = 
 								myGeometry.attributes.position.array[ vertexIndex * 3 + l ];

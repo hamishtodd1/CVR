@@ -1,5 +1,6 @@
 function mobileLoop(socket, cursor, models, maps, labels) {
 	delta_t = ourclock.getDelta();
+	console.log((1/delta_t))
 
 	if(isMobileOrTablet)
 		ourOrientationControls.update();
@@ -21,13 +22,14 @@ function mobileLoop(socket, cursor, models, maps, labels) {
 //		}
 //	}
 	
+	//urgh, come on
 	if( cursor.grabbing )
 	{
 		if(!cursor.followers.length && !cursor.children.length) //not picked anything up
 		{
 			for(var i = 0; i < models.length; i++)
 			{
-				if( !models[i].boundingSphere || models[i].parent.uuid === cursor.uuid )
+				if( !models[i].parent || !models[i].boundingSphere || models[i].parent.uuid === cursor.uuid )
 					continue;
 				
 				if( models[i].pointInBoundingSphere(cursor.getWorldPosition() ))

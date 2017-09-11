@@ -28,15 +28,26 @@ THREE.Face3.prototype.getCorner = function(i)
 	}
 }
 
+THREE.EfficientSphereBufferGeometry = function(radius)
+{
+	return new THREE.IcosahedronBufferGeometry(radius, 1);
+}
 THREE.EfficientSphereGeometry = function(radius)
 {
-	return new THREE.IcosahedronBufferGeometry(radius, 1); //buffer is also available
+	return new THREE.IcosahedronGeometry(radius, 1);
 }
 THREE.Vector3.prototype.addArray = function(array)
 {
 	this.x += array[0];
 	this.y += array[1];
 	this.z += array[2];
+}
+
+THREE.Face3.prototype.addOffset = function(offset)
+{
+	this.a += offset;
+	this.b += offset;
+	this.c += offset;
 }
 
 
