@@ -18,13 +18,10 @@ THREE.Face3.prototype.getCorner = function(i)
 	{
 	case 0:
 		return this.a;
-		break;
 	case 1:
 		return this.b;
-		break;
 	case 2:
 		return this.c;
-		break;
 	}
 }
 
@@ -52,7 +49,7 @@ THREE.Face3.prototype.addOffset = function(offset)
 
 
 //-----Fundamental
-var ourclock = new THREE.Clock( true ); //.getElapsedTime ()
+var ourClock = new THREE.Clock( true ); //.getElapsedTime ()
 var delta_t = 0;
 var logged = 0;
 var debugging = 0;

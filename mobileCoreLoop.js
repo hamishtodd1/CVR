@@ -1,6 +1,6 @@
 function mobileLoop(socket, cursor, models, maps, labels) {
-	delta_t = ourclock.getDelta();
-	console.log((1/delta_t))
+	delta_t = ourClock.getDelta();
+//	console.log((1/delta_t))
 
 	if(isMobileOrTablet)
 		ourOrientationControls.update();
@@ -22,7 +22,6 @@ function mobileLoop(socket, cursor, models, maps, labels) {
 //		}
 //	}
 	
-	//urgh, come on
 	if( cursor.grabbing )
 	{
 		if(!cursor.followers.length && !cursor.children.length) //not picked anything up

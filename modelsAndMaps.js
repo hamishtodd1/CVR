@@ -130,9 +130,10 @@ function initModelsAndMaps(models, maps, labels)
 			if( mapData.array.length !== mapData.sizeX*mapData.sizeY*mapData.sizeZ )
 				console.error("you may need to change map metadata")
 			
-			ourclock.getDelta();
-			map = cubeMarchingSystem.createMesh(mapData);
-			console.log( "Contouring took ", ourclock.getDelta())
+			ourClock.getDelta();
+			var cubeMarchingSystem = CubeMarchingSystem();
+			var map = cubeMarchingSystem.createMesh(mapData);
+			console.log( "Contouring took ", ourClock.getDelta())
 			scene.add( map );
 			map.position.z = initialZ;
 			map.updateBoundingSphere = updateBoundingSphere;
@@ -160,21 +161,22 @@ function initModelsAndMaps(models, maps, labels)
 	/*
 	 * tutModelWithLigand
 	 * ribosome.txt
+	 * oneAtomOneBond.txt
 	 */
 	new THREE.FileLoader().load( "data/tutModelWithLigand.txt",
 		function ( modelStringCoot )
 		{
 			var modelStringTranslated = modelStringCoot.replace(/(\])|(\[)|(\()|(\))|(Fa)|(Tr)/g, function(str,p1,p2,p3,p4,p5,p6) {
 				if(p1||p2) return '';
-				
 		        if(p3) return '[';
 		        if(p4) return ']';
-		        
 		        if(p5) return 'fa';
 		        if(p6) return 'tr';
 		    });
 			var cootArray = eval(modelStringTranslated);
 			console.log("string processed fully");
+			
+			ourClock.getDelta();
 			
 			var atomDataFromCoot = cootArray[0];
 			var bondDataFromCoot = cootArray[1];
@@ -185,17 +187,15 @@ function initModelsAndMaps(models, maps, labels)
 			for(var i = 0, il = bondDataFromCoot.length; i < il; i++ )
 				numberOfCylinders += bondDataFromCoot[i].length;
 			
-			var model = new THREE.Object3D();
+			model = new THREE.Object3D();
 			model.atoms = Array(numberOfAtoms);
-			
-			var templateSphereGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 4);
 			
 			var lowestUnusedAtom = 0;
 			for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
 			{
 				for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
 				{
-					model.atoms[lowestUnusedAtom] = {element:i};
+					model.atoms[lowestUnusedAtom] = {element:i}; //a number, not a string
 					model.atoms[lowestUnusedAtom].labelString = atomDataFromCoot[i][j][2];
 					model.atoms[lowestUnusedAtom].position = new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]);
 					
@@ -209,7 +209,7 @@ function initModelsAndMaps(models, maps, labels)
 				{
 					averagePosition.add(model.atoms[i].position);
 				}
-				averagePosition.multiplyScalar(1/model.atoms.length);
+				averagePosition.multiplyScalar( 1  /model.atoms.length);
 				
 				var furthestDistanceSquared = -1;
 				for(var i = 0, il = model.atoms.length; i < il; i++)
@@ -224,18 +224,29 @@ function initModelsAndMaps(models, maps, labels)
 			}
 			
 			//------Making shit
-			model.atomsBondsMesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshPhongMaterial( {vertexColors:THREE.FaceColors} ) );
+			model.atomsBondsMesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshPhongMaterial( {vertexColors:THREE.VertexColors} ) );
 			model.add(model.atomsBondsMesh);
+			
+			var templateSphereGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 4);
+			templateSphereGeometry.vertexNormals = Array(templateSphereGeometry.vertices.length);
+			for(var i = 0, il = templateSphereGeometry.vertices.length; i < il; i++)
+				templateSphereGeometry.vertexNormals[i] = templateSphereGeometry.vertices[i].clone().normalize();
 			
 			var nSphereVertices = templateSphereGeometry.vertices.length;
 			var nSphereFaces = templateSphereGeometry.faces.length;
 			var cylinderSides = 15;
 			
 			model.atomsBondsMesh.geometry.addAttribute( 'position', new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
-			model.atomsBondsMesh.geometry.addAttribute( 'color', new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
-			model.atomsBondsMesh.geometry.addAttribute( 'index', new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereFaces) ), 3) );
+			model.atomsBondsMesh.geometry.addAttribute( 'color', 	new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
+			model.atomsBondsMesh.geometry.addAttribute( 'normal',	new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
+			model.atomsBondsMesh.geometry.addAttribute( 'index', 	new THREE.BufferAttribute(new  Uint32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereFaces) ), 1) ); //setIndex?
 			
-			console.log("model set up, got ", model.atoms.length, " atoms to make")
+			model.atomsBondsMesh.geometry.index.setABC = function(index,a,b,c) //can't use XYZ because itemsize is 1
+			{
+				this.array[index*3+0] = a;
+				this.array[index*3+1] = b;
+				this.array[index*3+2] = c;
+			}
 			
 			var firstVertexIndex = 0;
 			var firstFaceIndex = 0;
@@ -250,24 +261,28 @@ function initModelsAndMaps(models, maps, labels)
 							templateSphereGeometry.vertices[k].x + model.atoms[i].position.x, 
 							templateSphereGeometry.vertices[k].y + model.atoms[i].position.y, 
 							templateSphereGeometry.vertices[k].z + model.atoms[i].position.z );
+					
+					model.atomsBondsMesh.geometry.attributes.color.setXYZ( firstVertexIndex + k, 
+							atomMaterials[model.atoms[i].element].color.r, 
+							atomMaterials[model.atoms[i].element].color.g, 
+							atomMaterials[model.atoms[i].element].color.b );
+					
+					model.atomsBondsMesh.geometry.attributes.normal.setXYZ( firstVertexIndex + k, 
+							templateSphereGeometry.vertexNormals[k].x, 
+							templateSphereGeometry.vertexNormals[k].y, 
+							templateSphereGeometry.vertexNormals[k].z );
 				}
 				for(var k = 0; k < nSphereFaces; k++)
 				{
-					model.atomsBondsMesh.geometry.attributes.index.setXYZ( firstVertexIndex + k, 
+					model.atomsBondsMesh.geometry.index.setABC( firstFaceIndex + k, 
 							templateSphereGeometry.faces[k].a + firstVertexIndex, 
 							templateSphereGeometry.faces[k].b + firstVertexIndex, 
 							templateSphereGeometry.faces[k].c + firstVertexIndex );
-					
-//					model.atomsBondsMesh.geometry.faces[firstFaceIndex + k].color = atomColor(model.atoms.element);
 				}
 
 				firstVertexIndex += nSphereVertices;
 				firstFaceIndex += nSphereFaces;
-				
-				if( i % 4000 === 0)
-					console.log("made 4000")
 			}
-			console.log("atoms made")
 			
 			//---------Bonds. You can't update them but don't worry about them too much until Paul has the damn atom-indexed version
 			var cylinderBeginning = new THREE.Vector3();
@@ -278,42 +293,62 @@ function initModelsAndMaps(models, maps, labels)
 				{
 					for(var k = 0; k < cylinderSides; k++)
 					{
-						model.atomsBondsMesh.geometry.attributes.index.setXYZ(firstFaceIndex+k*2,
+						model.atomsBondsMesh.geometry.index.setABC(firstFaceIndex+k*2,
 							(k*2+1) + firstVertexIndex,
 							(k*2+0) + firstVertexIndex,
 							(k*2+2) % (cylinderSides*2) + firstVertexIndex );
-						//atomcolor(i)
 						
-						model.atomsBondsMesh.geometry.attributes.index.setXYZ(firstFaceIndex+k*2 + 1,
+						model.atomsBondsMesh.geometry.index.setABC(firstFaceIndex+k*2 + 1,
 							(k*2+1) + firstVertexIndex,
 							(k*2+2) % (cylinderSides*2) + firstVertexIndex,
 							(k*2+3) % (cylinderSides*2) + firstVertexIndex );
-						//atomcolor(i)
 					}
 					
 					cylinderBeginning.fromArray( bondDataFromCoot[i][j][0] );
 					cylinderEnd.fromArray( bondDataFromCoot[i][j][1] );
 					
 					if(i===5)
-						insertCylinderCoordinatesBuffer( cylinderBeginning, cylinderEnd, model.atomsBondsMesh.geometry.attributes.position, cylinderSides, firstVertexIndex, defaultBondRadius / 2 );
-					else	
-						insertCylinderCoordinatesBuffer( cylinderBeginning, cylinderEnd, model.atomsBondsMesh.geometry.attributes.position, cylinderSides, firstVertexIndex, defaultBondRadius );
+						insertCylinderCoordsAndNormals( cylinderBeginning, cylinderEnd, model.atomsBondsMesh.geometry.attributes.position, model.atomsBondsMesh.geometry.attributes.normal, cylinderSides, firstVertexIndex, defaultBondRadius / 2 );
+					else
+						insertCylinderCoordsAndNormals( cylinderBeginning, cylinderEnd, model.atomsBondsMesh.geometry.attributes.position, model.atomsBondsMesh.geometry.attributes.normal, cylinderSides, firstVertexIndex, defaultBondRadius );
+					
+					for(var k = 0, kl = cylinderSides * 2; k < kl; k++)
+					{
+						model.atomsBondsMesh.geometry.attributes.color.setXYZ( firstVertexIndex + k, 
+							atomMaterials[i].color.r,
+							atomMaterials[i].color.g,
+							atomMaterials[i].color.b );
+					}
 					
 					firstVertexIndex += cylinderSides * 2;
 					firstFaceIndex += cylinderSides * 2;
 				}
 			}
-			for(var i = firstVertexIndex*3, il = model.atomsBondsMesh.geometry.attributes.position.array.length; i < il; i++)
-				model.atomsBondsMesh.geometry.attributes.position[i] = 0;
-			for(var i = firstFaceIndex*3, il = model.atomsBondsMesh.geometry.attributes.index.array.length; i < il; i++)
-				model.atomsBondsMesh.geometry.attributes.index.array[i] = firstVertexIndex-i%3;
-			console.log("bonds made")
 			
-			model.atomsBondsMesh.geometry.computeFaceNormals();
-			model.atomsBondsMesh.geometry.computeVertexNormals();
+			if(firstFaceIndex*3 !== model.atomsBondsMesh.geometry.index.array.length || firstFaceIndex*3 !== model.atomsBondsMesh.geometry.index.array.length)
+				console.error("not all vertices or faces filled?")
+			
+			//takes twice as long if you do this
+//			model.atomsBondsMesh.geometry.computeFaceNormals();
+//			model.atomsBondsMesh.geometry.computeVertexNormals();
 			
 //			model.updateBoundingSphere = updateBoundingSphere;
 //			model.pointInBoundingSphere = pointInBoundingSphere;
+				
+			model.moveAtom = function(atomIndex)
+			{
+				this.atoms[atomIndex].position.x += 2;
+				
+				for(var k = 0; k < nSphereVertices; k++)
+				{
+					model.atomsBondsMesh.geometry.attributes.position.setXYZ( this.atoms[atomIndex].firstVertexIndex + k, 
+							templateSphereGeometry.vertices[k].x + model.atoms[i].position.x, 
+							templateSphereGeometry.vertices[k].y + model.atoms[i].position.y, 
+							templateSphereGeometry.vertices[k].z + model.atoms[i].position.z );
+				}
+				
+				model.atomsBondsMesh.verticesNeedUpdate = true;
+			}
 			
 			//-----Labels
 			{
@@ -364,101 +399,12 @@ function initModelsAndMaps(models, maps, labels)
 			model.scale.setScalar(angstrom)
 			scene.add( model );
 			models.push( model );
+			
+			console.log( "Making model took ", ourClock.getDelta())
 		},
 		function ( xhr ) {}, //progression function
 		function ( xhr ) { console.error( "couldn't load PDB" ); }
 	);
-}
-
-function updateAtomsBondsMesh()
-{
-	var defaultBondRadius = 0.05;
-	
-	var cylinderSides = 15;
-
-	var numberOfCylindersDesired = 0;
-	var numberOfSpheresDesired = 0;
-	for(var i = 0, il = this.cylinderEnds.length; i < il; i++ )
-		numberOfCylindersDesired += this.cylinderEnds[i].length;
-	for(var i = 0, il = this.atoms.length; i < il; i++ )
-		numberOfSpheresDesired += this.atoms[i].length;
-	
-	var templateSphereGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 4);
-	var nSphereVertices = templateSphereGeometry.vertices.length;
-	var nSphereFaces = templateSphereGeometry.faces.length;
-	
-	this.atomsBondsMesh.geometry.vertices = Array(cylinderSides * numberOfCylindersDesired * 2 + numberOfSpheresDesired * nSphereVertices );
-	this.atomsBondsMesh.geometry.faces	= Array(cylinderSides * numberOfCylindersDesired * 2 + numberOfSpheresDesired * nSphereFaces );
-	
-	var cylinderBeginning = new THREE.Vector3();
-	var cylinderEnd = new THREE.Vector3();
-	var firstVertexIndex = 0;
-	var firstFaceIndex = 0;
-	for(var i = 0, il = this.atoms.length; i < il; i++ )
-	{
-		for(var j = 0, jl = this.atoms[i].length; j < jl; j++)
-		{
-			if(this.atoms[i][j][1])
-				continue;
-			for(var k = 0; k < nSphereVertices; k++)
-			{
-				this.atomsBondsMesh.geometry.vertices[firstVertexIndex + k] = templateSphereGeometry.vertices[k].clone();
-				this.atomsBondsMesh.geometry.vertices[firstVertexIndex + k].addArray(this.atoms[i][j][0]);
-			}
-			for(var k = 0; k < nSphereFaces; k++)
-			{
-				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k] = templateSphereGeometry.faces[k].clone();
-				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].a += firstVertexIndex;
-				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].b += firstVertexIndex;
-				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].c += firstVertexIndex;
-				this.atomsBondsMesh.geometry.faces[firstFaceIndex + k].color = atomColor(i);
-			}
-
-			firstVertexIndex += nSphereVertices;
-			firstFaceIndex += nSphereFaces;
-		}
-	}
-	for(var i = 0, il = this.cylinderEnds.length; i < il; i++ )
-	{
-		for(var j = 0, jl = this.cylinderEnds[i].length; j < jl; j++)
-		{
-			for(var k = 0; k < cylinderSides; k++)
-			{
-				this.atomsBondsMesh.geometry.vertices[firstVertexIndex+k*2  ] = new THREE.Vector3();
-				this.atomsBondsMesh.geometry.vertices[firstVertexIndex+k*2+1] = new THREE.Vector3();
-				
-				this.atomsBondsMesh.geometry.faces[firstFaceIndex+k*2 ] = new THREE.Face3(
-					firstVertexIndex +  k*2+1,
-					firstVertexIndex +  k*2+0,
-					firstVertexIndex + (k*2+2) % (cylinderSides*2),
-					false, atomColor(i) );
-				
-				this.atomsBondsMesh.geometry.faces[firstFaceIndex+k*2+1 ] = new THREE.Face3(
-					firstVertexIndex +  k*2+1,
-					firstVertexIndex + (k*2+2) % (cylinderSides*2),
-					firstVertexIndex + (k*2+3) % (cylinderSides*2),
-					false, atomColor(i) );
-			}
-			
-			cylinderBeginning.fromArray( this.cylinderEnds[i][j][0] );
-			cylinderEnd.fromArray( this.cylinderEnds[i][j][1] );
-			
-			if(i===5)
-				insertCylinderCoordinates( cylinderBeginning, cylinderEnd, this.atomsBondsMesh.geometry.vertices, cylinderSides, firstVertexIndex, defaultBondRadius / 2 );
-			else	
-				insertCylinderCoordinates( cylinderBeginning, cylinderEnd, this.atomsBondsMesh.geometry.vertices, cylinderSides, firstVertexIndex, defaultBondRadius );
-			
-			firstVertexIndex += cylinderSides * 2;
-			firstFaceIndex += cylinderSides * 2;
-		}
-	}
-	for(var i = firstVertexIndex, il = this.atomsBondsMesh.geometry.vertices.length; i < il; i++)
-		this.atomsBondsMesh.geometry.vertices[i] = new THREE.Vector3();
-	for(var i = firstFaceIndex, il = this.atomsBondsMesh.geometry.faces.length; i < il; i++)
-		this.atomsBondsMesh.geometry.faces[i] = new THREE.Face3(firstVertexIndex,firstVertexIndex-1,firstVertexIndex-2);
-	
-	this.atomsBondsMesh.geometry.computeFaceNormals();
-	this.atomsBondsMesh.geometry.computeVertexNormals();
 }
 
 function createCootModelFromElementsPositionsBondIndices(atomElements,atomPositions,bondIndices)
@@ -542,85 +488,19 @@ function randomPerpVector(ourVector){
 	return perpVector;
 }
 
-function insertCylinderCoordinates(A,B, verticesArray, cylinderSides, firstVertexIndex, radius ) {
-	var aToB = new THREE.Vector3(B.x-A.x, B.y-A.y, B.z-A.z);
+function insertCylinderCoordsAndNormals(A,B, vertexAttribute, normalAttribute, cylinderSides, firstVertexIndex, radius ) {
+	var aToB = new THREE.Vector3().subVectors(B,A);
 	aToB.normalize();
-	var perp = randomPerpVector(aToB);
-	perp.normalize(); 
+	var tickVector = randomPerpVector(aToB);
+	tickVector.normalize(); 
 	for( var i = 0; i < cylinderSides; i++)
 	{
-		var radiusComponent = perp.clone();
-		radiusComponent.multiplyScalar(radius);
-		radiusComponent.applyAxisAngle(aToB, i * TAU / cylinderSides);
+		vertexAttribute.setXYZ(  firstVertexIndex + i*2, tickVector.x*radius + A.x,tickVector.y*radius + A.y,tickVector.z*radius + A.z );
+		vertexAttribute.setXYZ(firstVertexIndex + i*2+1, tickVector.x*radius + B.x,tickVector.y*radius + B.y,tickVector.z*radius + B.z );
 		
-		verticesArray[firstVertexIndex + i*2 ].copy(radiusComponent);
-		verticesArray[firstVertexIndex + i*2 ].add(A);
+		normalAttribute.setXYZ(  firstVertexIndex + i*2, tickVector.x,tickVector.y,tickVector.z );
+		normalAttribute.setXYZ(firstVertexIndex + i*2+1, tickVector.x,tickVector.y,tickVector.z );
 		
-		verticesArray[firstVertexIndex + i*2+1 ].copy(radiusComponent);
-		verticesArray[firstVertexIndex + i*2+1 ].add(B);
+		tickVector.applyAxisAngle(aToB, TAU / cylinderSides);
 	}
-}
-
-function insertCylinderCoordinatesBuffer(A,B, buffer, cylinderSides, firstVertexIndex, radius ) {
-	var aToB = new THREE.Vector3(B.x-A.x, B.y-A.y, B.z-A.z);
-	aToB.normalize();
-	var perp = randomPerpVector(aToB);
-	perp.normalize(); 
-	for( var i = 0; i < cylinderSides; i++)
-	{
-		var radiusComponent = perp.clone();
-		radiusComponent.multiplyScalar(radius);
-		radiusComponent.applyAxisAngle(aToB, i * TAU / cylinderSides);
-		
-		buffer.setXYZ(  firstVertexIndex + i*2, radiusComponent.x + A.x,radiusComponent.y + A.y,radiusComponent.z + A.z );
-		buffer.setXYZ(firstVertexIndex + i*2+1, radiusComponent.x + B.x,radiusComponent.y + B.y,radiusComponent.z + B.z );
-	}
-}
-
-function geometryToLineCoordinates(myGeometry)
-{
-	if( myGeometry.isBufferGeometry )
-	{
-		if( mygeometry.attributes.index !== null )
-		{
-			var finalMeshNumbers = new Float32Array( mygeometry.attributes.index.array.length * 18 / 3 );
-			for(var i = 0, il = mygeometry.attributes.index.array.length / 3; i < il; i++)
-				for(var j = 0; j < 3; j++)//sides
-					for(var k = 0; k < 2; k++)//side ends
-					{
-						var vertexIndex = mygeometry.attributes.index.array[ i * 3 + ( j + k ) % 3 ];
-						for(var l = 0; l < 3; l++) //coordinates
-							finalMeshNumbers[ i * 18 + j * 6 + k * 3 + l ] = 
-								myGeometry.attributes.position.array[ vertexIndex * 3 + l ];
-					}
-		}
-		else
-		{
-			var finalMeshNumbers = new Float32Array( myGeometry.attributes.position.array.length * 2 );
-			for(var i = 0, il = myGeometry.attributes.position.array.length / 9; i < il; i++) //triangles
-				for(var j = 0; j < 3; j++)//sides
-					for(var k = 0; k < 2; k++)//side ends
-					{
-						for(var l = 0; l < 3; l++) //coordinates
-							finalMeshNumbers[ i * 18 + j * 6 + k * 3 + l ] = 
-								myGeometry.attributes.position.array[ i * 9 + ( ( j + k ) % 3 ) * 3  + l ];
-					}
-		}
-	}
-	else
-	{
-		var finalMeshNumbers = new Float32Array( myGeometry.faces.length * 18 );
-		var abc = ["a","b","c"];
-		for(var i = 0, il = myGeometry.faces.length; i < il; i++)
-			for(var j = 0; j < 3; j++)//sides
-				for(var k = 0; k < 2; k++)//side ends
-				{
-					var vertexIndex = myGeometry.faces[i][abc[ ( j + k ) % 3 ] ];
-					for(var l = 0; l < 3; l++) //coordinates
-						finalMeshNumbers[ i * 18 + j * 6 + k * 3 + l ] = 
-							myGeometry.vertices[ vertexIndex ].getComponent(l);
-				}
-	}
-	
-	return finalMeshNumbers;
 }
