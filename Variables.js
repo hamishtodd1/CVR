@@ -47,14 +47,15 @@ THREE.Face3.prototype.addOffset = function(offset)
 	this.c += offset;
 }
 
-
 //-----Fundamental
 var ourClock = new THREE.Clock( true ); //.getElapsedTime ()
 var delta_t = 0;
 var logged = 0;
 var debugging = 0;
 
-var angstrom = 0.009;
+var angstrom = 0.01;
+
+var atomColors;
 
 //------We enforce these to be static
 
@@ -75,4 +76,6 @@ renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
 //------varying
-mousePosition = new THREE.Vector2(); //[0,1],[0,1]
+//mousePosition = new THREE.Vector2(); //[0,1],[0,1]
+
+var mutator;

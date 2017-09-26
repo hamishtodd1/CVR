@@ -32,9 +32,6 @@ function CubeMarchingSystem()
 	{
 		var usingData = typeof mapData !== 'undefined';
 		
-		var points = [];
-		var values = [];
-		
 		// number of cubes along a side
 		if( !usingData )
 		{
@@ -59,6 +56,10 @@ function CubeMarchingSystem()
 			var sizeZ = mapData.sizeZ;
 			var sizeXY = mapData.sizeX * mapData.sizeY;
 		}
+		
+		var points = Array(sizeXY*sizeZ);
+		var values = Array(sizeXY*sizeZ);
+		var lowestUnused = 0;
 
 		// Generate a list of 3D points and values at those points
 		for (var k = 0; k < sizeZ; k++)
@@ -66,24 +67,26 @@ function CubeMarchingSystem()
 		for (var i = 0; i < sizeX; i++)
 		{
 			// actual values
-			var x = sizeX/-2 + sizeX * i / (sizeX - 1); 
-			var y = sizeY/-2 + sizeY * j / (sizeY - 1);
-			var z = sizeZ/-2 + sizeZ * k / (sizeZ - 1);
-			
 			if( !usingData )
 			{
-				values.push( scalarFunction(x,y,z) );
-				points.push( new THREE.Vector3(x*64.897/216,y*78.323/264,z*38.7920/128) );
+				var x = sizeX/-2 + sizeX * i / (sizeX - 1); 
+				var y = sizeY/-2 + sizeY * j / (sizeY - 1);
+				var z = sizeZ/-2 + sizeZ * k / (sizeZ - 1);
+				
+				values[lowestUnused] = scalarFunction(x,y,z);
+				points[lowestUnused] = new THREE.Vector3(x*64.897/216,y*78.323/264,z*38.7920/128);
 			}
 			else
 			{
-				values.push( mapData.array[i + j * sizeY + k * sizeXY] )
-				points.push( new THREE.Vector3( x * mapData.cellDimensionX/mapData.gridSamplingX,y * mapData.cellDimensionY/mapData.gridSamplingY,z * mapData.cellDimensionZ/mapData.gridSamplingZ) );
-//				points.push( new THREE.Vector3(x*64.897/216,y*78.323/264,z*38.7920/128) );
-//				if(!logged)
-//					console.log(mapData.cellDimensionX/mapData.gridSamplingX,mapData.cellDimensionY/mapData.gridSamplingY,mapData.cellDimensionZ/mapData.gridSamplingZ)
-//				logged = 1;
+				var x = (mapData.startingI + i) * mapData.cellDimensionX / mapData.gridSamplingX;
+				var y = (mapData.startingJ + j) * mapData.cellDimensionY / mapData.gridSamplingY;
+				var z = (mapData.startingK + k) * mapData.cellDimensionZ / mapData.gridSamplingZ;
+				
+				points[lowestUnused] = new THREE.Vector3( x, y, z );
+				values[lowestUnused] = mapData.array[ k + j * sizeX + i * sizeXY ];
 			}
+			
+			lowestUnused++;
 		}
 		 
 		// Marching Cubes Algorithm
@@ -96,7 +99,7 @@ function CubeMarchingSystem()
 		var geometry = new THREE.Geometry();
 		var vertexIndex = 0;
 		
-		var isolevel = usingData ? 1 : 0;
+		var isolevel = usingData ? 0.6 : 0;
 			
 		for (var z = 0; z < sizeZ - 1; z++)
 		for (var y = 0; y < sizeY - 1; y++)
@@ -107,6 +110,7 @@ function CubeMarchingSystem()
 				px   = p   + 1,
 				py   = p   + sizeX,
 				pxy  = py  + 1,
+				
 				pz   = p   + sizeXY,
 				pxz  = px  + sizeXY,
 				pyz  = py  + sizeXY,
@@ -240,20 +244,19 @@ function CubeMarchingSystem()
 			}
 		}
 		
-		geometry.computeFaceNormals();
-		geometry.computeVertexNormals();
+		var mesh = new THREE.LineSegments( new WireframeGeometry(geometry), new THREE.LineBasicMaterial({color:0x3139AE}));
 		
-//		var map = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({
+//		var mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({
 //			color:0x888888,
 //			side: THREE.DoubleSide, 
 //			side: THREE.BackSide, 
 //			transparent:true,
 //			opacity:0.5
 //		}));
-		var map = new THREE.LineSegments( new WireframeGeometry(geometry), new THREE.LineBasicMaterial({color:0x888888, side: THREE.DoubleSide}));
-		map.scale.setScalar(angstrom);
+//		geometry.computeFaceNormals();
+//		geometry.computeVertexNormals();
 		
-		return map;
+		return mesh;
 	}
 	
 	return cubeMarchingSystem;

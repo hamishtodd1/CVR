@@ -18,13 +18,13 @@ TODO CHECK FOR FIREWALLS! So you can warn if they're there
 '''
 
 #---------specific to our setup in some way
-import os
+import os #platform independent
 #os.chdir("C:\cootVRrelated\CVR") #specific to our setup, obviously
-os.chdir("C:\CVR") #specific to our setup, obviously
+os.chdir("C:\CVR")
 
 #to get these, open the python console (of the coot install but not in coot)
 #the procedure is: download get-pip.py, put it in wincoot/python27. run python.exe get-pip.py. run python.exe -m pip install pypiwin32.
-from win32api import GetKeyState, GetSystemMetrics, GetCursorPos
+from win32api import GetKeyState, GetSystemMetrics, GetCursorPos #gtk could do this instead and be platform independent
 
 import subprocess
 
@@ -126,8 +126,11 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		debug = True
 		
 	def on_message(self, message):
-		#time to send the next one. TODO make it sooner
-		if message == "loopDone":
+		#time to send the next one. TODO make it sooner?
+		splitMessage = message.split(",")
+		messageHeader = splitMessage[0]
+			
+		if messageHeader == "loopDone":
 			self.sendButtonState('lmb')
 			self.sendButtonState('F5')
 			#self.sendButtonState('o')
@@ -151,11 +154,42 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			proportionalY = float(mouseY) / float(screenHeight)
 			self.write_message( "mousePosition," + str(proportionalX) + "," + str(proportionalY) )
 			
-		elif message == "increase radius":
+		'''elif messageHeader == "refine":
+			
+		elif messageHeader == "increase radius":
 			if runningInCoot:
 				currentRadius = get_map_radius()
 				set_map_radius(currentRadius + 4)
 			self.sendMap()
+			
+		elif messageHeader == "refine": #no addition or deletion
+			if runningInCoot:
+				
+				refine_residues( imol, [[chain_id,res_no,ins_code]] )
+				atomDeltas = get_most_recent_atom_changes()
+				newModelData = get_bonds_representation(imol)
+				#post_manipulation_hook
+				self.write_message(newModelData)
+				
+		elif messageHeader == "mutate":
+			if runningInCoot:
+				mutate_and_auto_fit( splitMessage[1],splitMessage[2],splitMessage[3],splitMessage[4] )
+				self.write_message(atomDeltas)
+				
+				refine_active_reside()
+		elif messageHeader === "moveAtom":
+			if runningInCoot:
+				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "x", attribute_value);
+		
+		Also useful
+		pepflip-active-residue
+		%coot-listener-socket
+		active_residue()
+		add-molecule
+		auto-fit-best-rotamer
+		view-matrix
+		set-view-matrix
+		'''
 		else:
 			self.write_message("Didn't understand that")
 			print('received unrecognized message:', message)

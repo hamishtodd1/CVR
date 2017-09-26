@@ -1,39 +1,87 @@
 /*
- * Note: you have to be in image transferring mode
+ * Note: you have to be in image transferring mode and you may need to run "adb devices"
  * 
- * What for Wired?
- * 	Scaling, so you can tell the fun story?
- * 	Need to have it working on the phone.
- * 	
+ * NEED TO TALK TO KYLE ABOUT COMPILING COOT WITH KYLE Stevenson
+ */
+
+/* 	People should be able to grab you in coot and move you towards a part of the molecule. But that actually moves that part of the molecule closer to you on the client, muhahaha
+ * Seeing your partner's cursor... it's a disembodied object... you could do it as a ray but better would be if it went to whichever atom it was on.
+ * 	And it is attached to the camera or whatever representing their head. So you can grab their camera and move it so that their cursor overlaps the right thing
+ * 
+ * Refine/regularize, minimize, optimize
+ * 
+ * Fundamentally: add, delete, move
+ * 	Rigid body refinement
+ * 
+ * For building into low-rez alpha helices in EM, want the fast building of new backbone
+ * 
+ * Soon: handles on the "visible part" - both the contour area and the area in which the molecule is visible
+ * 
+ */
+
+/*
+ * Paul: "you have to decide whether to wag the tail or the dog". This is a major part of model building
+ * 		It is fine for things to become detatched from the "next" amino acid.
+ * 		Working out phipsi is easier
+ * 		How does coot do it?
+			However, you probably don't want to worry about the effect rippling up
+			Sad: we could try to do it ourselves but that would probably create reproduction issues
+		The argument in favour of atom parenting *would* be that it's terribly easy to change everything "beyond" a modified AA with one transformation (of its matrix)
+			But that's a bad argument because at least a few things above will be transformed god-knows-how. Yeah a bunch of it will end up being a matrix but still. Is Paul aware of this?
+		Look, it's about transformations. Yeah, you can manipulate things directly through vertices, but you'll want to use transformations applied to the whole lot. You already have some of these!
+
+	Shader idea (ask George)
+		Note the number of atoms and bonds you need can change, maybe undermining shader
+		Ohhh, could group according to color? But in the case of sphere refine you'd be updating many colors.
+		One instinct: surely multiplying by modelViewMatrix is something, right? If you shift all the atom positions into a separate thing in the shader, you're kinda doing something already handled by that?
+		Either way, we are going to have a single object3D with all that data, can get to work on that.
+		
+	George notes transparency solutions: "weighted blended order independent transparency" "dual depth peeling"
  */
 
 function mobileInitialize()
 {
-	models = [];
-	var maps = [];
 	var labels = [];
 	
-	var launcherObject = {
+	var launcher = {
 		socketOpened: false,
 		fontLoaded: false,
 		attemptLaunch: function()
 		{
-			console.log(this)
+			/*
+			 * tutModelWithLigand
+			 * 
+			 * ribosome.txt
+			 * oneAtomOneBond.txt
+			 * 3C0.lst
+			 */
+			
 			if(!this.socketOpened || !this.fontLoaded)
 				return;
 			else
-				mobileLoop( socket, cursor, models, maps, labels );
+			{
+				//rename when it's more than model and map. "the workspace" or something
+				modelAndMap = new THREE.Object3D();    
+				modelAndMap.scale.setScalar(angstrom);
+				modelAndMap.position.z = -FOCALPOINT_DISTANCE;
+				scene.add(modelAndMap);
+				
+//				initMutator();
+				
+				loadModel("data/tutModelWithLigand.txt", labels);
+//				loadMap("data/try-2-map-fragment.tab.txt");
+				
+				mobileLoop( socket, cursor, labels );
+			}
 		}
 	}
+	
 	new THREE.FontLoader().load(  "data/gentilis.js", 
 		function ( gentilis ) {
 			THREE.defaultFont = gentilis;
 			
-			console.log(THREE.defaultFont)
-			initModelsAndMaps( models, maps, labels);
-			
-			launcherObject.fontLoaded = true;
-			launcherObject.attemptLaunch();
+			launcher.fontLoaded = true;
+			launcher.attemptLaunch();
 		},
 		function ( xhr ) {}, //progression function
 		function ( xhr ) { console.error( "couldn't load font" ); }
@@ -51,7 +99,7 @@ function mobileInitialize()
 		cursorGeometry.applyMatrix( (new THREE.Matrix4()).makeRotationZ(TAU/8) );
 		var cursor = new THREE.Mesh(
 				cursorGeometry, 
-				new THREE.MeshPhongMaterial({color:0x888888, side: THREE.DoubleSide })
+				new THREE.MeshLambertMaterial({color:0x888888, side: THREE.DoubleSide })
 		);
 		
 		cursor.grabbing = false;
@@ -59,20 +107,19 @@ function mobileInitialize()
 		cursor.followers = [];
 		cursor.oldWorldPosition = new THREE.Vector3();
 		//if bugs appear that can be addressed with synchronous updating, you will probably notice them!
+		
+		camera.add(cursor);
 	}
 	
-	{
-		camera.add(cursor);
-		scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
-		
-		ourOrientationControls = new THREE.DeviceOrientationControls(camera);
-		
-		ourStereoEffect = new THREE.StereoEffect( renderer );
-		ourStereoEffect.stereoCamera.eyeSep = 0.02; //very small, gotten through guessing.
-		
-		//this is for the fairphone in the daydream, and would need to be changed with eyeSep
-//		ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8] = 0.442;
-	}
+	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
+	
+	ourOrientationControls = new THREE.DeviceOrientationControls(camera);
+	
+	ourStereoEffect = new THREE.StereoEffect( renderer );
+	ourStereoEffect.stereoCamera.eyeSep = 0.02; //very small, gotten through guessing.
+	
+	//this is for the fairphone in the daydream, and would need to be changed with eyeSep
+//	ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8] = 0.442;
 	
 //	document.addEventListener( 'mousedown', function(event)
 //	{
@@ -92,62 +139,18 @@ function mobileInitialize()
 		camera.updateProjectionMatrix();
 	}, false );
 	
-	makeStandardScene(true);
+	makeStandardScene(false);
 	
-	//testing. Try with shader one day
-	{
-//		var testObject = new THREE.Object3D();
-//		scene.add(testObject)
-//		var numSpheres = 20000; 
-//		//if you only submitted the changed parts to the graphics card...
-//		//how about sets of atoms? Amino acids isn't enough
-//		//the shader idea is not ridiculous.
-//		var templateSphereGeometry = new THREE.EfficientSphereGeometry(0.05 * 4 * angstrom);
-//		var templateMaterial = new THREE.MeshPhongMaterial( {vertexColors: THREE.FaceColors} )
-//		
-//		var amalgmGeometry = new THREE.Geometry();
-//		var numSphereVertices = templateSphereGeometry.vertices.length;
-//		var numSphereFaces = templateSphereGeometry.faces.length;
-//		amalgmGeometry.vertices = Array( numSphereVertices * numSpheres);
-//		amalgmGeometry.faces = Array( numSphereFaces * numSpheres );
-//		var firstVertexIndex = 0;
-//		var firstFaceIndex = 0;
-//		for(var i = 0; i < numSpheres; i++)
-//		{
-//			var X = Math.random() * 10;
-//			
-//			for(var j = 0; j < numSphereVertices; j++)
-//			{
-//				amalgmGeometry.vertices[firstVertexIndex+j] = templateSphereGeometry.vertices[j].clone();
-//				amalgmGeometry.vertices[firstVertexIndex+j].x += X;
-//			}
-//			for(var j = 0; j < numSphereFaces; j++)
-//			{
-//				amalgmGeometry.faces[firstFaceIndex + j] = templateSphereGeometry.faces[j].clone();
-//				amalgmGeometry.faces[firstFaceIndex + j].a += numSphereVertices * i;
-//				amalgmGeometry.faces[firstFaceIndex + j].b += numSphereVertices * i;
-//				amalgmGeometry.faces[firstFaceIndex + j].c += numSphereVertices * i;
-//			}
-//			
-//			if(!i%30000)
-//				console.log(i)
-//			
-//			firstVertexIndex += numSphereVertices;
-//			firstFaceIndex += numSphereFaces;
-//		}
-//		testObject.add(new THREE.Mesh(amalgmGeometry, templateMaterial))
-//		testObject.position.z = -FOCALPOINT_DISTANCE / 4;
-	}
-		
-		
+	initSphereSelector(cursor);
+
 	//socket crap
 	{
-		socket = initSocket(maps);
+		socket = initSocket();
 		
 		socket.onopen = function( )
 		{
-			launcherObject.socketOpened = true;
-			launcherObject.attemptLaunch();
+			launcher.socketOpened = true;
+			launcher.attemptLaunch();
 		}
 		
 		socket.messageResponses["mousePosition"] = function(messageContents)

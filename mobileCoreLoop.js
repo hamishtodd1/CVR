@@ -1,79 +1,39 @@
-function mobileLoop(socket, cursor, models, maps, labels) {
+/* residue pair selection
+
+	Single residue (need atoms organized into residues)
+	Have sphere selection, with radius that can be varied and makes atoms inside light up.
+	
+	"here to here along this strand"
+		That needs a "spraycan" like tool
+	
+	Humm, need "undo"
+		
+	hey shouldn't there be coloring for how far away from you surface is?
+	
+	Big question: out of order or in sequence order? Will there be any speedups from keeping order?
+	
+	Superposing is the way that you could "accept or reject" coot's stuff
+	
+	You know what, there isn't much reason to follow Paul's methods at all. It's already gotten bad, "sphere refine"? That doesn't happen IRL.
+*/
+
+/*
+ * Obvious control scheme: side button for grabbing whole thing (and scaling if you grab with both), trigger button for grabbing little things
+ */
+
+function mobileLoop(socket, cursor, labels) {
 	delta_t = ourClock.getDelta();
 //	console.log((1/delta_t))
 
 	if(isMobileOrTablet)
 		ourOrientationControls.update();
 	
-	cursor.updateMatrixWorld();
-	camera.updateMatrixWorld();
+//	if(selector)
+//		selector.update();
 	
-	//highlight
-//	{
-//		if(!cursor.children.length)
-//		{
-//			for(var i = 0; i < models.length; i++)
-//			{
-//				if( models[i].atomsBondsMesh.material && models[i].atomsBondsMesh.pointInBoundingSphere( cursor.getWorldPosition() ) )
-//					models[i].atomsBondsMesh.material.emissive.b = 0.3;
-//				else
-//					models[i].atomsBondsMesh.material.emissive.b = 0;
-//			}
-//		}
-//	}
-	
-	if( cursor.grabbing )
-	{
-		if(!cursor.followers.length && !cursor.children.length) //not picked anything up
-		{
-			for(var i = 0; i < models.length; i++)
-			{
-				if( !models[i].parent || !models[i].boundingSphere || models[i].parent.uuid === cursor.uuid )
-					continue;
-				
-				if( models[i].pointInBoundingSphere(cursor.getWorldPosition() ))
-				{	
-					cursor.followers.push(models[i]);
-					for(var i = 0; i < maps.length; i++)
-					{
-						THREE.SceneUtils.attach(maps[i], scene, camera );
-					}
-					break;
-				}
-
-				if( !cursor.followers.length && !cursor.children.length )
-				{
-					for(var i = 0; i < maps.length; i++)
-					{
-						THREE.SceneUtils.attach(maps[i], scene, cursor );
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		cursor.followers.length = 0;
-		for(var i = 1; i < camera.children.length; i++) //still want cursor on
-		{
-			THREE.SceneUtils.detach(camera.children[i], camera, scene );
-		}
-		for(var i = 0; i < cursor.children.length; i++)
-		{
-			THREE.SceneUtils.detach(cursor.children[i], cursor, scene );
-		}
-		
-		/* how about taking the head rotation and multiplying them all by some amount?
-		 * So you probably are going to the map pivoting around you. In that context, protein staying still maybe makes sense
-		 * 
-		 */
-	}
-	
-	for(var i = 0; i < cursor.followers.length; i++)
-	{
-		cursor.followers[i].position.sub(cursor.oldWorldPosition);
-		cursor.followers[i].position.add(cursor.getWorldPosition());
-	}
+//	if(mutator !== undefined)
+//		mutator.update();
+//	mutator.rotation.y += 0.01
 	
 	for(var i = 0; i < labels.length; i++)
 		labels[i].update();
@@ -81,7 +41,7 @@ function mobileLoop(socket, cursor, models, maps, labels) {
 	socket.send("loopDone")
 	
 	requestAnimationFrame( function(){
-		mobileLoop(socket, cursor, models, maps,labels);
+		mobileLoop(socket, cursor, labels);
 	} );
 	ourStereoEffect.render( scene, camera );
 }

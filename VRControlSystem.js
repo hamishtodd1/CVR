@@ -20,7 +20,7 @@ function initVRInputSystem(controllers)
 			button2: 4
 	}
 	
-	var controllerMaterial = new THREE.MeshPhongMaterial({color:0x000000});
+	var controllerMaterial = new THREE.MeshLambertMaterial({color:0x000000});
 	for(var i = 0; i < 2; i++)
 	{
 		controllers[ i ] = new THREE.Object3D();

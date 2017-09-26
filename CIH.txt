@@ -1,0 +1,19 @@
+
+prfx=$HOME/autobuild/build-coot+rdkit-pre-release-gtk2-python
+install_prfx=$prfx
+
+export PATH=$prfx/bin:$PATH
+export LD_LIBRARY_PATH=$prfx/lib
+export PKG_CONFIG_PATH=$prfx/lib/pkgconfig
+
+./coot/configure                 \
+   --prefix=$install_prfx        \
+   --with-fftw-prefix=$install_prfx        \
+   --with-glut-prefix=$prfx      \
+   --with-goocanvas-prefix=$prfx \
+   --disable-static              \
+   --with-python                 \
+   --with-pygtk=$prfx            \
+    CXXFLAGS="-g -O2" 
+
+

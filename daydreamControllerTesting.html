@@ -141,7 +141,7 @@
 			var loader = new THREE.BufferGeometryLoader()
 			loader.load( 'data/daydream.json', function ( geometry ) {
 
-				var material = new THREE.MeshPhongMaterial( { color: 0x888899, shininess: 15, side: THREE.DoubleSide } );
+				var material = new THREE.MeshLambertMaterial( { color: 0x888899, shininess: 15, side: THREE.DoubleSide } );
 				mesh = new THREE.Mesh( geometry, material );
 				mesh.rotation.x = Math.PI / 2;
 				scene.add( mesh );
