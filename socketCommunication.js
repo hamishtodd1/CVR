@@ -14,7 +14,7 @@ function initSocket( cursor )
 	}
 	socket.onclose = function()
 	{
-		console.log("The connection has been closed. Small chance that you had no data loaded");
+		console.log("The connection has been closed. Maybe you had no data loaded?");
 	}
 	
 	socket.messageResponses = {};

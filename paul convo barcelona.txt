@@ -1,0 +1,211 @@
+I will listen then...
+12:26 PMPaul EmsleyChi angles
+12:26 PMPaul EmsleyEdit Chi angles.
+12:26 PMPaul EmsleyNot quite.
+12:27 PMPaul EmsleyThere is a slider that affects both the model and the Ramachandran plot
+12:27 PMPaul EmsleyYou can't pull the points on the ramachandran plot
+12:27 PMPaul EmsleyThat is a specific and very useful case of residue-range refine
+12:28 PMPaul Emsleyone up, central residue, one down
+12:28 PMPaul EmsleyCoot does the residue selection based on the central residue
+12:28 PMPaul Emsleyyou don't have to click on them
+12:28 PMPaul EmsleyPress the T key
+12:29 PMPaul Emsley(not shift T)
+12:29 PMPaul EmsleyHmmm...
+12:30 PMPaul EmsleyI rarely use the non-autofit version
+12:30 PMPaul EmsleyMaybe the model is in the wrong place.
+12:30 PMPaul Emsleyyes.
+12:30 PMPaul EmsleyYes.
+12:31 PMPaul Emsley:-)
+12:32 PMPaul EmsleyHmm..
+12:32 PMPaul EmsleyI don't understand the quesiton
+12:32 PMPaul EmsleyWhen do you think it should be doing refinement?
+12:32 PMPaul Emsley"all the time"?
+12:32 PMPaul EmsleyOh I see.
+12:32 PMPaul EmsleyHmm
+12:33 PMPaul EmsleyYes.
+12:33 PMPaul EmsleyWell... many tools do end in refinement
+12:33 PMPaul EmsleyOr we could script them so that they do.
+12:33 PMPaul EmsleyYes... 
+12:33 PMPaul EmsleyThe engine is the same, the atom selections are different
+12:34 PMPaul EmsleyYes, it gets converted into an array of atoms
+12:34 PMPaul EmsleyI hope so
+12:34 PMPaul EmsleySo how far did you get with the mutate tool?
+12:34 PMPaul EmsleyCan you select them
+12:35 PMPaul Emsley?
+12:35 PMPaul EmsleyOK.
+12:35 PMPaul EmsleyYes
+12:36 PMPaul EmsleyIndex 0
+12:36 PMPaul Emsley....
+12:36 PMPaul EmsleyIf you are dealing with protein models, no
+12:36 PMPaul Emsleyit will not be like that.
+12:36 PMPaul EmsleyThat's right.
+12:36 PMPaul EmsleyIt's a drug
+12:36 PMPaul EmsleyOK!
+12:37 PMPaul EmsleySounds good.
+12:37 PMPaul EmsleyIt is the connection to coot that seems the tricky bit
+12:37 PMPaul Emsley(to me)
+12:37 PMPaul EmsleyYou will send "mutate_and_autofit"
+12:38 PMPaul Emsleyas the tool choice 
+12:38 PMPaul Emsleyand send the atom spec string of the "picked" atom
+12:38 PMPaul Emsleycoot server is listening and will act on those strings.
+12:38 PMPaul EmsleyIn fact, the atom spec is best not a string
+12:39 PMPaul Emsleybut split into fields, 
+12:39 PMPaul Emsleymodel-number chain-id residue-number (etc)
+12:39 PMPaul Emsleyas a list of attributes
+12:40 PMPaul Emsleythat's right
+12:40 PMPaul EmsleyI will read the docs...
+12:41 PMPaul Emsleyone moment
+12:41 PMPaul EmsleyYes.
+12:42 PMPaul EmsleyI should do a python version of the documentation
+12:42 PMPaul EmsleyNext function
+12:42 PMPaul Emsleyno.
+12:42 PMPaul EmsleyI meant next function down in the documentation
+12:42 PMPaul Emsleyoh
+12:43 PMPaul Emsleyha!
+12:43 PMPaul Emsleyinconsistency
+12:43 PMPaul Emsley:-(
+12:43 PMPaul EmsleyI don't know
+12:43 PMPaul Emsleythat's a good start :-)
+12:43 PMPaul Emsley"ALA"
+12:44 PMPaul Emsley"TYR"
+12:44 PMPaul Emsley(etc)
+12:44 PMPaul Emsleyk
+12:44 PMPaul Emsleyok
+12:44 PMPaul EmsleyYes.
+12:44 PMPaul EmsleyNot first priority
+12:44 PMPaul Emsleythat is more important
+12:44 PMPaul Emsleypepflip flips the atoms of the mainchain
+12:45 PMPaul Emsleysidechain 180 flips the last chi angle of a side chain
+12:45 PMPaul EmsleyPerhaps I shouldn't be typing here.
+12:45 PMPaul Emsleythere is no record though.
+12:45 PMPaul Emsleyother window will record.
+12:45 PMPaul EmsleyOK
+12:45 PMPaul Emsleys
+12:46 PMPaul Emsleyyes
+12:46 PMPaul EmsleyYes.
+12:46 PMPaul EmsleyYes.
+12:46 PMPaul Emsleythat's right.
+12:46 PMPaul EmsleyThat will involve coot sending intermediate atoms.
+12:46 PMPaul EmsleyThe functions that don't send intermediate atoms will be easier.
+12:47 PMPaul Emsleye.g. mutate-and-auto-fit
+12:47 PMPaul EmsleyYes
+12:47 PMPaul Emsleyand so is refine.
+12:47 PMPaul Emsleyoften.
+12:47 PMPaul EmsleyThere can be auto-accept version too.
+12:47 PMPaul EmsleyBoth have the same user interface.
+12:48 PMPaul Emsleyrefine fits to the map.
+12:48 PMPaul Emsleysingle residue or arbitrary atom selections, yes
+12:49 PMPaul Emsleynot single atoms
+12:49 PMPaul EmsleyRefine-and-autofit is easy/usefule
+12:50 PMPaul Emsleybah
+12:50 PMPaul EmsleyNo
+12:50 PMPaul EmsleyNot that.
+12:50 PMPaul Emsleymutate-and-auto-fit is easy/useful
+12:50 PMPaul Emsleyrefine is top usefulness
+12:50 PMPaul EmsleyThat's what I would suggest
+12:51 PMPaul EmsleySo have you seen it in the daydream?
+12:51 PMPaul Emsleybecause?
+12:51 PMPaul EmsleyOh.
+12:51 PMPaul EmsleyI don't hahaha
+12:51 PMPaul Emsley"It's behind you..."
+12:51 PMPaul EmsleyYes.
+12:52 PMPaul EmsleyVery useful.
+12:52 PMPaul EmsleyHm
+12:52 PMPaul EmsleyIt won't flip a ligand or a residue at the end of a chain
+12:52 PMPaul EmsleyHmm....
+12:53 PMPaul Emsleyok, good.
+12:54 PMPaul Emsley""
+12:54 PMPaul Emsleyhigh resolution structures often have residues
+12:54 PMPaul Emsleyin several (often 2) conformers...
+12:54 PMPaul EmsleyA set of positions "A" and a set of positions "B"
+12:55 PMPaul EmsleyYes.
+12:55 PMPaul EmsleyYes.
+12:55 PMPaul EmsleyHmm...
+12:55 PMPaul EmsleySo...
+12:55 PMPaul Emsleyshall we arrange next week?
+12:56 PMPaul EmsleyFriday
+12:56 PMPaul EmsleySo shall we go to Cambridge on Monday?
+12:56 PMPaul EmsleyOr we could meet at the weekend?
+12:56 PMPaul EmsleyThat's fine too.
+12:56 PMPaul Emsleyok
+12:57 PMPaul EmsleyI am keen on 2 things.
+12:57 PMPaul Emsley1: communications of your edit wishes to coot
+12:57 PMPaul Emsley2: rotating the molecule
+12:58 PMPaul Emsleyorienting, "pulling it here"
+12:58 PMPaul EmsleyI want to look at this "from the top"
+12:58 PMPaul EmsleyHahaha
+12:58 PMPaul EmsleyI laugh at your ... 
+12:59 PMPaul Emsleydoubt
+12:59 PMPaul EmsleyHaha.
+12:59 PMPaul Emsleyyes!
+12:59 PMPaul EmsleyI'd like to see it on the daydream, fwiw.
+12:59 PMPaul Emsley... hang on!
+1:00 PMPaul Emsleysay that again...
+1:00 PMPaul EmsleyYes....
+1:01 PMPaul EmsleyOK so far.
+1:01 PMPaul Emsleycan you send a screeny of that?
+1:01 PMPaul EmsleyAh!
+1:01 PMPaul EmsleyI see.
+1:01 PMPaul Emsleyprobably everything that's closer than 1.6A
+1:02 PMPaul Emsleyis bonded.
+1:02 PMPaul Emsley1.6 is about the right number
+1:02 PMPaul EmsleyYes...
+1:02 PMPaul Emsleythe bonding in the general case is non-trivial
+1:02 PMPaul EmsleyI'd like that not to be the case.
+1:02 PMPaul EmsleyI'd like stretchy bonds rather than broken bonds.
+1:03 PMPaul EmsleyCoot is not sending you a PDB file.
+1:03 PMPaul EmsleyOK
+1:03 PMPaul Emsley:-) 
+1:04 PMPaul EmsleyOK, so... communication with coot server
+1:05 PMPaul EmsleyI think that is an issue.
+1:05 PMPaul EmsleyDo you?
+1:05 PMPaul EmsleyGood choice
+1:06 PMPaul Emsleyyou only need one.
+1:06 PMPaul Emsley:-)
+1:06 PMPaul Emsley... "just call that function"
+1:07 PMPaul EmsleyHahahaha.
+1:07 PMPaul EmsleyOK.
+1:07 PMPaul EmsleyHmm.
+1:07 PMPaul EmsleyOK...
+1:08 PMPaul EmsleyI see.
+1:08 PMPaul EmsleySo you just send Coot a string?
+1:08 PMPaul EmsleyOK!
+1:08 PMPaul EmsleyOK....
+1:08 PMPaul EmsleyYour python script is running in the coot server
+1:08 PMPaul EmsleyYes, I think I follow
+1:08 PMPaul Emsleysay that again please
+1:09 PMPaul Emsleyfollowing...
+1:09 PMPaul Emsleyok...
+1:10 PMPaul Emsleyand that gets interpretted.
+1:10 PMPaul EmsleyOK...
+1:10 PMPaul EmsleyOK.
+1:10 PMPaul Emsleyso similar ... for mutate-and-auto-fit and an atom spec
+1:11 PMPaul Emsleyyes :-)
+1:11 PMPaul Emsleyhahaha.
+1:11 PMPaul EmsleyYes.
+1:11 PMPaul EmsleyI think I prefer the current method.
+1:12 PMPaul EmsleyDo the string parsing in the server
+1:12 PMPaul Emsleyyes...
+1:12 PMPaul Emsleyevery fraction of a second.
+1:12 PMPaul Emsleythat would be nice.
+1:12 PMPaul EmsleyThe updated coordinates..
+1:13 PMPaul EmsleyYes!
+1:13 PMPaul Emsleyexactly.
+1:13 PMPaul Emsleythe updated coordinates will be bigger
+1:13 PMPaul Emsleyatoms...
+1:13 PMPaul Emsleyyes.
+1:13 PMPaul EmsleyI imagine so.
+1:13 PMPaul Emsleyok!
+1:14 PMPaul EmsleyYes.
+1:15 PMPaul EmsleyIf we can go that fast... that will be fine
+1:15 PMPaul Emsley(hahaha!)
+1:15 PMPaul EmsleyYes...
+1:15 PMPaul Emsleythis part is intriguing for me.
+1:15 PMPaul EmsleySunday?
+1:15 PMPaul EmsleyAfternoon or evening.
+1:16 PMPaul EmsleyI will need to chec,
+1:16 PMPaul Emsleybut we could say 5pm now...
+1:16 PMPaul Emsleyand adjust as needed later.
+1:16 PMPaul Emsleynice and sunny here.
+
+01335 01235 567 537

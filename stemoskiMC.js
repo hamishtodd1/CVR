@@ -99,7 +99,7 @@ function CubeMarchingSystem()
 		var geometry = new THREE.Geometry();
 		var vertexIndex = 0;
 		
-		var isolevel = usingData ? 0.6 : 0;
+		var isolevel = usingData ? 0.4 : 0;
 			
 		for (var z = 0; z < sizeZ - 1; z++)
 		for (var y = 0; y < sizeY - 1; y++)
@@ -244,7 +244,7 @@ function CubeMarchingSystem()
 			}
 		}
 		
-		var mesh = new THREE.LineSegments( new WireframeGeometry(geometry), new THREE.LineBasicMaterial({color:0x3139AE}));
+		var mesh = new THREE.LineSegments( new WireframeGeometry(geometry), new THREE.LineBasicMaterial({color:0x777799, linewidth: 0.1}));
 		
 //		var mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({
 //			color:0x888888,
