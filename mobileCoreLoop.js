@@ -28,6 +28,8 @@ function mobileLoop(socket, cursor, labels) {
 	if(isMobileOrTablet)
 		ourOrientationControls.update();
 	
+//	modelAndMap.maps[0].rotation.y += 0.02;
+	
 //	if(selector)
 //		selector.update();
 	

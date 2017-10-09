@@ -40,34 +40,35 @@
 		
 		<script src="lib/three.min.js"></script> <!--change to v=something if you want reloading-->
 		<script src="lib/WireFrameGeometry.js"></script> <!--change to v=something if you want reloading-->
-		<script src="lib/SceneFromDemo.js?v=101710"></script>
-		<script src="lib/THREEx.FullScreen.js?v=101710"></script>
-		<script src="lib/OBJLoader.js?v=101710"></script>
-		<script src="lib/PDBLoader.js?v=101710"></script>
 		
-		<script src="lib/WebVR.js?v=101710"></script>
-		<script src="lib/VREffect.js?v=101710"></script>
-		<script src="lib/VRControls.js?v=101710"></script>
+		<script src="lib/SceneFromDemo.js?v=101785"></script>
+		<script src="lib/THREEx.FullScreen.js?v=101785"></script>
+		<script src="lib/OBJLoader.js?v=101785"></script>
+		<script src="lib/PDBLoader.js?v=101785"></script>
 		
-		<script src="lib/StereoEffect.js?v=101710"></script>
-		<script src="lib/DeviceOrientationControls.js?v=101710"></script>
+		<script src="lib/WebVR.js?v=101785"></script>
+		<script src="lib/VREffect.js?v=101785"></script>
+		<script src="lib/VRControls.js?v=101785"></script>
 		
-		<script src="stemoskiMC.js?v=101710"></script>
+		<script src="lib/StereoEffect.js?v=101785"></script>
+		<script src="lib/DeviceOrientationControls.js?v=101785"></script>
 		
-		<script src="variables.js?v=101710"></script>
-		<script src="VRControlSystem.js?v=101710"></script>
-		<script src="socketCommunication.js?v=101710"></script>
+		<script src="stemoskiMC.js?v=101785"></script>
 		
-		<script src="models.js?v=101710"></script>
-		<script src="maps.js?v=101710"></script>
-		<script src="holdables.js?v=101710"></script>
-		<script src="tools.js?v=101710"></script>
+		<script src="variables.js?v=101785"></script>
+		<script src="VRControlSystem.js?v=101785"></script>
+		<script src="socketCommunication.js?v=101785"></script>
 		
-		<script src="mobileInitialization.js?v=101710"></script>
-		<script src="mobileCoreLoop.js?v=101710"></script>
+		<script src="models.js?v=101785"></script>
+		<script src="maps.js?v=101785"></script>
+		<script src="holdables.js?v=101785"></script>
+		<script src="tools.js?v=101785"></script>
 		
-		<script src="desktopInitialization.js?v=101710"></script>
-		<script src="desktopCoreLoop.js?v=101710"></script>
+		<script src="mobileInitialization.js?v=101785"></script>
+		<script src="mobileCoreLoop.js?v=101785"></script>
+		
+		<script src="desktopInitialization.js?v=101785"></script>
+		<script src="desktopCoreLoop.js?v=101785"></script>
 		
 		<script>
 			console.log("yo")
@@ -77,17 +78,17 @@
 				mobileInitialize();
 			else
 			{
-				//if ( typeof WEBVR === 'undefined' || !WEBVR.isAvailable() )
+				if ( typeof WEBVR === 'undefined' || !WEBVR.isAvailable() )
 				{
 					console.log("no webVR, not a mobile. Going to pretend to be mobile")
-					//isMobileOrTablet = true;
+					isMobileOrTablet = true;
 					mobileInitialize();
 				}
-				/*else
+				else
 				{
 					console.log("desktop VR")
 					desktopInitialize();
-				}*/
+				}
 			}
 		</script>
 		

@@ -12,19 +12,20 @@ function initVRInputSystem(controllers)
 		scene.add( controllers[ 1 ] );
 	}
 	
-	var riftInputlerKeys = {
+	var riftControllerKeys = {
 			thumbstickButton:0,
-			trigger: 1,
-			grip:2,
+			grippingTop: 1,
+			grippingSide:2,
 			button1: 3,
 			button2: 4
 	}
 	
-	var controllerMaterial = new THREE.MeshLambertMaterial({color:0x000000});
+	var controllerMaterial = new THREE.MeshLambertMaterial({color:0x444444});
 	for(var i = 0; i < 2; i++)
 	{
 		controllers[ i ] = new THREE.Object3D();
-		controllers[ i ].gripping = 0;
+		controllers[ i ].grippingTop = false;
+		controllers[ i ].grippingSide = false;
 		controllers[ i ].add(new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() ))
 	}
 	new THREE.OBJLoader().load( "data/external_controller01_left.obj",
@@ -45,39 +46,30 @@ function initVRInputSystem(controllers)
 	
 	VRInputSystem.update = function(socket)
 	{
-		cameraRepositioner.update(); //positions the head		
-//		camera.position.z -= FOCALPOINT_DISTANCE;
+		cameraRepositioner.update(); //positions the head
 
 		var gamepads = navigator.getGamepads();
 		for(var k = 0; k < 2 && k < gamepads.length; ++k)
 		{
-			var affectedInputlerIndex = 666;
+			var affectedControllerIndex = 666;
 			if (gamepads[k] && gamepads[k].id === "Oculus Touch (Right)")
-				affectedInputlerIndex = RIGHT_CONTROLLER_INDEX;
+				affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
 			if (gamepads[k] && gamepads[k].id === "Oculus Touch (Left)")
-				affectedInputlerIndex = LEFT_CONTROLLER_INDEX;
-			if( affectedInputlerIndex === 666 )
+				affectedControllerIndex = LEFT_CONTROLLER_INDEX;
+			if( affectedControllerIndex === 666 )
 				continue;
 			
-			controllers[affectedInputlerIndex].position.fromArray( gamepads[k].pose.position );
-//			controllers[affectedInputlerIndex].position.z -= FOCALPOINT_DISTANCE;
-			controllers[affectedInputlerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
-			controllers[affectedInputlerIndex].updateMatrixWorld();
+			controllers[affectedControllerIndex].position.fromArray( gamepads[k].pose.position );
+			controllers[affectedControllerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
+			controllers[affectedControllerIndex].updateMatrixWorld();
 			
-			if( gamepads[k].buttons[riftInputlerKeys.grip].pressed || gamepads[k].buttons[riftInputlerKeys.trigger].pressed )
-				controllers[affectedInputlerIndex].gripping = 1;
-			else
-				controllers[affectedInputlerIndex].gripping = 0;
+			controllers[affectedControllerIndex].grippingSide = gamepads[k].buttons[riftControllerKeys.grippingSide].pressed;
+			controllers[affectedControllerIndex].grippingTop = gamepads[k].buttons[riftControllerKeys.grippingTop].pressed;
 			
-			if( affectedInputlerIndex === RIGHT_CONTROLLER_INDEX )
-			{
+//			if( affectedControllerIndex === RIGHT_CONTROLLER_INDEX )
+//			{
 //				ourVREffect.eyeSeparationMultiplier = gamepads[k].buttons[riftTriggerButton].value;
-				
-				if( gamepads[k].buttons[riftInputlerKeys.grip].pressed )
-					socket.send("increase radius");
-			}
-			
-			controllers[affectedInputlerIndex].children[0].material.emissive.r = controllers[affectedInputlerIndex].gripping;
+//			}
 		}
 	}
 	

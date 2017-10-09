@@ -2,6 +2,8 @@
  * Note: you have to be in image transferring mode and you may need to run "adb devices"
  * 
  * NEED TO TALK TO KYLE ABOUT COMPILING COOT WITH KYLE Stevenson
+ * 
+ * blue lines need to be one pixel, or thinner, or shiny, and more neutral/pastel
  */
 
 /* 	People should be able to grab you in coot and move you towards a part of the molecule. But that actually moves that part of the molecule closer to you on the client, muhahaha
@@ -61,15 +63,20 @@ function mobileInitialize()
 			else
 			{
 				//rename when it's more than model and map. "the workspace" or something
-				modelAndMap = new THREE.Object3D();    
-				modelAndMap.scale.setScalar(angstrom);
+				modelAndMap = new THREE.Object3D();
+				modelAndMap.scale.setScalar(0.01); //angstrom
 				modelAndMap.position.z = -FOCALPOINT_DISTANCE;
 				scene.add(modelAndMap);
 				
-//				initMutator();
+				getAngstrom = function()
+				{
+					return modelAndMap.scale.x;
+				}
+				
+				initMutator();
 				
 				loadModel("data/tutModelWithLigand.txt", labels);
-//				loadMap("data/try-2-map-fragment.tab.txt");
+				loadMap("data/try-2-map-fragment.tab.txt");
 				
 				mobileLoop( socket, cursor, labels );
 			}
@@ -121,14 +128,14 @@ function mobileInitialize()
 	//this is for the fairphone in the daydream, and would need to be changed with eyeSep
 //	ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8] = 0.442;
 	
-//	document.addEventListener( 'mousedown', function(event)
-//	{
-//		console.log("hmm?")
-//		if( THREEx.FullScreen.activated() )
-//			return;
-//		
-//		THREEx.FullScreen.request(renderer.domElement);
-//	}, false );
+	document.addEventListener( 'mousedown', function(event)
+	{
+		console.log("hmm?")
+		if( THREEx.FullScreen.activated() )
+			return;
+		
+		THREEx.FullScreen.request(renderer.domElement);
+	}, false );
 
 	window.addEventListener( 'resize', function(event)
 	{
@@ -139,9 +146,9 @@ function mobileInitialize()
 		camera.updateProjectionMatrix();
 	}, false );
 	
-	makeStandardScene(false);
+	makeStandardScene(true);
 	
-	initSphereSelector(cursor);
+//	initSphereSelector(cursor);
 
 	//socket crap
 	{

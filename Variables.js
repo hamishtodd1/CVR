@@ -25,6 +25,11 @@ THREE.Face3.prototype.getCorner = function(i)
 	}
 }
 
+function sq(x)
+{
+	return x*x;
+}
+
 THREE.EfficientSphereBufferGeometry = function(radius)
 {
 	return new THREE.IcosahedronBufferGeometry(radius, 1);
@@ -53,13 +58,11 @@ var delta_t = 0;
 var logged = 0;
 var debugging = 0;
 
-var angstrom = 0.01;
-
 var atomColors;
 
 //------We enforce these to be static
 
-var FOCALPOINT_DISTANCE = 0.5;
+var FOCALPOINT_DISTANCE = 0;
 var RIGHT_CONTROLLER_INDEX = 0;
 var LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
 
