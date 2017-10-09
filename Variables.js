@@ -62,7 +62,7 @@ var atomColors;
 
 //------We enforce these to be static
 
-var FOCALPOINT_DISTANCE = 0.4;
+var FOCALPOINT_DISTANCE = 0;
 var RIGHT_CONTROLLER_INDEX = 0;
 var LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
 

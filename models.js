@@ -394,4 +394,6 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 			firstFaceIndex += cylinderSides * 2;
 		}
 	}
+	
+	console.log(bufferGeometry.index.array.length / 3)
 }

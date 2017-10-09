@@ -199,7 +199,7 @@ function initMutator()
 	               "ASN","ASP","CYS","GLN","HIS","ILE","LYS","MET", "PHE","PRO","TRP","TYR"];
 	mutator.AAs = Array(aaNames.length);
 	var ourPDBLoader = new THREE.PDBLoader();
-	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(5,32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5}) );
+	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(4,32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5}) );
 	var innerCircleRadius = 0.1;
 	var textWidth = innerCircleRadius / 3;
 	function singleLoop(aaIndex, position)
@@ -214,7 +214,7 @@ function initMutator()
 			 	makeMoleculeMesh( mutator.AAs[aaIndex].geometry, mutator.AAs[aaIndex].atoms );
 			 	
 			 	mutator.AAs[aaIndex].position.copy(position)
-			 	mutator.AAs[aaIndex].scale.setScalar(angstrom);
+			 	mutator.AAs[aaIndex].scale.setScalar(getAngstrom());
 				mutator.add( mutator.AAs[aaIndex] );
 				
 				var textureLoader = new THREE.TextureLoader();
@@ -248,7 +248,7 @@ function initMutator()
 		}
 		else
 		{
-			position.y = innerCircleRadius * 2;
+			position.y = innerCircleRadius * 1.9;
 			position.applyAxisAngle( zAxis, (i-numInLayer1) / (il-numInLayer1) * TAU );
 		}
 		
@@ -287,5 +287,5 @@ function initMutator()
 	}
 	
 	mutator.position.z = -FOCALPOINT_DISTANCE;
-	scene.add(mutator);
+//	scene.add(mutator);
 }

@@ -38,8 +38,8 @@ def try_exit():
 
 #---------specific to our setup in some way
 import os #platform independent
-#os.chdir("C:\cootVRrelated\CVR") #specific to our setup, obviously
-os.chdir("C:\CVR")
+os.chdir("C:\cootVRrelated\CVR") #specific to our setup, obviously
+#os.chdir("C:\CVR")
 
 #to get these, open the python console (of the coot install but not in coot)
 #the procedure is: download get-pip.py, put it in wincoot/python27. run python.exe get-pip.py. run python.exe -m pip install pypiwin32.

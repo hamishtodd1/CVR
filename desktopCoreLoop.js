@@ -1,86 +1,54 @@
-function desktopLoop(socket, controllers, VRInputSystem, models, maps) {
-//	checkForNewGlobals();
-	
-	delta_t = ourclock.getDelta();
+function desktopLoop(socket, controllers, VRInputSystem, labels) {
+	delta_t = ourClock.getDelta();
 	
 	VRInputSystem.update( socket);
-	
-	for( var j = 0; j < models.length; j++)
-	{
-		if( models[j].importantObject.pointInBoundingSphere( controllers[0].position ) ||
-			models[j].importantObject.pointInBoundingSphere( controllers[1].position ) )
-			models[j].importantObject.material.emissive.r = 0.5;
-		else
-			models[j].importantObject.material.emissive.r = 0;
-	}
-	
+	oldHandSeparation = handSeparation;
+	handSeparation = controllers[0].position.distanceTo( controllers[1].position );
+
 	for(var i = 0; i < controllers.length; i++)
 	{
-		if( controllers[i].gripping )
+		if( controllers[i].grippingSide )
 		{
-			if( controllers[i].children.length < 2 )
+			if( modelAndMap.parent === scene )
 			{
-				for( var j = 0; j < models.length + maps.length; j++)
-				{
-					var holdable = j < models.length ? models[j].importantObject : maps[j-models.length];
-					if( holdable.pointInBoundingSphere( controllers[i].position ) && holdable.parent === scene )
-					{
-						THREE.SceneUtils.attach( holdable, scene, controllers[i] );
-						break;
-					}	
-				}
+				THREE.SceneUtils.attach( modelAndMap, scene, controllers[i] );
+			}
+			if( modelAndMap.parent === controllers[1-i] )
+			{
+				//it's being held in the other one
+				modelAndMap.scale.setScalar( modelAndMap.scale.x * handSeparation / oldHandSeparation );
 			}
 		}
 		else
 		{
-			for(var j = 1; j < controllers[i].children.length; j++)
+			if( modelAndMap.parent === controllers[i] )
 			{
-				THREE.SceneUtils.detach(controllers[i].children[j], controllers[i], scene );
+				THREE.SceneUtils.detach(modelAndMap, controllers[i], scene );
 			}
 		}
+		
+//		console.log(mutator.parent !== controllers[i])
 	}
 	
-	for(var i = 0; i < models.length; i++)
-	{
-		if( models[i].parent !== scene )
-			continue;
-		
-		for( var j = 0; j < maps.length; j++)
-		{
-			if( models[i].position.distanceTo(maps[j].position) < 0.1 && models[i].quaternion.distanceTo(maps[j].quaternion) < TAU / 16 )
-			{
-				models[i].position.copy( maps[j].position );
-				models[i].quaternion.copy( maps[j].quaternion );
-			}
-		}
-	}
+//	if( controllers[i].grippingTop && mutator.parent !== controllers[i] )
+//	{
+//		controllers[i].add(mutator)
+//		console.log(mutator.parent !== controllers[i])
+//		mutator.position.set(0,0,0)
+//	}
+//	if( !controllers[i].grippingTop && mutator.parent === controllers[i] )
+//	{
+//		controllers[i].remove(mutator)
+//		console.log("ya")
+//	}
+	
+	for(var i = 0; i < labels.length; i++)
+		labels[i].update();
 	
 	socket.send("loopDone");
 	
 	ourVREffect.requestAnimationFrame( function(){
 		ourVREffect.render( scene, camera );
-		desktopLoop(socket, controllers, VRInputSystem, models, maps);
+		desktopLoop(socket, controllers, VRInputSystem, labels);
 	} );
-}
-
-function checkForNewGlobals()
-{
-	if( typeof numGlobalVariables === 'undefined')
-	{
-		numGlobalVariables = Object.keys(window).length + 1;
-	}
-	else if( numGlobalVariables > Object.keys(window).length)
-	{
-		console.log("new global variable(s): ")
-		for(var i = numGlobalVariables; i < Object.keys(window).length; i++ )
-		{
-			if( Object.keys(window)[i] !== location && //these ones are ok
-				Object.keys(window)[i] !== name &&
-				Object.keys(window)[i] !== window &&
-				Object.keys(window)[i] !== self &&
-				Object.keys(window)[i] !== document )
-				console.log( Object.keys(window)[i] );
-		}
-		numGlobalVariables = Object.keys(window).length + 1;
-	}	
 }
