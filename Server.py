@@ -38,12 +38,14 @@ def try_exit():
 
 #---------specific to our setup in some way
 import os #platform independent
-os.chdir("C:\cootVRrelated\CVR") #specific to our setup, obviously
-#os.chdir("C:\CVR")
+if os.name == 'nt':
+	os.chdir("C:\CVR")
+if os.name == 'posix':
+	os.chdir("/home/htodd/CVR")
 
 #to get these, open the python console (of the coot install but not in coot)
 #the procedure is: download get-pip.py, put it in wincoot/python27. run python.exe get-pip.py. run python.exe -m pip install pypiwin32.
-from win32api import GetKeyState, GetSystemMetrics, GetCursorPos #gtk could do this instead and be platform independent
+#from win32api import GetKeyState, GetSystemMetrics, GetCursorPos #gtk could do this instead and be platform independent
 
 import subprocess
 
@@ -54,6 +56,7 @@ VK_CODE = {    'lmb':0x01,    'rmb':0x02,    'backspace':0x08,    'tab':0x09,   
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
+import tornado.template
 
 #------variables
 runningInCoot = True
@@ -64,18 +67,23 @@ except NameError:
 	print("get_map_radius doesn't exist - we're probably not running in coot")
 
 #You want the thing at the end of "IPv4 address"
-(ipconfigUTF8,err) = subprocess.Popen(["ipconfig"], stdout=subprocess.PIPE, shell=True).communicate()
-ipconfigDecoded = ipconfigUTF8.decode("utf-8")
-ipconfigParsed = ipconfigDecoded.split("\n")
-stringPrecedingIP = "IPv4 Address. . . . . . . . . . . : "
-ourIP = ""
-for line in ipconfigParsed:
-	precessionLocation = line.find(stringPrecedingIP)
-	if precessionLocation != -1:
-		ourIP = str(line[ precessionLocation + len(stringPrecedingIP):])	
-		#there are two of these fuckers and you want the second
-if ourIP == "":
-	print("no ip found, are you connected to the internet? Or not on windows?")
+ourIP = ''
+if os.name == "nt":
+	(ipconfigUTF8,err) = subprocess.Popen(["ipconfig"], stdout=subprocess.PIPE, shell=True).communicate()
+	ipconfigDecoded = ipconfigUTF8.decode("utf-8")
+	ipconfigParsed = ipconfigDecoded.split("\n")
+	stringPrecedingIP = "IPv4 Address. . . . . . . . . . . : "
+	ourIP = ""
+	for line in ipconfigParsed:
+		precessionLocation = line.find(stringPrecedingIP)
+		if precessionLocation != -1:
+			ourIP = str(line[ precessionLocation + len(stringPrecedingIP):])	
+			#there are two of these fuckers and you want the second
+	if ourIP == "":
+		print("no ip found, are you connected to the internet? Or not on windows?")
+if os.name == "posix":
+	import socket
+	ourIP = socket.gethostname()
 
 
 class mainHandler(tornado.web.RequestHandler):
@@ -148,7 +156,8 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		#time to send the next one. TODO make it sooner?
 		splitMessage = message.split(";")
 		messageHeader = splitMessage[0]
-			
+		
+		'''
 		if messageHeader == "loopDone":
 			self.sendButtonState('lmb')
 			self.sendButtonState('F5')
@@ -176,7 +185,6 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			self.write_message("Didn't understand that")
 			print('received unrecognized message:', message)
 		
-		'''		
 		elif messageHeader == "refine": #no addition or deletion
 			if runningInCoot:
 				imol = splitMessage[1]
@@ -239,8 +247,16 @@ application = tornado.web.Application([
 
 #if __name__ == "__main__":
 
-print( "go to the following :9090 " + ourIP )
+if ourIP:
+	print( "go to the following :9090 " + ourIP )
 signal.signal(signal.SIGINT, signal_handler)
+'''
+http_server = tornado.httpserver.HTTPServer(application, ssl_options={
+	"certfile": "keys/ca.csr",
+	"keyfile": "keys/ca.key",
+})
+http_server.listen(9090)
+'''
 application.listen(9090)
 tornado.ioloop.PeriodicCallback(try_exit, 100).start() 
 tornado.ioloop.IOLoop.instance().start()
