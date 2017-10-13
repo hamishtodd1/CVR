@@ -30,9 +30,10 @@ function desktopInitialize()
 				{
 					return modelAndMap.scale.x;
 				}
-				
+			
 				initMutator(tools);
 //				initAtomDeleter(tools);
+//				initMutator();
 				
 				loadModel("data/tutModelWithLigand.txt", labels);
 				loadMap("data/try-2-map-fragment.tab.txt");

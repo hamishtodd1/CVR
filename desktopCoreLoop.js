@@ -1,7 +1,7 @@
 function desktopLoop(socket, controllers, VRInputSystem, labels, tools) {
 	delta_t = ourClock.getDelta();
 	
-	VRInputSystem.update( socket);
+//	VRInputSystem.update( socket);
 	oldHandSeparation = handSeparation;
 	handSeparation = controllers[0].position.distanceTo( controllers[1].position );
 

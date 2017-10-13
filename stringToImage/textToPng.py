@@ -1,6 +1,6 @@
 import urllib.request
 
-stringArray = ["leucine","alanine","serine","glycine","valine","glutamic acid","arginine","threonine", "asparagine","aspartic acid","cysteine","glutamine","histidine","isoleucine","lysine","methionine", "phenylalanine","proline","tryptophan","tyrosine"]
+stringArray = ["to be or not to be that is the sexton whether tis nobler in the sex to suffer the sex of sexy sex"]
 
 for ourString in stringArray:
 	print("going to get " + ourString)
