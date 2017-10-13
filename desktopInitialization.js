@@ -30,10 +30,10 @@ function desktopInitialize()
 					return modelAndMap.scale.x;
 				}
 				
-				initMutator();
+//				initMutator();
 				
 				loadModel("data/tutModelWithLigand.txt", labels);
-//				loadMap("data/try-2-map-fragment.tab.txt");
+				loadMap("data/try-2-map-fragment.tab.txt");
 				
 				desktopLoop( socket, controllers, VRInputSystem, labels );
 			}

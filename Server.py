@@ -250,13 +250,13 @@ application = tornado.web.Application([
 if ourIP:
 	print( "go to the following :9090 " + ourIP )
 signal.signal(signal.SIGINT, signal_handler)
-'''
-http_server = tornado.httpserver.HTTPServer(application, ssl_options={
-	"certfile": "keys/ca.csr",
-	"keyfile": "keys/ca.key",
-})
-http_server.listen(9090)
-'''
+
+#causes problems!
+'''http_server = tornado.httpserver.HTTPServer(application,
+ssl_options={
+	"certfile": "keys/csr.txt",
+	"keyfile": "keys/myserver.key",
+})'''
 application.listen(9090)
 tornado.ioloop.PeriodicCallback(try_exit, 100).start() 
 tornado.ioloop.IOLoop.instance().start()

@@ -73,7 +73,7 @@ function mobileInitialize()
 					return modelAndMap.scale.x;
 				}
 				
-				initMutator();
+//				initMutator();
 				
 				loadModel("data/tutModelWithLigand.txt", labels);
 				loadMap("data/try-2-map-fragment.tab.txt");
@@ -123,7 +123,7 @@ function mobileInitialize()
 	ourOrientationControls = new THREE.DeviceOrientationControls(camera);
 	
 	ourStereoEffect = new THREE.StereoEffect( renderer );
-	ourStereoEffect.stereoCamera.eyeSep = 0.02; //very small, gotten through guessing.
+	ourStereoEffect.stereoCamera.eyeSep = 0.0065;
 	
 	//this is for the fairphone in the daydream, and would need to be changed with eyeSep
 //	ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8] = 0.442;
@@ -171,8 +171,7 @@ function mobileInitialize()
 			cameraFrustum = (new THREE.Frustum()).setFromMatrix(camera.projectionMatrix);
 			
 			var frustumWidthAtZ = renderer.domElement.width / renderer.domElement.height * 2 * Math.tan( camera.fov / 360 * TAU / 2 ) * -cursor.position.z;
-			if(isMobileOrTablet)
-				frustumWidthAtZ /= 2; //coz there's two
+			frustumWidthAtZ /= 2; //coz there's two
 			cursor.position.x = (parseFloat( messageContents[1] ) - 0.5) * frustumWidthAtZ;
 		}
 		

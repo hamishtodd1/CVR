@@ -186,7 +186,7 @@ function initMutator()
 	
 	var handleRadius = 0.02;
 	var handleTubeRadius = handleRadius / 3;
-	var chunkOut = TAU / 4;
+	var chunkOut = 0;//TAU / 4;
 	mutator.handle = new THREE.Mesh(new THREE.TorusGeometry(handleRadius, handleTubeRadius, 7, 31, TAU - chunkOut), new THREE.MeshBasicMaterial({transparent:true,color:0xFF0000}));
 	mutator.handle.rotation.y = TAU / 4;
 	mutator.handle.rotation.z = chunkOut / 2;
@@ -286,6 +286,5 @@ function initMutator()
 		}
 	}
 	
-	mutator.position.z = -FOCALPOINT_DISTANCE;
-//	scene.add(mutator);
+	scene.add(mutator);
 }
