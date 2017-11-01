@@ -244,7 +244,7 @@ function CubeMarchingSystem()
 			}
 		}
 		
-		var mesh = new THREE.LineSegments( new WireframeGeometry(geometry), new THREE.LineBasicMaterial({color:0x777799, linewidth: 0.1}));
+		var mesh = new THREE.LineSegments( new WireframeGeometry(geometry), new THREE.LineBasicMaterial({color:0x777799, linewidth: 10}));
 		
 //		var mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({
 //			color:0x888888,

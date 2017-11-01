@@ -7,8 +7,6 @@
  */
 
 /* Other tools
- * Rotating sidechains causes snap to 180
- * 
  * In real life: say you're picking things off a bush. If you want to get a few things you pinch, if you want a lot then you scoop. It's a natural action of your hand
  * Ok here: Sphere is both hands
  * Regularizer is pinch
@@ -16,9 +14,12 @@
  * Maybe the general way to do it is "let people just manipulate the atoms and then when they look away, correct them"
  * 
  * Undo is a button on the controller that makes a sign flash up
+ * 
+ * Staple gun style?
  */
 
 /*
+ * sidechain flipper. Should be part of atom movement
  * do-180-degree-side-chain-flip imol chain id resno inscode altconf [function]
 Where:
 • imol is an integer number
@@ -28,101 +29,50 @@ Where:
 • altconf is a string
  */
 
-//Residue deleter?
-function initSidechainFlipper( )
-{
-	sidechainFlipper = new THREE.Object3D();
-	sidechainFlipper.ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(1), new THREE.MeshLambertMaterial({transparent:true,color:0xFF00FF, opacity: 0.3}));
-	sidechainFlipper.add( sidechainFlipper.ball );
-	sidechainFlipper.ball.scale.setScalar(0.05); //the radius
-	
-	sidechainFlipper.highlightedAtoms = [];
-	
-	sidechainFlipper.update = function()
-	{
-		if(!modelAndMap.model /*|| this.parent === scene*/)
-			return;
-		
-		var ourPosition = this.getWorldPosition();
-		modelAndMap.model.updateMatrixWorld();
-		modelAndMap.model.worldToLocal(ourPosition);
-		
-		var ourRadiusSq = sq( sidechainFlipper.ball.scale.x / getAngstrom() );
-		
-		var highlightColor = new THREE.Color(1,1,1);
-		
-		/*
-		 * TODO optimize
-		 * Divide up atoms, at least into residues, possibly into cubes
-		 * 
-		 * could also generalize
-		 */
-		for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
-		{
-			if( modelAndMap.model.atoms[i].position.distanceToSquared( ourPosition ) < ourRadiusSq )
-			{
-				modelAndMap.model.geometry.colorAtom(i, highlightColor);
-				this.highlightedAtoms.push(i);
-			}
-		}
-		for(var i = 0; i < this.highlightedAtoms.length; i++)
-		{
-			if( modelAndMap.model.atoms[ this.highlightedAtoms[i] ].position.distanceToSquared( ourPosition ) >= ourRadiusSq )
-			{
-				modelAndMap.model.geometry.colorAtom( this.highlightedAtoms[i] );
-				this.highlightedAtoms.splice(i,1);
-				i--;
-			}
-		}
-		
-		modelAndMap.model.geometry.attributes.color.needsUpdate = true;
-	}
-	
-	cursor.add(sidechainFlipper)	
-}
-
-/* need these things
+/* 
  * 
- * Well the fun thing for peptide flipper would be grabbing it and moving it =/ it fits into that scheme
+ * peptide flipper - once again, grabbing it and moving it!
  * 
+ * need these things
  *imol is an integer number
 • chain id is a string
 • resno is an integer number
 • inscode is a string
 • altconf
  */
-function initPepFlipper()
+
+/*
+ * atom deleter
+ * imol is an integer number
+• chain id is a string
+• resno is an integer number
+• ins code is a string
+• at name is a string
+• altloc is a string
+ */
+function initAtomDeleter(tools)
 {
-	pepFlipper = new THREE.Object3D();
-	pepFlipper.ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(1), new THREE.MeshLambertMaterial({transparent:true,color:0x00FF00, opacity: 0.3}));
-	pepFlipper.add(pepFlipper.ball);
-	pepFlipper.ball.scale.setScalar(0.05); //the radius
+	atomDeleter = new THREE.Object3D();
 	
-	pepFlipper.highlightedAtoms = [];
+	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(1), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.3}));
+	atomDeleter.add( ball );
+	ball.scale.setScalar(0.05);
 	
-//	pepFlipper.userPressingBu
+	atomDeleter.highlightedAtoms = [];
 	
-	pepFlipper.update = function()
+	atomDeleter.update = function()
 	{
-		if(!modelAndMap.model /*|| this.parent === scene*/)
+		if(!modelAndMap.model )
 			return;
-		
-		//Should be able to vary radius by grabbing with both hands and pulling
 		
 		var ourPosition = this.getWorldPosition();
 		modelAndMap.model.updateMatrixWorld();
 		modelAndMap.model.worldToLocal(ourPosition);
 		
-		var ourRadiusSq = sq( pepFlipper.ball.scale.x / getAngstrom() );
+		var ourRadiusSq = sq( ball.scale.x / getAngstrom() );
 		
 		var highlightColor = new THREE.Color(1,1,1);
 		
-		/*
-		 * TODO optimize
-		 * Divide up atoms, at least into residues, possibly into cubes
-		 * 
-		 * could also generalize
-		 */
 		for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
 		{
 			if( modelAndMap.model.atoms[i].position.distanceToSquared( ourPosition ) < ourRadiusSq )
@@ -140,12 +90,26 @@ function initPepFlipper()
 				i--;
 			}
 		}
-		
 		modelAndMap.model.geometry.attributes.color.needsUpdate = true;
+		
+		if( this.parent !== scene )
+		{
+			if( this.parent.button1 || this.parent.button2 )
+			{
+				for(var i = 0, il = this.highlightedAtoms.length; i < il; i++)
+				{
+//					socket.send("delete|" + this.highlightedAtoms[i].labelString);
+				}
+				this.highlightedAtoms.length = 0;
+			}
+		}
 	}
 	
-	cursor.add(pepFlipper)
+	tools.push(atomDeleter);
+	scene.add(atomDeleter)	
 }
+
+
 
 /*Rotamer changer
  * Put it over an atom. Sends to coot, gets different conformations, shows them. They are selectable
@@ -180,17 +144,21 @@ function initPepFlipper()
 	
 	It should also be possible to select between them using the thumbstick, so you can look at different results without moving your eyes
  */
-function initMutator()
+function initMutator(tools)
 {
 	mutator = new THREE.Object3D();
+	console.log(mutator)
 	
 	var handleRadius = 0.02;
 	var handleTubeRadius = handleRadius / 3;
 	var chunkOut = TAU / 4;
-	mutator.handle = new THREE.Mesh(new THREE.TorusGeometry(handleRadius, handleTubeRadius, 7, 31, TAU - chunkOut), new THREE.MeshBasicMaterial({transparent:true,color:0xFF0000}));
+	mutator.handle = new THREE.Mesh(new THREE.TorusGeometry(handleRadius, handleTubeRadius, 7, 31, TAU - chunkOut), new THREE.MeshBasicMaterial({transparent:true,color:0xFFFF00}));
 	mutator.handle.rotation.y = TAU / 4;
 	mutator.handle.rotation.z = chunkOut / 2;
+//	mutator.handle.geometry.computeBoundingSphere();
 	mutator.add(mutator.handle);
+	
+//	mutator.boundingSphere = mutator.handle.geometry.boundingSphere;
 
 	var labelMaterial = new THREE.MeshLambertMaterial( { color: 0x156289 });
 	var aaNames = ["leucine","alanine","serine","glycine","valine","glutamic acid","arginine","threonine", //most common
@@ -214,7 +182,7 @@ function initMutator()
 			 	makeMoleculeMesh( mutator.AAs[aaIndex].geometry, mutator.AAs[aaIndex].atoms );
 			 	
 			 	mutator.AAs[aaIndex].position.copy(position)
-			 	mutator.AAs[aaIndex].scale.setScalar(getAngstrom());
+			 	mutator.AAs[aaIndex].scale.setScalar(getAngstrom()); //it can stay at this too
 				mutator.add( mutator.AAs[aaIndex] );
 				
 				var textureLoader = new THREE.TextureLoader();
@@ -254,38 +222,36 @@ function initMutator()
 		
 		singleLoop(i,position);
 	}
-	
-//	mutator.potentialResidues = 
-	
-	mutator.update = function()
-	{
-		/*
-		 * If it's on an amino acid it's working on that
-		 * You take it off, the menu disappears.
-		 * While you're holding it it's not looking for anything
-		 * Let go of it and 
-		 * 		If you've put it on your belt, it stays there
-		 * 		else, it works out which is the closest amino acid and goes straight for that. It is basically impossible to move the molecule in time.
-		 * 
-		 * It starts out on your belt
-		 * 
-		 * You've selected an amino acid.
-		 * We send a message to coot. It mutates and autofits.
-		 */
-		
-		if(this.residueSelected)
-		for(var i = 0, il = this.potentialResidues.length; i < il; i++)
-		{
-			
-		}
-		
-		
-		if(0)
-		{
-//			socket.send("mutate|" + residueNumber.toString() + "," + residue-number chain-id mol mol-for-map residue-type )
-		}
-	}
+
+//	mutator.update = function()
+//	{
+//		/*
+//		 * If it's on an amino acid it's working on that
+//		 * You take it off, the menu disappears.
+//		 * While you're holding it it's not looking for anything
+//		 * Let go of it and 
+//		 * 		If you've put it on your belt, it stays there
+//		 * 		else, it works out which is the closest amino acid and goes straight for that. It is basically impossible to move the molecule in time.
+//		 * 
+//		 * It starts out on your belt
+//		 * 
+//		 * You've selected an amino acid.
+//		 * We send a message to coot. It mutates and autofits.
+//		 */
+//		
+//		if(this.residueSelected)
+//		for(var i = 0, il = this.potentialResidues.length; i < il; i++)
+//		{
+//			
+//		}
+//		
+//		if(0)
+//		{
+////			socket.send("mutate|" + residueNumber.toString() + "," + residue-number chain-id mol mol-for-map residue-type )
+//		}
+//	}
 	
 	mutator.position.z = -FOCALPOINT_DISTANCE;
-//	scene.add(mutator);
+//	tools.push(mutator);
+	scene.add(mutator);
 }

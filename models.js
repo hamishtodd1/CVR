@@ -24,6 +24,7 @@ function Atom(element,labelString,position)
 		this.element = element;
 	else
 		this.element = ELEMENT_TO_NUMBER[ element ];
+	this.labelString = labelString;
 	if(this.element === undefined)
 		console.error("unrecognized element: ", element)
 	this.position = position;
@@ -247,7 +248,7 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 			{
 				for( var j = i+1, jl = atoms.length; j < jl; j++)
 				{
-					if( atoms[i].position.distanceTo( atoms[j].position ) < 1.6 ) //quantum chemistry
+					if( atoms[i].position.distanceTo( atoms[j].position ) < 1.81 ) //quantum chemistry
 					{
 						var midPoint = atoms[i].position.clone();
 						midPoint.lerp( atoms[j].position, 0.5 );
@@ -394,6 +395,4 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 			firstFaceIndex += cylinderSides * 2;
 		}
 	}
-	
-	console.log(bufferGeometry.index.array.length / 3)
 }

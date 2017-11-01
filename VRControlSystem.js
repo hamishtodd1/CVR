@@ -6,6 +6,9 @@ function initVRInputSystem(controllers)
 	
 	VRInputSystem.startGettingInput = function()
 	{
+		if(cameraRepositioner.vrInputs.length < 1)
+			console.error("no vr input? Check steamVR or Oculus to make sure it's working correctly")
+			
 		cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }])
 		
 		scene.add( controllers[ 0 ] );
@@ -24,9 +27,13 @@ function initVRInputSystem(controllers)
 	for(var i = 0; i < 2; i++)
 	{
 		controllers[ i ] = new THREE.Object3D();
-		controllers[ i ].grippingTop = false;
-		controllers[ i ].grippingSide = false;
-		controllers[ i ].add(new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() ))
+		for( var propt in riftControllerKeys )
+		{
+			controllers[ i ][propt] = false;
+		}
+		console.log(controllers[i])
+		controllers[ i ].controllerModel = new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() );
+		controllers[ i ].add( controllers[ i ].controllerModel );
 	}
 	new THREE.OBJLoader().load( "data/external_controller01_left.obj",
 		function ( object ) 
@@ -37,10 +44,9 @@ function initVRInputSystem(controllers)
 			controllerModelGeometry.applyMatrix( new THREE.Matrix4().makeTranslation(0.002,0.036,-0.039) );
 //			controllerModelGeometry.applyMatrix( new THREE.Matrix4().makeScale(0.76,0.76,0.76) );
 			
-			controllers[  LEFT_CONTROLLER_INDEX ].children[0].geometry = controllerModelGeometry;
-			
-			controllers[1-LEFT_CONTROLLER_INDEX ].children[0].geometry = controllerModelGeometry.clone();
-			controllers[1-LEFT_CONTROLLER_INDEX ].children[0].geometry.applyMatrix( new THREE.Matrix4().makeScale(-1,1,1) );
+			controllers[  LEFT_CONTROLLER_INDEX ].controllerModel.geometry = controllerModelGeometry;
+			controllers[1-LEFT_CONTROLLER_INDEX ].controllerModel.geometry = controllerModelGeometry.clone();
+			controllers[1-LEFT_CONTROLLER_INDEX ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeScale(-1,1,1) );
 		},
 		function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );
 	
@@ -65,6 +71,8 @@ function initVRInputSystem(controllers)
 			
 			controllers[affectedControllerIndex].grippingSide = gamepads[k].buttons[riftControllerKeys.grippingSide].pressed;
 			controllers[affectedControllerIndex].grippingTop = gamepads[k].buttons[riftControllerKeys.grippingTop].pressed;
+			
+			controllers[affectedControllerIndex].button1 = gamepads[k].buttons[riftControllerKeys.button1].pressed;
 			
 //			if( affectedControllerIndex === RIGHT_CONTROLLER_INDEX )
 //			{

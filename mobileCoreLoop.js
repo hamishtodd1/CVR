@@ -25,10 +25,7 @@ function mobileLoop(socket, cursor, labels) {
 	delta_t = ourClock.getDelta();
 //	console.log((1/delta_t))
 
-	if(isMobileOrTablet)
-		ourOrientationControls.update();
-	
-//	modelAndMap.maps[0].rotation.y += 0.02;
+	ourOrientationControls.update();
 	
 //	if(selector)
 //		selector.update();
