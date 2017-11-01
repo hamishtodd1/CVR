@@ -1,6 +1,7 @@
 function desktopInitialize()
 {
 	var labels = [];
+	var tools = [];
 	
 	var launcher = {
 		socketOpened: false,
@@ -29,13 +30,15 @@ function desktopInitialize()
 				{
 					return modelAndMap.scale.x;
 				}
-				
+			
+				initMutator(tools);
+//				initAtomDeleter(tools);
 //				initMutator();
 				
 				loadModel("data/tutModelWithLigand.txt", labels);
 				loadMap("data/try-2-map-fragment.tab.txt");
 				
-				desktopLoop( socket, controllers, VRInputSystem, labels );
+				desktopLoop( socket, controllers, VRInputSystem, labels, tools );
 			}
 		}
 	}

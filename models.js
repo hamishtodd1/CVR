@@ -24,6 +24,7 @@ function Atom(element,labelString,position)
 		this.element = element;
 	else
 		this.element = ELEMENT_TO_NUMBER[ element ];
+	this.labelString = labelString;
 	if(this.element === undefined)
 		console.error("unrecognized element: ", element)
 	this.position = position;
