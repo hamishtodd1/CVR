@@ -158,34 +158,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		messageHeader = splitMessage[0]
 		
 		'''
-		if messageHeader == "loopDone":
-			self.sendButtonState('lmb')
-			self.sendButtonState('F5')
-			#self.sendButtonState('o')
-			#self.sendButtonState('l')
-			
-			screenWidth = GetSystemMetrics(0)
-			screenHeight = GetSystemMetrics(1)
-			mouseX, mouseY = GetCursorPos()
-			
-			#this is a hack for multi-monitor setups. Really you should get the other screen resolution
-			while mouseX > screenWidth:
-				mouseX -= screenWidth
-			while mouseX < 0:
-				mouseX += screenWidth
-			while mouseY > screenHeight:
-				mouseY -= screenHeight
-			while mouseY < 0:
-				mouseY += screenHeight
-				
-			proportionalX = float(mouseX) / float(screenWidth)
-			proportionalY = float(mouseY) / float(screenHeight)
-			self.write_message( "mousePosition," + str(proportionalX) + "," + str(proportionalY) )
-		else:
-			self.write_message("Didn't understand that")
-			print('received unrecognized message:', message)
-		
-		elif messageHeader == "refine": #no addition or deletion
+		if messageHeader == "refine": #no addition or deletion
 			if runningInCoot:
 				imol = splitMessage[1]
 				chain_id = splitMessage[2]
@@ -198,8 +171,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 				newModelData = get_bonds_representation(imol)
 				self.write_message(newModelData)
 			
-		
-			
+				
 		elif messageHeader == "increase radius":
 			if runningInCoot:
 				currentRadius = get_map_radius()
@@ -224,8 +196,10 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		auto-fit-best-rotamer
 		view-matrix
 		set-view-matrix
-		'''
 		
+		self.write_message("Didn't understand that")
+		print('received unrecognized message:', message)
+		'''
 			
 	def sendButtonState(self, buttonString):
 		buttonState = 0
