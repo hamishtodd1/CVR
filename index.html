@@ -5,19 +5,31 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
 			body {
-				font-family: Monospace;
-				background-color: #101010;
-				color: #fff;
 				margin: 0px;
 				overflow: hidden;
-			}
-			a {
-				color: #f00;
 			}
 		</style>
 	</head>
 	<body>
 		<!--these two scripts are purely for the ripped-off setup-->
+		<script type="x-shader/x-vertex" id="modelVertexShader">
+			varying vec3 N;
+			varying vec3 v;
+			void main() 
+			{
+				//v = vec3(gl_ModelViewMatrix * gl_Vertex);       
+				//N = normalize(gl_NormalMatrix * gl_Normal);
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+				//gl_Position = gl_ModelViewProjectionMatrix * position;
+			}
+		</script>
+		<script type="x-shader/x-fragment" id="modelFragmentShader">
+			void main()
+			{
+				gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+			}
+		</script>
+		
 		<script type="x-shader/x-vertex" id="vertexShader">
 			varying vec3 vWorldPosition;
 			void main() {
@@ -41,34 +53,36 @@
 		<script src="lib/three.min.js"></script> <!--change to v=something if you want reloading-->
 		<script src="lib/WireframeGeometry.js"></script> <!--change to v=something if you want reloading-->
 		
-		<script src="lib/SceneFromDemo.js?v=101838"></script>
-		<script src="lib/THREEx.FullScreen.js?v=101838"></script>
-		<script src="lib/OBJLoader.js?v=101838"></script>
-		<script src="lib/PDBLoader.js?v=101838"></script>
+		<script src="lib/SceneFromDemo.js?v=102607"></script>
+		<script src="lib/THREEx.FullScreen.js?v=102607"></script>
+		<script src="lib/OBJLoader.js?v=102607"></script>
+		<script src="lib/zlib.min.js?v=102607"></script>
+		<script src="lib/FBXLoader.js?v=102607"></script>
+		<script src="lib/PDBLoader.js?v=102607"></script>
 		
-		<script src="lib/WebVR.js?v=101838"></script>
-		<script src="lib/VREffect.js?v=101838"></script>
-		<script src="lib/VRControls.js?v=101838"></script>
+		<script src="lib/WebVR.js?v=102607"></script>
+		<script src="lib/VREffect.js?v=102607"></script>
+		<script src="lib/VRControls.js?v=102607"></script>
 		
-		<script src="lib/StereoEffect.js?v=101838"></script>
-		<script src="lib/DeviceOrientationControls.js?v=101838"></script>
+		<script src="lib/StereoEffect.js?v=102607"></script>
+		<script src="lib/DeviceOrientationControls.js?v=102607"></script>
 		
-		<script src="stemoskiMC.js?v=101838"></script>
+		<script src="stemoskiMC.js?v=102607"></script>
 		
-		<script src="variables.js?v=101838"></script>
-		<script src="VRControlSystem.js?v=101838"></script>
-		<script src="socketCommunication.js?v=101838"></script>
+		<script src="variables.js?v=102607"></script>
+		<script src="VRControlSystem.js?v=102607"></script>
+		<script src="socketCommunication.js?v=102607"></script>
 		
-		<script src="models.js?v=101838"></script>
-		<script src="maps.js?v=101838"></script>
-		<script src="holdables.js?v=101838"></script>
-		<script src="tools.js?v=101838"></script>
+		<script src="models.js?v=102607"></script>
+		<script src="maps.js?v=102607"></script>
+		<script src="holdables.js?v=102607"></script>
+		<script src="tools.js?v=102607"></script>
 		
-		<script src="mobileInitialization.js?v=101838"></script>
-		<script src="mobileCoreLoop.js?v=101838"></script>
+		<script src="mobileInitialization.js?v=102607"></script>
+		<script src="mobileCoreLoop.js?v=102607"></script>
 		
-		<script src="desktopInitialization.js?v=101838"></script>
-		<script src="desktopCoreLoop.js?v=101838"></script>
+		<script src="desktopInitialization.js?v=102607"></script>
+		<script src="desktopCoreLoop.js?v=102607"></script>
 		
 		<script>
 			var isMobileOrTablet = false;

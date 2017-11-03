@@ -4,87 +4,22 @@ I will listen then...
 12:26 PMPaul EmsleyNot quite.
 12:27 PMPaul EmsleyThere is a slider that affects both the model and the Ramachandran plot
 12:27 PMPaul EmsleyYou can't pull the points on the ramachandran plot
+
 12:27 PMPaul EmsleyThat is a specific and very useful case of residue-range refine
 12:28 PMPaul Emsleyone up, central residue, one down
 12:28 PMPaul EmsleyCoot does the residue selection based on the central residue
 12:28 PMPaul Emsleyyou don't have to click on them
 12:28 PMPaul EmsleyPress the T key
 12:29 PMPaul Emsley(not shift T)
-12:29 PMPaul EmsleyHmmm...
-12:30 PMPaul EmsleyI rarely use the non-autofit version
-12:30 PMPaul EmsleyMaybe the model is in the wrong place.
-12:30 PMPaul Emsleyyes.
-12:30 PMPaul EmsleyYes.
-12:31 PMPaul Emsley:-)
-12:32 PMPaul EmsleyHmm..
+
 12:32 PMPaul EmsleyI don't understand the quesiton
 12:32 PMPaul EmsleyWhen do you think it should be doing refinement?
 12:32 PMPaul Emsley"all the time"?
-12:32 PMPaul EmsleyOh I see.
-12:32 PMPaul EmsleyHmm
-12:33 PMPaul EmsleyYes.
-12:33 PMPaul EmsleyWell... many tools do end in refinement
-12:33 PMPaul EmsleyOr we could script them so that they do.
-12:33 PMPaul EmsleyYes... 
+
 12:33 PMPaul EmsleyThe engine is the same, the atom selections are different
 12:34 PMPaul EmsleyYes, it gets converted into an array of atoms
 12:34 PMPaul EmsleyI hope so
-12:34 PMPaul EmsleySo how far did you get with the mutate tool?
-12:34 PMPaul EmsleyCan you select them
-12:35 PMPaul Emsley?
-12:35 PMPaul EmsleyOK.
-12:35 PMPaul EmsleyYes
-12:36 PMPaul EmsleyIndex 0
-12:36 PMPaul Emsley....
-12:36 PMPaul EmsleyIf you are dealing with protein models, no
-12:36 PMPaul Emsleyit will not be like that.
-12:36 PMPaul EmsleyThat's right.
-12:36 PMPaul EmsleyIt's a drug
-12:36 PMPaul EmsleyOK!
-12:37 PMPaul EmsleySounds good.
-12:37 PMPaul EmsleyIt is the connection to coot that seems the tricky bit
-12:37 PMPaul Emsley(to me)
-12:37 PMPaul EmsleyYou will send "mutate_and_autofit"
-12:38 PMPaul Emsleyas the tool choice 
-12:38 PMPaul Emsleyand send the atom spec string of the "picked" atom
-12:38 PMPaul Emsleycoot server is listening and will act on those strings.
-12:38 PMPaul EmsleyIn fact, the atom spec is best not a string
-12:39 PMPaul Emsleybut split into fields, 
-12:39 PMPaul Emsleymodel-number chain-id residue-number (etc)
-12:39 PMPaul Emsleyas a list of attributes
-12:40 PMPaul Emsleythat's right
-12:40 PMPaul EmsleyI will read the docs...
-12:41 PMPaul Emsleyone moment
-12:41 PMPaul EmsleyYes.
-12:42 PMPaul EmsleyI should do a python version of the documentation
-12:42 PMPaul EmsleyNext function
-12:42 PMPaul Emsleyno.
-12:42 PMPaul EmsleyI meant next function down in the documentation
-12:42 PMPaul Emsleyoh
-12:43 PMPaul Emsleyha!
-12:43 PMPaul Emsleyinconsistency
-12:43 PMPaul Emsley:-(
-12:43 PMPaul EmsleyI don't know
-12:43 PMPaul Emsleythat's a good start :-)
-12:43 PMPaul Emsley"ALA"
-12:44 PMPaul Emsley"TYR"
-12:44 PMPaul Emsley(etc)
-12:44 PMPaul Emsleyk
-12:44 PMPaul Emsleyok
-12:44 PMPaul EmsleyYes.
-12:44 PMPaul EmsleyNot first priority
-12:44 PMPaul Emsleythat is more important
-12:44 PMPaul Emsleypepflip flips the atoms of the mainchain
-12:45 PMPaul Emsleysidechain 180 flips the last chi angle of a side chain
-12:45 PMPaul EmsleyPerhaps I shouldn't be typing here.
-12:45 PMPaul Emsleythere is no record though.
-12:45 PMPaul Emsleyother window will record.
-12:45 PMPaul EmsleyOK
-12:45 PMPaul Emsleys
-12:46 PMPaul Emsleyyes
-12:46 PMPaul EmsleyYes.
-12:46 PMPaul EmsleyYes.
-12:46 PMPaul Emsleythat's right.
+
 12:46 PMPaul EmsleyThat will involve coot sending intermediate atoms.
 12:46 PMPaul EmsleyThe functions that don't send intermediate atoms will be easier.
 12:47 PMPaul Emsleye.g. mutate-and-auto-fit
