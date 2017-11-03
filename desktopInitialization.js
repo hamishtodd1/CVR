@@ -1,53 +1,66 @@
 function desktopInitialize()
 {
-	var labels = [];
-	var tools = [];
-	
 	var launcher = {
 		socketOpened: false,
-		fontLoaded: false,
+		dataLoaded:{
+			font: false,
+			controllerModel0: false,
+			controllerModel1: false
+		},
 		attemptLaunch: function()
 		{
-			/*
-			 * tutModelWithLigand
-			 * 
-			 * ribosome.txt
-			 * oneAtomOneBond.txt
-			 * 3C0.lst
-			 */
-			
-			if(!this.socketOpened || !this.fontLoaded)
+			for(var data in this.dataLoaded)
+			{
+				if( !this.dataLoaded[data] )
+					return;
+			}
+			if(!this.socketOpened )
 				return;
 			else
 			{
-				//rename when it's more than model and map. "the workspace" or something
-				modelAndMap = new THREE.Object3D();
-				modelAndMap.scale.setScalar(0.01); //angstrom
-				modelAndMap.position.z = -FOCALPOINT_DISTANCE;
-				scene.add(modelAndMap);
-				
-				getAngstrom = function()
-				{
-					return modelAndMap.scale.x;
-				}
-			
-				initMutator(tools);
+//				initMutator(tools);
 //				initAtomDeleter(tools);
-//				initMutator();
 				
-				loadModel("data/tutModelWithLigand.txt", labels);
-				loadMap("data/try-2-map-fragment.tab.txt");
+				/*
+				 * tutModelWithLigand
+				 * ribosome.txt
+				 * oneAtomOneBond.txt
+				 * 3C0.lst
+				 */
+				loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
+				initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
 				
-				desktopLoop( socket, controllers, VRInputSystem, labels, tools );
+				desktopLoop(ourVREffect, socket, controllers, VRInputSystem, visiBox, thingsToBeUpdated, holdables );
 			}
 		}
 	}
+
+	var thingsToBeUpdated = {};
+	thingsToBeUpdated.labels = [];
+	var holdables = {};
+	
+	var visiBox = initVisiBox(thingsToBeUpdated,holdables);
+	
+	var ourVREffect = new THREE.VREffect( renderer );
+	
+	controllers = Array(2);
+	var VRInputSystem = initVRInputSystem(controllers, launcher);
+	
+	//rename when it's more than model and map. "the workspace" or something
+	modelAndMap = new THREE.Object3D();
+	modelAndMap.scale.setScalar( 0.028 );
+	getAngstrom = function()
+	{
+		return modelAndMap.scale.x;
+	}
+	modelAndMap.position.z = -FOCALPOINT_DISTANCE;
+	scene.add(modelAndMap);
 	
 	new THREE.FontLoader().load( "data/gentilis.js", 
 		function ( gentilis ) {
 			THREE.defaultFont = gentilis;
 			
-			launcher.fontLoaded = true;
+			launcher.dataLoaded.font = true;
 			launcher.attemptLaunch();
 		},
 		function ( xhr ) {}, //progression function
@@ -55,13 +68,6 @@ function desktopInitialize()
 	);
 	
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
-	
-	ourVREffect = new THREE.VREffect( renderer );
-	
-	var controllers = Array(2);
-	var VRInputSystem = initVRInputSystem(controllers);
-	handSeparation = controllers[0].position.distanceTo( controllers[1].position );
-	oldHandSeparation = handSeparation;
 	
 	window.addEventListener( 'resize', function(){
 		console.log("resizing")
@@ -80,9 +86,43 @@ function desktopInitialize()
 		}
 	}, false );
 	
-	makeStandardScene(true);
+	makeScene(true);
 	
 //	initSphereSelector(cursor);
+	
+	{
+		var blinker = new THREE.Mesh(new THREE.PlaneBufferGeometry(10,10),new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0}))
+		blinker.blinkProgress = 1;
+		camera.add(blinker);
+		
+		document.addEventListener( 'keydown', function(event)
+		{
+			if(event.keyCode === 13 )
+			{
+				blinker.blinkProgress = -1;
+			}
+		}, false );
+		
+		blinker.update = function()
+		{
+			var oldBlinkProgress = blinker.blinkProgress;
+			
+			blinker.blinkProgress += frameDelta * 7;
+			blinker.material.opacity = 1-Math.abs(this.blinkProgress);
+			blinker.position.z = -camera.near - 0.00001;
+			
+			if( oldBlinkProgress < 0 && this.blinkProgress > 0)
+			{
+				ourVREffect.toggleEyeSeparation();
+				if( visiBox.position.distanceTo(camera.position) < camera.near )
+				{
+					visiBox.position.setLength(camera.near * 1.1);
+				}
+			}
+		}
+		
+		thingsToBeUpdated.blinker = blinker;
+	}
 
 	//socket crap
 	{

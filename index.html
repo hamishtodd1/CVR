@@ -5,19 +5,31 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
 			body {
-				font-family: Monospace;
-				background-color: #101010;
-				color: #fff;
 				margin: 0px;
 				overflow: hidden;
-			}
-			a {
-				color: #f00;
 			}
 		</style>
 	</head>
 	<body>
 		<!--these two scripts are purely for the ripped-off setup-->
+		<script type="x-shader/x-vertex" id="modelVertexShader">
+			varying vec3 N;
+			varying vec3 v;
+			void main() 
+			{
+				//v = vec3(gl_ModelViewMatrix * gl_Vertex);       
+				//N = normalize(gl_NormalMatrix * gl_Normal);
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+				//gl_Position = gl_ModelViewProjectionMatrix * position;
+			}
+		</script>
+		<script type="x-shader/x-fragment" id="modelFragmentShader">
+			void main()
+			{
+				gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+			}
+		</script>
+		
 		<script type="x-shader/x-vertex" id="vertexShader">
 			varying vec3 vWorldPosition;
 			void main() {

@@ -1,20 +1,57 @@
-function loadMap(mapURL, mapArray,  pairIndex)
+/*
+ * TODO: when the thing moves away, the lines get thicker
+ */
+
+function initMap(mapURL, slabPlanes)
 {
+	modelAndMap.map = new THREE.LineSegments( new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+		color:0xFFFFFF, //0x777799 is coot 
+		linewidth: 1.2, 
+		clippingPlanes: slabPlanes}));
+//	modelAndMap.map = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({
+//		//side: THREE.DoubleSide, transparent:true, opacity:0.5, 
+//		side: THREE.BackSide, 
+//		clippingPlanes: camera.slabPlanes,
+//		color:0x777799
+//	}));
+	if(modelAndMap.model)
+		modelAndMap.map.position.copy(modelAndMap.model.position);
+	modelAndMap.add(modelAndMap.map);
+	
+	var cubeMarchingSystem = CubeMarchingSystem();
+	modelAndMap.map.contour = function(isolevel)
+	{
+		if( !this.data )
+		{
+			return;
+		}
+		else
+		{
+			var oldGeometry = this.geometry;
+			if( this.isLineSegments)
+			{
+				//Alex Rose's code is much faster
+				//both the below take about 0.4s, yeesh
+				var solidGeometry = cubeMarchingSystem.createGeometry( modelAndMap.map.data, isolevel );
+				this.geometry = new WireframeGeometry( solidGeometry );
+				solidGeometry.dispose();
+			}
+			else
+			{
+				this.geometry = cubeMarchingSystem.createGeometry( modelAndMap.map.data, isolevel );
+				//the below takes a quarter the time of wireframe making
+				this.geometry.computeFaceNormals();
+				this.geometry.computeVertexNormals();
+			}
+			oldGeometry.dispose(); //if we expect them to go back we could remember it
+		}
+	}
+	
 	new THREE.FileLoader().load( mapURL,
 		function ( scalarFieldFile )
 		{
-			/*
-			 * Kinda feels like this one has some shader stuff https://webglsamples.org/blob/blob.html
-			 * Didn't volume ray casting allow you to render a surface without actually making the mesh? Wasn't that Dan's thing?
-			 * 		One way of doing that: all voxels inside surface have opacity 1, outside 0. But if we're getting an odd numbered pixel then it's all opacity 0
-			 * 		First try to do just that cross hatching, red and blue, so you know how to do fragment shaders
-			 * 		Likely a terrible idea, you can't get your molecules in it
-			 * Major problem that geometry shaders don't exist in webgl
-			 * This one has workers and is threejs but is from 2009 http://philogb.github.io/blog/2010/12/10/animating-isosurfaces-with-webgl-and-workers/#result
-			 * 
-			 */
 			var scalarFieldCommas = scalarFieldFile.replace(/\s+/g,",");
-			var mapData = 
+			modelAndMap.map.data = 
 			{
 				array: new Float32Array( JSON.parse("[" + scalarFieldCommas.substr(1,scalarFieldCommas.length-2) + "]") ),  //substring to remove start and end commas. -2 instead of -1 because javascript
 				sizeX: 53,
@@ -52,14 +89,10 @@ function loadMap(mapURL, mapArray,  pairIndex)
 				 */
 			}
 //			bottom left will be at molecule coordinates: 125*64.87/168, -10*78.323/200, 4*38.792/100
-			if( mapData.array.length !== mapData.sizeX*mapData.sizeY*mapData.sizeZ )
-				console.error("you may need to change map metadata")
-			
-			var cubeMarchingSystem = CubeMarchingSystem();
-			modelAndMap.map = cubeMarchingSystem.createMesh(mapData);
-			if(modelAndMap.model)
-				modelAndMap.map.position.copy(modelAndMap.model.position)
-			modelAndMap.add(modelAndMap.map)
+			if( modelAndMap.map.data.array.length !== modelAndMap.map.data.sizeX * modelAndMap.map.data.sizeY * modelAndMap.map.data.sizeZ )
+				console.error("you may need to change map metadata");
+				
+			modelAndMap.map.contour(0.9);
 		},
 		function ( xhr ) {}, //progression function
 		function ( xhr ) { console.error( "couldn't load PDB" ); }
