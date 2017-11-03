@@ -1,5 +1,14 @@
 '''
 
+The procedure was
+	in gitcoot/coot, git pull
+	in gitcoot/build, bash CIH (sets the configure stuff up?)
+	in gitcoot/build, make -j 4
+	in gitcoot/build, make install
+	in coot-Linux (?) it should be there
+
+Which of these if any involve intermediate atoms?
+
 go into coot git pull cd ../build make then make install
 
 Rerun autogen.sh <- not very frequent; fresh checkout
@@ -37,7 +46,7 @@ Single Residue
    Delete Residue
    Add terminal residue
    
-   Torsions #you said that changing phi psi was common?
+   Torsions
    Triple-Refine * #one up, central residue, one down. T key. Interesting.
    Base Pairing
    Pep-flip * #just select, send to coot. pepflip. Trivial

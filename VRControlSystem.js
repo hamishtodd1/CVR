@@ -1,8 +1,10 @@
-function initVRInputSystem(controllers)
+function initVRInputSystem(controllers, launcher)
 {
 	var VRInputSystem = {};
 	
 	var cameraRepositioner = new THREE.VRControls( camera );
+	
+	//wouldn't it make sense if moving whole was better without clipping planes?
 	
 	VRInputSystem.startGettingInput = function()
 	{
@@ -23,6 +25,40 @@ function initVRInputSystem(controllers)
 			button2: 4
 	}
 	
+	function overlappingHoldable(holdable)
+	{
+		var ourPosition = this.controllerModel.geometry.boundingSphere.center.clone();
+		this.localToWorld( ourPosition );
+		
+		var holdablePosition = holdable.boundingSphere.center.clone();
+		holdable.localToWorld( holdablePosition );
+		
+		var ourScale = this.matrixWorld.getMaxScaleOnAxis();
+		var holdableScale = holdable.matrixWorld.getMaxScaleOnAxis();
+		
+		if( ourPosition.distanceTo(holdablePosition) < holdable.boundingSphere.radius * holdableScale + this.controllerModel.geometry.boundingSphere.radius * ourScale )
+			return true;
+		else
+			return false;
+	}
+		
+	function loadControllerModel(i)
+	{
+		new THREE.OBJLoader().load( "data/external_controller01_" + (i===LEFT_CONTROLLER_INDEX?"left":"right") + ".obj",
+			function ( object ) 
+			{
+				controllers[  i ].controllerModel.geometry = object.children[0].geometry;
+			
+				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xAxis,0.5) );
+				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeTranslation((i==LEFT_CONTROLLER_INDEX?1:-1)*0.002,0.036,-0.039) );
+				controllers[  i ].controllerModel.geometry.computeBoundingSphere();
+				
+				launcher.dataLoaded["controllerModel"+i.toString()] = true;
+				launcher.attemptLaunch();
+			},
+			function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );
+	}
+	
 	var controllerMaterial = new THREE.MeshLambertMaterial({color:0x444444});
 	for(var i = 0; i < 2; i++)
 	{
@@ -31,24 +67,16 @@ function initVRInputSystem(controllers)
 		{
 			controllers[ i ][propt] = false;
 		}
-		console.log(controllers[i])
+		controllers[ i ].thumbStickAxes = [0,0];
 		controllers[ i ].controllerModel = new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() );
 		controllers[ i ].add( controllers[ i ].controllerModel );
-	}
-	new THREE.OBJLoader().load( "data/external_controller01_left.obj",
-		function ( object ) 
-		{	
-			var controllerModelGeometry = object.children[0].geometry;
+		controllers[ i ].oldPosition = controllers[ i ].position.clone();
+		controllers[ i ].oldQuaternion = controllers[ i ].quaternion.clone();
 		
-			controllerModelGeometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xAxis,0.5) );
-			controllerModelGeometry.applyMatrix( new THREE.Matrix4().makeTranslation(0.002,0.036,-0.039) );
-//			controllerModelGeometry.applyMatrix( new THREE.Matrix4().makeScale(0.76,0.76,0.76) );
-			
-			controllers[  LEFT_CONTROLLER_INDEX ].controllerModel.geometry = controllerModelGeometry;
-			controllers[1-LEFT_CONTROLLER_INDEX ].controllerModel.geometry = controllerModelGeometry.clone();
-			controllers[1-LEFT_CONTROLLER_INDEX ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeScale(-1,1,1) );
-		},
-		function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );
+		controllers[ i ].overlappingHoldable = overlappingHoldable;
+		
+		loadControllerModel(i);
+	}
 	
 	VRInputSystem.update = function(socket)
 	{
@@ -65,6 +93,12 @@ function initVRInputSystem(controllers)
 			if( affectedControllerIndex === 666 )
 				continue;
 			
+			controllers[affectedControllerIndex].thumbStickAxes[0] = gamepads[k].axes[0];
+			controllers[affectedControllerIndex].thumbStickAxes[1] = gamepads[k].axes[1];
+			
+			controllers[affectedControllerIndex].oldPosition.copy(controllers[ affectedControllerIndex ].position);
+			controllers[affectedControllerIndex].oldQuaternion.copy(controllers[ affectedControllerIndex ].quaternion);
+			
 			controllers[affectedControllerIndex].position.fromArray( gamepads[k].pose.position );
 			controllers[affectedControllerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
 			controllers[affectedControllerIndex].updateMatrixWorld();
@@ -76,7 +110,7 @@ function initVRInputSystem(controllers)
 			
 //			if( affectedControllerIndex === RIGHT_CONTROLLER_INDEX )
 //			{
-//				ourVREffect.eyeSeparationMultiplier = gamepads[k].buttons[riftTriggerButton].value;
+//				eyeSeparation = gamepads[k].buttons[riftControllerKeys.grippingTop].value;
 //			}
 		}
 	}

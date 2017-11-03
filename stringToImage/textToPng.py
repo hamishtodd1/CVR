@@ -1,3 +1,5 @@
+#note: would be faster if they were also resized to the right size
+
 import urllib.request
 
 stringArray = ["to be or not to be that is the sexton whether tis nobler in the sex to suffer the sex of sexy sex"]
