@@ -6,8 +6,18 @@ The procedure was
 	in gitcoot/build, make -j 4
 	in gitcoot/build, make install
 	in coot-Linux (?) it should be there
+	
+hostname -I 
 
-Which of these if any involve intermediate atoms?
+ctrl C
+ctrl D
+/home/htodd/auto.../bin/coot --no-graphics -s CVR/Server.py
+
+
+Workflow: save script, change window, ctrl+C to finish script in coot, ctrl+D to exit coot, up and enter to re-run coot
+Need to optimize this workflow.
+
+	One option:send python functions from javascript. Might end up doing this anyway.
 
 go into coot git pull cd ../build make then make install
 
@@ -18,9 +28,11 @@ May need to go to the build directory and type make
 
 
 	Question: am I the only one who has the perspective flip quite often?
-	Can you be my external examiner?
 	Would also be good to highlight which of these need the keyboard?
-	yo, how 
+	
+	Which of these if any involve intermediate atoms?
+	
+Trying to do drug design using realtime MD: like trying to figure out the size of mouse carcass that a bucket of worms most enjoy crawling on by putting your hands into the bucket and trying to change its shape
 '''
 
 Atom
