@@ -18,7 +18,7 @@ function desktopInitialize()
 				return;
 			else
 			{
-//				initMutator(tools);
+//				initMutator(thingsToBeUpdated);
 //				initAtomDeleter(tools);
 				
 				/*
@@ -27,8 +27,8 @@ function desktopInitialize()
 				 * oneAtomOneBond.txt
 				 * 3C0.lst
 				 */
-				loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
-				initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
+//				loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
+//				initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
 				
 				desktopLoop(ourVREffect, socket, controllers, VRInputSystem, visiBox, thingsToBeUpdated, holdables );
 			}
@@ -48,13 +48,37 @@ function desktopInitialize()
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.028 );
+	modelAndMap.scale.setScalar( 0.01 ); //0.028 is nice
 	getAngstrom = function()
 	{
 		return modelAndMap.scale.x;
 	}
 	modelAndMap.position.z = -FOCALPOINT_DISTANCE;
 	scene.add(modelAndMap);
+	
+	
+	
+	new THREE.PDBLoader().load( "https://files.rcsb.org/download/4INS.pdb",
+		function ( carbonAlphas, geometryAtoms )
+		{			
+			var tubeGeometry = new THREE.TubeBufferGeometry( 
+					new THREE.CatmullRomCurve3( carbonAlphas ),
+					carbonAlphas.length*8, 0.1, 16 );
+			
+			var spline = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
+			spline.position.z = -0.3;
+			
+			//to extend along binormal, note that the normal is the 0th index https://github.com/mrdoob/three.js/blob/master/src/geometries/TubeGeometry.js
+			
+			modelAndMap.add(spline);
+		},
+		function ( xhr ) {}, //progression function
+		function ( xhr ) { console.error( "couldn't load PDB (maybe something about .txt): ", aaNames[aaIndex]  ); }
+	);
+	
+	
+	
+	
 	
 	new THREE.FontLoader().load( "data/gentilis.js", 
 		function ( gentilis ) {

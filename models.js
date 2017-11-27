@@ -2,6 +2,20 @@
  * Change color of carbons as you go down the chain, to give you landmarks. This is interesting. Useful though?
  */
 
+/*
+ * Ribbon
+ * 
+ * 
+	1. Get all carbon alphas, ribbon will go through all of them
+	2. For all points, look at point just before and just after. Normal+tangent vector is in the same plane as all 3.
+	3. For all carbon alphas, look at the one just in front and cubic bezier to get a curve connecting the two
+	4. "Extrude a tube" going along all these connected curves
+	
+	OPTIONAL! Plausibly makes it worse, a single tube is less confusing when you're looking at something in density!
+	5. At places along tube where there are alpha helices and beta sheets, "thicken" tube along the curve's binomial vector.
+	6. AAs which are part of an alpha helix or beta sheet are listed in pdb file
+ */
+
 ELEMENT_TO_NUMBER = {
 		C: 0,
 		S: 1,

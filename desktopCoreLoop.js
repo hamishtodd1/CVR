@@ -117,8 +117,11 @@ function desktopLoop(ourVREffect, socket, controllers, VRInputSystem, visiBox, t
 			thingsToBeUpdated[thing].update();
 	}
 	
-	modelAndMap.map.material.linewidth = 0.2 / modelAndMap.position.distanceTo(camera.position);
-	modelAndMap.map.material.needsUpdate = true;
+	if( modelAndMap.map )
+	{
+		modelAndMap.map.material.linewidth = 0.2 / modelAndMap.position.distanceTo(camera.position);
+		modelAndMap.map.material.needsUpdate = true;
+	}
 	
 	socket.send("loopDone");
 	
