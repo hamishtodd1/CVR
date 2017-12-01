@@ -5,53 +5,6 @@ var yAxis = new THREE.Vector3(0,1,0);
 var xAxis = new THREE.Vector3(1,0,0);
 var zeroVector = new THREE.Vector3();
 
-THREE.Quaternion.prototype.distanceTo = function(q2)
-{
-	var theta = Math.acos(this.w*q2.w + this.x*q2.x + this.y*q2.y + this.z*q2.z);
-	if (theta>Math.PI/2) theta = Math.PI - theta;
-	return theta;
-}
-
-THREE.Face3.prototype.getCorner = function(i)
-{
-	switch(i)
-	{
-	case 0:
-		return this.a;
-	case 1:
-		return this.b;
-	case 2:
-		return this.c;
-	}
-}
-
-function sq(x)
-{
-	return x*x;
-}
-
-THREE.EfficientSphereBufferGeometry = function(radius)
-{
-	return new THREE.IcosahedronBufferGeometry(radius, 1);
-}
-THREE.EfficientSphereGeometry = function(radius)
-{
-	return new THREE.IcosahedronGeometry(radius, 1);
-}
-THREE.Vector3.prototype.addArray = function(array)
-{
-	this.x += array[0];
-	this.y += array[1];
-	this.z += array[2];
-}
-
-THREE.Face3.prototype.addOffset = function(offset)
-{
-	this.a += offset;
-	this.b += offset;
-	this.c += offset;
-}
-
 //-----Fundamental
 var ourClock = new THREE.Clock( true ); //.getElapsedTime ()
 var frameDelta = 0;

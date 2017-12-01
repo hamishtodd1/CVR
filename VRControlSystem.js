@@ -2,7 +2,7 @@ function initVRInputSystem(controllers, launcher)
 {
 	var VRInputSystem = {};
 	
-//	var cameraRepositioner = new THREE.VRControls( camera );
+	var cameraRepositioner = new THREE.VRControls( camera );
 	
 	//wouldn't it make sense if moving whole was better without clipping planes?
 	
@@ -11,7 +11,7 @@ function initVRInputSystem(controllers, launcher)
 //		if(cameraRepositioner.vrInputs.length < 1)
 //			console.error("no vr input? Check steamVR or Oculus to make sure it's working correctly")
 			
-//		cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }])
+		cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }])
 		
 		scene.add( controllers[ 0 ] );
 		scene.add( controllers[ 1 ] );
@@ -80,7 +80,7 @@ function initVRInputSystem(controllers, launcher)
 	
 	VRInputSystem.update = function(socket)
 	{
-//		cameraRepositioner.update(); //positions the head
+		cameraRepositioner.update(); //positions the head
 
 		var gamepads = navigator.getGamepads();
 		for(var k = 0; k < 2 && k < gamepads.length; ++k)

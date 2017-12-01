@@ -144,7 +144,7 @@ function initAtomDeleter(tools)
 	
 	It should also be possible to select between them using the thumbstick, so you can look at different results without moving your eyes
  */
-function initMutator(tools)
+function initMutator(thingsToBeUpdated)
 {
 	mutator = new THREE.Object3D();
 	console.log(mutator)
@@ -182,7 +182,7 @@ function initMutator(tools)
 			 	makeMoleculeMesh( mutator.AAs[aaIndex].geometry, mutator.AAs[aaIndex].atoms );
 			 	
 			 	mutator.AAs[aaIndex].position.copy(position)
-			 	mutator.AAs[aaIndex].scale.setScalar(getAngstrom()); //it can stay at this too
+			 	mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
 				mutator.add( mutator.AAs[aaIndex] );
 				
 				var textureLoader = new THREE.TextureLoader();
@@ -223,8 +223,8 @@ function initMutator(tools)
 		singleLoop(i,position);
 	}
 
-//	mutator.update = function()
-//	{
+	mutator.update = function()
+	{
 //		/*
 //		 * If it's on an amino acid it's working on that
 //		 * You take it off, the menu disappears.
@@ -249,10 +249,10 @@ function initMutator(tools)
 //		{
 ////			socket.send("mutate|" + residueNumber.toString() + "," + residue-number chain-id mol mol-for-map residue-type )
 //		}
-//	}
+	}
 	
 	mutator.position.z = -FOCALPOINT_DISTANCE;
-	tools.mutator = mutator;
+	thingsToBeUpdated.mutator = mutator;
 	scene.add(mutator);
 }
 
