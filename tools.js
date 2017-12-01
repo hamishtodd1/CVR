@@ -3,10 +3,10 @@
  * Take it off, but leave it in midair, it stays
  * Put it in proximity to your belt and look away from it and it'll go there
  * 
- * If you look down, all your tools return to your belt
+ * If you look down, all your thingsToBeUpdated return to your belt
  */
 
-/* Other tools
+/* Other thingsToBeUpdated
  * In real life: say you're picking things off a bush. If you want to get a few things you pinch, if you want a lot then you scoop. It's a natural action of your hand
  * Ok here: Sphere is both hands
  * Regularizer is pinch
@@ -50,7 +50,7 @@ Where:
 • at name is a string
 • altloc is a string
  */
-function initAtomDeleter(tools)
+function initAtomDeleter(thingsToBeUpdated)
 {
 	atomDeleter = new THREE.Object3D();
 	
@@ -105,7 +105,7 @@ function initAtomDeleter(tools)
 		}
 	}
 	
-	tools.push(atomDeleter);
+	thingsToBeUpdated.push(atomDeleter);
 	scene.add(atomDeleter)	
 }
 
@@ -147,7 +147,6 @@ function initAtomDeleter(tools)
 function initMutator(thingsToBeUpdated)
 {
 	mutator = new THREE.Object3D();
-	console.log(mutator)
 	
 	var handleRadius = 0.02;
 	var handleTubeRadius = handleRadius / 3;
@@ -167,13 +166,13 @@ function initMutator(thingsToBeUpdated)
 	               "ASN","ASP","CYS","GLN","HIS","ILE","LYS","MET", "PHE","PRO","TRP","TYR"];
 	mutator.AAs = Array(aaNames.length);
 	var ourPDBLoader = new THREE.PDBLoader();
-	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(4,32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5}) );
+	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(4*0.0108,32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5}) );
 	var innerCircleRadius = 0.1;
 	var textWidth = innerCircleRadius / 3;
 	function singleLoop(aaIndex, position)
 	{
 		ourPDBLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt",
-			function ( geometryAtoms ) {
+			function ( carbonAlphas, geometryAtoms ) {
 				mutator.AAs[aaIndex] = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( {vertexColors:THREE.VertexColors} ) );
 				mutator.AAs[aaIndex].atoms = Array(geometryAtoms.elements.length);
 			 	for(var i = 0; i < mutator.AAs[aaIndex].atoms.length; i++)
@@ -199,7 +198,8 @@ function initMutator(thingsToBeUpdated)
 					function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
 				);
 				
-				mutator.AAs[aaIndex].add( plaque.clone() );
+				mutator.add( plaque.clone() );
+				mutator.children[ mutator.children.length-1 ].position.copy(position)
 			},
 			function ( xhr ) {}, //progression function
 			function ( xhr ) { console.error( "couldn't load PDB (maybe something about .txt): ", aaNames[aaIndex]  ); }
@@ -216,7 +216,7 @@ function initMutator(thingsToBeUpdated)
 		}
 		else
 		{
-			position.y = innerCircleRadius * 1.9;
+			position.y = innerCircleRadius * 1.87;
 			position.applyAxisAngle( zAxis, (i-numInLayer1) / (il-numInLayer1) * TAU );
 		}
 		
@@ -225,20 +225,20 @@ function initMutator(thingsToBeUpdated)
 
 	mutator.update = function()
 	{
-//		/*
-//		 * If it's on an amino acid it's working on that
-//		 * You take it off, the menu disappears.
-//		 * While you're holding it it's not looking for anything
-//		 * Let go of it and 
-//		 * 		If you've put it on your belt, it stays there
-//		 * 		else, it works out which is the closest amino acid and goes straight for that. It is basically impossible to move the molecule in time.
-//		 * 
-//		 * It starts out on your belt
-//		 * 
-//		 * You've selected an amino acid.
-//		 * We send a message to coot. It mutates and autofits.
-//		 */
-//		
+		/*
+		 * If it's on an amino acid it's working on that
+		 * You take it off, the menu disappears.
+		 * While you're holding it it's not looking for anything
+		 * Let go of it and 
+		 * 		If you've put it on your belt, it stays there
+		 * 		else, it works out which is the closest amino acid and goes straight for that. It is basically impossible to move the molecule in time.
+		 * 
+		 * It starts out on your belt
+		 * 
+		 * You've selected an amino acid.
+		 * We send a message to coot. It mutates and autofits.
+		 */
+		
 //		if(this.residueSelected)
 //		for(var i = 0, il = this.potentialResidues.length; i < il; i++)
 //		{
