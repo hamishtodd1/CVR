@@ -15,10 +15,11 @@ function ensureDetachment(child, parent)
 	}
 }
 
-function desktopLoop(ourVREffect, socket, controllers, VRInputSystem, visiBox, thingsToBeUpdated, holdables ) {
+function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, holdables )
+{
 	frameDelta = ourClock.getDelta();
 	
-	VRInputSystem.update( socket);
+	vrInputSystem.update( socket );
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
@@ -122,11 +123,4 @@ function desktopLoop(ourVREffect, socket, controllers, VRInputSystem, visiBox, t
 		modelAndMap.map.material.linewidth = 0.2 / modelAndMap.position.distanceTo(camera.position);
 		modelAndMap.map.material.needsUpdate = true;
 	}
-	
-	socket.send("loopDone");
-	
-	ourVREffect.requestAnimationFrame( function(){
-		ourVREffect.render( scene, camera );
-		desktopLoop(ourVREffect, socket, controllers, VRInputSystem, visiBox, thingsToBeUpdated, holdables );
-	} );
 }

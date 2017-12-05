@@ -36,16 +36,34 @@ ATOM_COLORS[9].setRGB(1.0,1.0,1.0); //hydrogen
 
 DEFAULT_BOND_RADIUS = 0.13;
 
-function Atom(element,labelString,position)
+function Atom(element,position,model,chainId,residue,insertionCode,name,alternateConformer)
 {
+	/*
+	position, isHydrogen, label elements, residue. Last unused
+	 */
+
+	this.position = position;
+
+	this.model = model;
+	this.chainId = chainId;
+	this.residue = residue;
+	this.insertionCode = insertionCode;
+	this.name = name;
+	this.alternateConformer = alternateConformer;
+
+	this.labelString = "";
+	for(var i = 2, il = arguments.length; i < il; i++)
+	{
+		this.labelString += arguments[i] + ",";
+	}
+
 	if(typeof element === "number") //there are a lot of these things, best to keep it as a number
 		this.element = element;
 	else
 		this.element = ELEMENT_TO_NUMBER[ element ];
-	this.labelString = labelString;
+
 	if(this.element === undefined)
 		console.error("unrecognized element: ", element)
-	this.position = position;
 }
 function Residue()
 {
@@ -67,46 +85,45 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 	new THREE.FileLoader().load( modelURL,
 		function ( modelStringCoot )
 		{
-			var modelStringTranslated = modelStringCoot.replace(/(\])|(\[)|(\()|(\))|(Fa)|(Tr)/g, function(str,p1,p2,p3,p4,p5,p6) {
-				if(p1||p2) return '';
-		        if(p3) return '[';
-		        if(p4) return ']';
-		        if(p5) return 'fa';
-		        if(p6) return 'tr';
+			var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
+			{
+		        if(p1) return "[";
+		        if(p2) return "]";
+		        if(p3) return "fa";
+		        if(p4) return "tr";
+		        if(p5) return "'model 1'";
+				// if(p6||p7) return ""; //|(\])|(\[)
 		    });
-			var cootArray = eval(modelStringTranslated);
-			var atomDataFromCoot = cootArray[0];
-			var bondDataFromCoot = cootArray[1];
+		    var cootArray = eval(modelStringTranslated);
+		    if(cootArray.length>2)
+			{
+				console.error("got more than one model in there!")
+			}
+			//cootArray[0] is just the model number as a string. Is that necessary given the label?
+			var atomDataFromCoot = cootArray[1][0];
+			var bondDataFromCoot = cootArray[1][1];
+			console.log(atomDataFromCoot)
 			
-//			ourClippingPlanes[1] = new THREE.Plane( zAxis.clone().negate(), -0.2 );
 			var model = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
 				vertexColors: THREE.VertexColors,
-				clippingPlanes:visiBoxPlanes
+				clippingPlanes: visiBoxPlanes
 			} ) );
 			
 			var numberOfAtoms = 0;
 			for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
+			{
 				numberOfAtoms += atomDataFromCoot[i].length;
+			}
 			model.atoms = Array(numberOfAtoms);
 			
 			var lowestUnusedAtom = 0;
 			model.residues = [];
+			var a = new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3])
 			for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
 			{
 				for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
 				{
-					/*
-					 * atomDataFromCoot[i][j][2], the label:
-					 * 	model number,  
-					 * 	chain-id string, 
-					 * 	residue number, 
-					 * 	insertion-code string
-					 * 	atom name string,
-					 * 	alt-conf string
-					 * 
-					 * model 1 "A" 1 "" " CA " ""
-					 */
-					model.atoms[lowestUnusedAtom] = new Atom( i, atomDataFromCoot[i][j][2], new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3]) );
+					model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3]), atomDataFromCoot[i][j][3][0],atomDataFromCoot[i][j][3][1],atomDataFromCoot[i][j][3][2],atomDataFromCoot[i][j][3][3],atomDataFromCoot[i][j][3][4],atomDataFromCoot[i][j][3][5] );
 					
 					if( -1 !== atomDataFromCoot[i][j][3] )
 					{
@@ -147,6 +164,11 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 			}
 			
 			makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
+
+			// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
+			// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
+			// 		carbonAlphas.length*8, 0.1, 16 );
+			// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
 			
 			//-----Labels
 			{

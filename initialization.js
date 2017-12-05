@@ -1,8 +1,14 @@
-function desktopInitialize()
+/*
+Target remains: get coot connection working with "refine"
+Going to bring in laptop
+
+*/
+
+function initialize()
 {
 	if(!WEBVR || !WEBVR.isAvailable())
 	{
-		console.error("no webVR!")
+		console.error("No webvr!")
 		return;
 	}
 
@@ -24,10 +30,7 @@ function desktopInitialize()
 				return;
 			else
 			{
-				// initMutator(thingsToBeUpdated);
-				// thingsToBeUpdated.mutator.position.z = FOCALPOINT_DISTANCE;
-				// thingsToBeUpdated.mutator.rotation.y = TAU/2;
-
+				initMutator(thingsToBeUpdated, holdables);
 //				initAtomDeleter(tools);
 				
 				/*
@@ -37,9 +40,9 @@ function desktopInitialize()
 				 * 3C0.lst
 				 */
 				loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
-				initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
+				// initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
 				
-				desktopLoop(ourVREffect, socket, controllers, VRInputSystem, visiBox, thingsToBeUpdated, holdables );
+				render();
 			}
 		}
 	}
@@ -56,14 +59,24 @@ function desktopInitialize()
 	
 	var visiBox = initVisiBox(thingsToBeUpdated,holdables);
 	
-	var ourVREffect = new THREE.VREffect( renderer );
+	var ourVrEffect = new THREE.VREffect( renderer );
+	var loopCallString = getStandardFunctionCallString(loop);
+	function render()
+	{
+		eval(loopCallString);
+
+		ourVrEffect.requestAnimationFrame( function(){
+			ourVrEffect.render( scene, camera );
+			render();
+		} );
+	}
 	
 	controllers = Array(2);
-	var VRInputSystem = initVRInputSystem(controllers, launcher);
+	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer);
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.028 );
+	modelAndMap.scale.setScalar( 0.028 ); //0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return modelAndMap.scale.x;
@@ -96,8 +109,8 @@ function desktopInitialize()
 		if(event.keyCode === 190 && ( navigator.getVRDisplays !== undefined || navigator.getVRDevices !== undefined ) )
 		{
 			event.preventDefault();
-			VRInputSystem.startGettingInput();
-			ourVREffect.setFullScreen( true );
+			vrInputSystem.startGettingInput();
+			ourVrEffect.setFullScreen( true );
 		}
 	}, false );
 	
@@ -128,7 +141,7 @@ function desktopInitialize()
 			
 			if( oldBlinkProgress < 0 && this.blinkProgress > 0)
 			{
-				ourVREffect.toggleEyeSeparation();
+				ourVrEffect.toggleEyeSeparation();
 				if( visiBox.position.distanceTo(camera.position) < camera.near )
 				{
 					visiBox.position.setLength(camera.near * 1.1);

@@ -178,7 +178,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 				set_map_radius(currentRadius + 4)
 			self.sendMap()
 			
-		elif messageHeader == "mutate":
+		elif messageHeader == "mutateAndAutoFit":
 			if runningInCoot:
 				mutate_and_auto_fit( splitMessage[1],splitMessage[2],splitMessage[3],splitMessage[4] )
 				self.write_message(atomDeltas)

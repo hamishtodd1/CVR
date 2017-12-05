@@ -25,14 +25,10 @@ Rerun autogen.sh <- not very frequent; fresh checkout
 Rerun CIH.sh happens once a week
 May need to go to the build directory and type make
 
+Question: am I the only one who has the perspective flip quite often?
+Would also be good to highlight which of these need the keyboard?
 
-
-	Question: am I the only one who has the perspective flip quite often?
-	Would also be good to highlight which of these need the keyboard?
-	
-	Which of these if any involve intermediate atoms?
-	
-Trying to do drug design using realtime MD: like trying to figure out the size of mouse carcass that a bucket of worms most enjoy crawling on by putting your hands into the bucket and trying to change its shape
+Which of these if any involve intermediate atoms?
 '''
 
 Atom
@@ -118,6 +114,6 @@ Views
 2D Objects
 ----------
    Various Validation Graphs #???
-   Ramachandran Plot2D Objects
+   Ramachandran Plot2D Objects #cool, for navigating the thing
 
 * = of particular importance

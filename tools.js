@@ -144,22 +144,22 @@ function initAtomDeleter(thingsToBeUpdated)
 	
 	It should also be possible to select between them using the thumbstick, so you can look at different results without moving your eyes
  */
-function initMutator(thingsToBeUpdated)
+function initMutator(thingsToBeUpdated, holdables)
 {
 	mutator = new THREE.Object3D();
 	
-	var handleRadius = 0.02;
+	var handleRadius = 0.035;
 	var handleTubeRadius = handleRadius / 3;
 	var chunkOut = TAU / 4;
 	mutator.handle = new THREE.Mesh(new THREE.TorusGeometry(handleRadius, handleTubeRadius, 7, 31, TAU - chunkOut), new THREE.MeshBasicMaterial({transparent:true,color:0xFFFF00}));
 	mutator.handle.rotation.y = TAU / 4;
 	mutator.handle.rotation.z = chunkOut / 2;
 	mutator.handle.geometry.computeBoundingSphere();
-	mutator.add(mutator.handle);
-	
+	mutator.add(mutator.handle);	
 	mutator.boundingSphere = mutator.handle.geometry.boundingSphere;
+	mutator.ordinaryParent = scene;
 
-	var labelMaterial = new THREE.MeshLambertMaterial( { color: 0x156289 });
+	var labelMaterial = new THREE.MeshLambertMaterial( { color: 0x156289 } );
 	var aaNames = ["leucine","alanine","serine","glycine","valine","glutamic acid","arginine","threonine", //most common
 	               "asparagine","aspartic acid","cysteine","glutamine","histidine","isoleucine","lysine","methionine", "phenylalanine","proline","tryptophan","tyrosine"];
 	var aaAbbreviations = ["LEU","ALA","SER","GLY","VAL","GLU","ARG","THR",
@@ -171,35 +171,45 @@ function initMutator(thingsToBeUpdated)
 	var textWidth = innerCircleRadius / 3;
 	function singleLoop(aaIndex, position)
 	{
-		ourPDBLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt",
-			function ( carbonAlphas, geometryAtoms ) {
+		ourPDBLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
+			{
+				var newPlaque = plaque.clone();
+				newPlaque.position.copy(position);
+				mutator.add( newPlaque );
+
 				mutator.AAs[aaIndex] = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( {vertexColors:THREE.VertexColors} ) );
 				mutator.AAs[aaIndex].atoms = Array(geometryAtoms.elements.length);
 			 	for(var i = 0; i < mutator.AAs[aaIndex].atoms.length; i++)
-			 		mutator.AAs[aaIndex].atoms[i] = new Atom( geometryAtoms.elements[i], "", new THREE.Vector3().fromArray(geometryAtoms.attributes.position.array,3*i) );
+			 	{
+			 		mutator.AAs[aaIndex].atoms[i] = new Atom( geometryAtoms.elements[i], new THREE.Vector3().fromArray(geometryAtoms.attributes.position.array,3*i) );
+			 	}
 
 			 	makeMoleculeMesh( mutator.AAs[aaIndex].geometry, mutator.AAs[aaIndex].atoms );
 			 	
-			 	mutator.AAs[aaIndex].position.copy(position)
 			 	mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
-				mutator.add( mutator.AAs[aaIndex] );
+				newPlaque.add( mutator.AAs[aaIndex] );
 				
 				var textureLoader = new THREE.TextureLoader();
 				textureLoader.crossOrigin = true;
-				textureLoader.load(
-					"data/AAs/" + aaNames[aaIndex] + ".png",
-					function(texture) {
+				textureLoader.load( "data/AAs/" + aaNames[aaIndex] + ".png", function(texture) 
+					{
 						var nameMesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( textWidth, textWidth * (texture.image.naturalHeight/texture.image.naturalWidth) ), new THREE.MeshBasicMaterial({ map: texture }) );
 						nameMesh.position.copy(mutator.AAs[aaIndex].position)
 						nameMesh.position.y -= 0.01;
 						nameMesh.position.z = 0.01;
-						mutator.add(nameMesh)
+						newPlaque.add(nameMesh);
+
+						for(var i = 0, il = mutator.AAs.length; i < il; i++)
+						{
+							if(!mutator.AAs[i])
+							{
+								return;
+							}
+						}
+						mutator.update = properUpdate;
 					},
 					function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
 				);
-				
-				mutator.add( plaque.clone() );
-				mutator.children[ mutator.children.length-1 ].position.copy(position)
 			},
 			function ( xhr ) {}, //progression function
 			function ( xhr ) { console.error( "couldn't load PDB (maybe something about .txt): ", aaNames[aaIndex]  ); }
@@ -223,7 +233,8 @@ function initMutator(thingsToBeUpdated)
 		singleLoop(i,position);
 	}
 
-	mutator.update = function()
+	mutator.update = function(){};
+	function properUpdate()
 	{
 		/*
 		 * If it's on an amino acid it's working on that
@@ -238,21 +249,38 @@ function initMutator(thingsToBeUpdated)
 		 * You've selected an amino acid.
 		 * We send a message to coot. It mutates and autofits.
 		 */
-		
-//		if(this.residueSelected)
-//		for(var i = 0, il = this.potentialResidues.length; i < il; i++)
-//		{
-//			
-//		}
-//		
-//		if(0)
-//		{
-////			socket.send("mutate|" + residueNumber.toString() + "," + residue-number chain-id mol mol-for-map residue-type )
-//		}
+		for(var i = 0, il = this.AAs.length; i < il; i++)
+		{
+			this.AAs[i].parent.visible = !(this.parent === scene);
+			this.AAs[i].parent.children[0].visible = !(this.parent === scene);
+			this.AAs[i].parent.children[1].visible = !(this.parent === scene);
+
+			this.AAs[i].scale.setScalar(getAngstrom());
+		}
+
+		if(this.parent !== scene)
+		{
+			var closestAtomIndex = -1;
+			var closestAtomSqDistance = Infinity;
+			for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
+			{
+				if( modelAndMap.model.atoms[i].position.distanceToSquared(this.position) < closestAtomSqDistance )
+				{
+					closestAtomIndex = i;
+					closestAtomSqDistance = modelAndMap.model.atoms[i].position.distanceToSquared(this.position);
+				}
+			}
+
+			if( Math.sqrt(closestAtomSqDistance) < handleRadius )
+			{
+				socket.send("mutateAndAutoFit|" + modelAndMap.model.atoms[closestAtomIndex]. residueNumber.toString() + "," + residue-number chain-id mol mol-for-map residue-type );
+			}
+		}
 	}
 	
 	mutator.position.z = -FOCALPOINT_DISTANCE;
 	thingsToBeUpdated.mutator = mutator;
+	holdables.mutator = mutator;
 	scene.add(mutator);
 }
 

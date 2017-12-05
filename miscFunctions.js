@@ -67,3 +67,8 @@ THREE.Face3.prototype.addOffset = function(offset)
 	this.b += offset;
 	this.c += offset;
 }
+
+function getStandardFunctionCallString(myFunc)
+{
+	return myFunc.toString().split("\n",1)[0].substring(9);
+}
