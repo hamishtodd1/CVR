@@ -118,12 +118,12 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 			
 			var lowestUnusedAtom = 0;
 			model.residues = [];
-			var a = new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3])
+			// var a = new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3])
 			for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
 			{
 				for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
 				{
-					model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3]), atomDataFromCoot[i][j][3][0],atomDataFromCoot[i][j][3][1],atomDataFromCoot[i][j][3][2],atomDataFromCoot[i][j][3][3],atomDataFromCoot[i][j][3][4],atomDataFromCoot[i][j][3][5] );
+					model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]), atomDataFromCoot[i][j][2][0],atomDataFromCoot[i][j][2][1],atomDataFromCoot[i][j][2][2],atomDataFromCoot[i][j][2][3],atomDataFromCoot[i][j][2][4],atomDataFromCoot[i][j][2][5] );
 					
 					if( -1 !== atomDataFromCoot[i][j][3] )
 					{

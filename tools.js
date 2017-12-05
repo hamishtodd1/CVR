@@ -273,7 +273,7 @@ function initMutator(thingsToBeUpdated, holdables)
 
 			if( Math.sqrt(closestAtomSqDistance) < handleRadius )
 			{
-				socket.send("mutateAndAutoFit|" + modelAndMap.model.atoms[closestAtomIndex]. residueNumber.toString() + "," + residue-number chain-id mol mol-for-map residue-type );
+				// socket.send("mutateAndAutoFit|" + modelAndMap.model.atoms[closestAtomIndex]. residueNumber.toString() + "," + residue-number chain-id mol mol-for-map residue-type );
 			}
 		}
 	}
