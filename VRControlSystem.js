@@ -39,9 +39,13 @@ function initVrInputSystem(controllers, launcher,renderer)
 		var holdableScale = holdable.matrixWorld.getMaxScaleOnAxis();
 		
 		if( ourPosition.distanceTo(holdablePosition) < holdable.boundingSphere.radius * holdableScale + this.controllerModel.geometry.boundingSphere.radius * ourScale )
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 		
 	function loadControllerModel(i)
@@ -50,8 +54,11 @@ function initVrInputSystem(controllers, launcher,renderer)
 			function ( object ) 
 			{
 				controllers[  i ].controllerModel.geometry = object.children[0].geometry;
-				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xAxis,0.5) );
-				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeTranslation((i==LEFT_CONTROLLER_INDEX?1:-1)*0.002,0.036,-0.039) );
+				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xAxis,TAU/8) );
+				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeTranslation(
+					0.008 * ( i == LEFT_CONTROLLER_INDEX?-1:1),
+					0.041,
+					-0.03) );
 				controllers[  i ].controllerModel.geometry.computeBoundingSphere();
 				
 				launcher.dataLoaded["controllerModel"+i.toString()] = true;
@@ -69,8 +76,14 @@ function initVrInputSystem(controllers, launcher,renderer)
 			controllers[ i ][propt] = false;
 		}
 		controllers[ i ].thumbStickAxes = [0,0];
+
 		controllers[ i ].controllerModel = new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() );
 		controllers[ i ].add( controllers[ i ].controllerModel );
+
+		controllers[ i ].controllerModel.pointer = new THREE.Mesh( new THREE.CylinderBufferGeometryUncentered(0.001, 2), new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) );
+		controllers[ i ].controllerModel.pointer.rotation.x = -TAU/4;
+		controllers[ i ].controllerModel.add( controllers[ i ].controllerModel.pointer );
+
 		controllers[ i ].oldPosition = controllers[ i ].position.clone();
 		controllers[ i ].oldQuaternion = controllers[ i ].quaternion.clone();
 		

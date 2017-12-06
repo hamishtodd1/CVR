@@ -1,34 +1,25 @@
 '''
-
-The procedure was
+Update procedure:
+   Switch virtual machine connection mode to whatever it is normally (NAT?)
 	in gitcoot/coot, git pull
 	in gitcoot/build, bash CIH (sets the configure stuff up?)
 	in gitcoot/build, make -j 4
 	in gitcoot/build, make install
 	in coot-Linux (?) it should be there
-	
-hostname -I 
 
-ctrl C
-ctrl D
-/home/htodd/auto.../bin/coot --no-graphics -s CVR/Server.py
-
+Running procedure:
+   Switch virtual machine connection mode to host-only
+   hostname -I gets ip address to put in browser
+   For no graphics: /home/htodd/auto.../bin/coot --no-graphics -s CVR/Server.py
+   To get out of coot:
+      ctrl C
+      ctrl D
 
 Workflow: save script, change window, ctrl+C to finish script in coot, ctrl+D to exit coot, up and enter to re-run coot
 Need to optimize this workflow.
 
-	One option:send python functions from javascript. Might end up doing this anyway.
+One option:send python functions from javascript. Might end up doing this anyway.  
 
-go into coot git pull cd ../build make then make install
-
-Rerun autogen.sh <- not very frequent; fresh checkout
-Rerun CIH.sh happens once a week
-May need to go to the build directory and type make
-
-Question: am I the only one who has the perspective flip quite often?
-Would also be good to highlight which of these need the keyboard?
-
-Which of these if any involve intermediate atoms?
 '''
 
 Atom
@@ -51,9 +42,9 @@ Single Residue
    Mutate and Autofit-rotamer #send the spec of the picked atom then "mutate_and_autofit"
    
 		#trivial
-   Delete Residue
+   Delete residue
    Add terminal residue
-   
+      
    Torsions
    Triple-Refine * #one up, central residue, one down. T key. Interesting.
    Base Pairing

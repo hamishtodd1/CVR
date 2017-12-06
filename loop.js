@@ -23,13 +23,15 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
-		{
-			modelAndMap.scale.setScalar( modelAndMap.scale.x * (1+controllers[i].thumbStickAxes[1] / 100) );
-			var minScale = 0.0000001;
-			if( modelAndMap.scale.x < minScale )
-				modelAndMap.scale.setScalar( minScale )
-		}
+		// if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
+		// {
+		// 	modelAndMap.scale.setScalar( modelAndMap.scale.x * (1+controllers[i].thumbStickAxes[1] / 100) );
+		// 	var minScale = 0.0000001;
+		// 	if( modelAndMap.scale.x < minScale )
+		// 		modelAndMap.scale.setScalar( minScale )
+		// }
+
+		controllers[i].controllerModel.pointer.visible = controllers[i].button1;
 		
 		if( controllers[i].grippingTop )
 		{
@@ -65,7 +67,7 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	}
 	
 	var bothAttachedController = RIGHT_CONTROLLER_INDEX;
-	
+
 	if( controllers[RIGHT_CONTROLLER_INDEX].grippingSide && controllers[LEFT_CONTROLLER_INDEX].grippingSide )
 	{
 		ensureDetachment(visiBox, controllers[1-bothAttachedController]);
@@ -77,11 +79,11 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 			controllers[0].oldPosition.distanceTo( controllers[1].oldPosition );
 		
 		visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 
-		visiBox.scale.setScalar( visiBox.scale.x * handSeparationDifferential );
+		visiBox.scale.multiplyScalar( handSeparationDifferential );
 		visiBox.position.multiplyScalar(visiBox.scale.x);
 		
 		modelAndMap.position.multiplyScalar( 1 / modelAndMap.scale.x ); 
-		modelAndMap.scale.setScalar( modelAndMap.scale.x * handSeparationDifferential );
+		modelAndMap.scale.multiplyScalar( handSeparationDifferential );
 		modelAndMap.position.multiplyScalar(modelAndMap.scale.x);
 	}
 	else

@@ -31,7 +31,7 @@ function initialize()
 			else
 			{
 				initMutator(thingsToBeUpdated, holdables);
-//				initAtomDeleter(tools);
+				initAtomDeleter(thingsToBeUpdated, holdables);
 				
 				/*
 				 * tutModelWithLigand
@@ -39,7 +39,7 @@ function initialize()
 				 * oneAtomOneBond.txt
 				 * 3C0.lst
 				 */
-				loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
+				loadModel("data/newData.txt", thingsToBeUpdated, visiBox.planes);
 				// initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
 				
 				render();
@@ -76,7 +76,7 @@ function initialize()
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.028 ); //0.028 is nice, 0.01 fits on screen
+	modelAndMap.scale.setScalar( 0.045 ); //0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return modelAndMap.scale.x;
@@ -84,8 +84,8 @@ function initialize()
 	modelAndMap.position.z = -FOCALPOINT_DISTANCE;
 	scene.add(modelAndMap);
 	
-	new THREE.FontLoader().load( "data/gentilis.js", 
-		function ( gentilis ) {
+	new THREE.FontLoader().load( "data/gentilis.js", function ( gentilis )
+		{
 			THREE.defaultFont = gentilis;
 			
 			launcher.dataLoaded.font = true;

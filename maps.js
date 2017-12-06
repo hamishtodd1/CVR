@@ -5,7 +5,7 @@
 function initMap(mapURL, slabPlanes)
 {
 	modelAndMap.map = new THREE.LineSegments( new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-		color:0xFFFFFF, //0x777799 is coot 
+		color:0x4444AA, //0x777799 is coot 
 		linewidth: 1.2, 
 		clippingPlanes: slabPlanes}));
 //	modelAndMap.map = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({
@@ -92,7 +92,7 @@ function initMap(mapURL, slabPlanes)
 			if( modelAndMap.map.data.array.length !== modelAndMap.map.data.sizeX * modelAndMap.map.data.sizeY * modelAndMap.map.data.sizeZ )
 				console.error("you may need to change map metadata");
 				
-			modelAndMap.map.contour(0.9);
+			modelAndMap.map.contour(0.6);
 		},
 		function ( xhr ) {}, //progression function
 		function ( xhr ) { console.error( "couldn't load PDB" ); }

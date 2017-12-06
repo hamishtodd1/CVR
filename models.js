@@ -34,7 +34,7 @@ ATOM_COLORS[3].setRGB(0.2,0.4,0.8); //nitrogen
 ATOM_COLORS[6].setRGB(1.0,165/255,0.0); //phosphorus
 ATOM_COLORS[9].setRGB(1.0,1.0,1.0); //hydrogen
 
-DEFAULT_BOND_RADIUS = 0.13;
+DEFAULT_BOND_RADIUS = 0.055;
 
 function Atom(element,position,model,chainId,residue,insertionCode,name,alternateConformer)
 {
@@ -102,7 +102,6 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 			//cootArray[0] is just the model number as a string. Is that necessary given the label?
 			var atomDataFromCoot = cootArray[1][0];
 			var bondDataFromCoot = cootArray[1][1];
-			console.log(atomDataFromCoot)
 			
 			var model = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
 				vertexColors: THREE.VertexColors,
@@ -123,12 +122,15 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 			{
 				for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
 				{
+					console.log( atomDataFromCoot[i][j] )
 					model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]), atomDataFromCoot[i][j][2][0],atomDataFromCoot[i][j][2][1],atomDataFromCoot[i][j][2][2],atomDataFromCoot[i][j][2][3],atomDataFromCoot[i][j][2][4],atomDataFromCoot[i][j][2][5] );
 					
 					if( -1 !== atomDataFromCoot[i][j][3] )
 					{
 						if( !model.residues[ atomDataFromCoot[i][j][3] ] )
+						{
 							model.residues[ atomDataFromCoot[i][j][3] ] = new Residue();
+						}
 						
 						model.residues[ atomDataFromCoot[i][j][3] ].atoms.push( model.atoms[lowestUnusedAtom] );
 						model.atoms[lowestUnusedAtom].residue = model.residues[ atomDataFromCoot[i][j][3] ];
@@ -145,22 +147,16 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 			
 			model.moveAtom = function(atomIndex)
 			{
-				this.atoms[atomIndex].position.x += 2;
+				this.atoms[atomIndex].position.y += 1;
+				// console.log(this.atoms[atomIndex].position.y)
+				this.geometry.positionAtom(atomIndex);
 				
-				for(var k = 0; k < nSphereVertices; k++)
-				{
-					model.geometry.attributes.position.setXYZ( this.atoms[atomIndex].firstVertexIndex + k, 
-							atomGeometry.vertices[k].x + model.atoms[i].position.x, 
-							atomGeometry.vertices[k].y + model.atoms[i].position.y, 
-							atomGeometry.vertices[k].z + model.atoms[i].position.z );
-				}
-				
-				if(this.atoms[atomIndex].residue)
-					this.atoms[atomIndex].residue.updatePosition();
+				// if(this.atoms[atomIndex].residue)
+				// 	this.atoms[atomIndex].residue.updatePosition();
 				
 //				socket.send("moveAtom|" + this.atoms[atomIndex].labelString )
 				
-				model.verticesNeedUpdate = true;
+				model.geometry.attributes.position.needsUpdate = true;
 			}
 			
 			makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
@@ -192,15 +188,11 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 				{
 					if( this.atoms[atomIndex].label === undefined)
 					{
-						this.atoms[atomIndex].label = new THREE.Mesh(
-							new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 2, font: THREE.defaultFont }),
-							labelMaterial );
-						
+						this.atoms[atomIndex].label = new THREE.Mesh( new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 16, font: THREE.defaultFont }), labelMaterial );
+						this.atoms[atomIndex].label.update = updateLabel;
+						this.atoms[atomIndex].label.position.copy(this.atoms[atomIndex].position); //assigning them to be equal has no effect!
 						labels.push( this.atoms[atomIndex].label );
 						
-						this.atoms[atomIndex].label.update = updateLabel;
-						
-						this.atoms[atomIndex].label.position = this.atoms[atomIndex].position;
 						this.add( this.atoms[atomIndex].label );
 						
 						return;
@@ -208,9 +200,13 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 					else
 					{
 						if( this.atoms[atomIndex].label.visible )
+						{
 							this.atoms[atomIndex].label.visible = false;
+						}
 						else
+						{
 							this.atoms[atomIndex].label.visible = true;
+						}
 					}
 				}
 			}
@@ -244,19 +240,8 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 	);
 }
 
-//assumes ourVector is not zeroVector
-function randomPerpVector(ourVector){
-	var perpVector = new THREE.Vector3();
-	
-	if( ourVector.equals(zAxis))
-		perpVector.crossVectors(ourVector, yAxis);
-	else
-		perpVector.crossVectors(ourVector, zAxis);
-	
-	return perpVector;
-}
-
-function insertCylinderCoordsAndNormals(A,B, vertexAttribute, normalAttribute, cylinderSides, firstVertexIndex, radius ) {
+function insertCylinderCoordsAndNormals(A,B, vertexAttribute, normalAttribute, cylinderSides, firstVertexIndex, radius )
+{
 	var aToB = new THREE.Vector3().subVectors(B,A);
 	aToB.normalize();
 	var tickVector = randomPerpVector(aToB);
@@ -318,35 +303,43 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 	}
 	var numberOfCylinders = 0;
 	for(var i = 0, il = bondData.length; i < il; i++ )
+	{
 		numberOfCylinders += bondData[i].length;
+	}
 	
-	var hydrogenGeometry = new THREE.EfficientSphereGeometry(DEFAULT_BOND_RADIUS);
-	var atomGeometry = new THREE.EfficientSphereGeometry(DEFAULT_BOND_RADIUS * 3);
+	var hydrogenGeometry = new THREE.EfficientSphereGeometry(DEFAULT_BOND_RADIUS * 2);
+	var atomGeometry = new THREE.EfficientSphereGeometry(DEFAULT_BOND_RADIUS * 5);
 	atomGeometry.vertexNormals = Array(atomGeometry.vertices.length);
 	for(var i = 0, il = atomGeometry.vertices.length; i < il; i++)
+	{
 		atomGeometry.vertexNormals[i] = atomGeometry.vertices[i].clone().normalize();
+	}
 	
 	var nSphereVertices = atomGeometry.vertices.length;
 	var nSphereFaces = atomGeometry.faces.length;
 	var cylinderSides = 15;
 	
 	var numberOfAtoms = atoms.length;
+	//Speedup opportunity: you only need as many colors as there are atoms and bonds, not as many as there are triangles.
 	bufferGeometry.addAttribute( 'position',new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
-	bufferGeometry.addAttribute( 'color', 	new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) ); //Speedup opportunity: you only need as many colors as there are atoms and bonds
+	bufferGeometry.addAttribute( 'color', 	new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
 	bufferGeometry.addAttribute( 'normal',	new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
 	bufferGeometry.setIndex( new THREE.BufferAttribute(new Uint32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereFaces) ), 1) );
-	
-	bufferGeometry.index.setABC = function(index,a,b,c) //can't use XYZ because itemsize is 1
+
+	//can't use XYZ because itemsize is 1
+	bufferGeometry.index.setABC = function(index,a,b,c)
 	{
-		this.array[index*3+0] = a;
-		this.array[index*3+1] = b;
-		this.array[index*3+2] = c;
+		this.array[ index*3+0 ] = a;
+		this.array[ index*3+1 ] = b;
+		this.array[ index*3+2 ] = c;
 	}
 	
 	bufferGeometry.colorAtom = function( atomIndex, newColor )
 	{
 		if(!newColor)
+		{
 			newColor = ATOM_COLORS[ atoms[atomIndex].element ];
+		}
 		
 		for(var k = 0; k < nSphereVertices; k++)
 		{
@@ -356,6 +349,30 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 				newColor.b );
 		}
 	}
+
+	bufferGeometry.positionAtom = function( atomIndex )
+	{
+		if(atoms[atomIndex].element === 9)
+		{
+			for(var k = 0; k < nSphereVertices; k++)
+			{
+				this.attributes.position.setXYZ( atoms[atomIndex].firstVertexIndex + k, 
+						hydrogenGeometry.vertices[k].x + atoms[atomIndex].position.x, 
+						hydrogenGeometry.vertices[k].y + atoms[atomIndex].position.y, 
+						hydrogenGeometry.vertices[k].z + atoms[atomIndex].position.z );
+			}
+		}
+		else
+		{
+			for(var k = 0; k < nSphereVertices; k++)
+			{
+				this.attributes.position.setXYZ( atoms[atomIndex].firstVertexIndex + k, 
+						atomGeometry.vertices[k].x + atoms[atomIndex].position.x, 
+						atomGeometry.vertices[k].y + atoms[atomIndex].position.y, 
+						atomGeometry.vertices[k].z + atoms[atomIndex].position.z );
+			}
+		}
+	}
 	
 	for(var i = 0, il = atoms.length; i < il; i++ )
 	{
@@ -363,24 +380,10 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 		atoms[i].firstFaceIndex = i*nSphereFaces;
 		
 		bufferGeometry.colorAtom(i);
+		bufferGeometry.positionAtom(i)
 		
 		for(var k = 0; k < nSphereVertices; k++)
 		{
-			if(atoms[i].element === 9)
-			{
-				bufferGeometry.attributes.position.setXYZ( atoms[i].firstVertexIndex + k, 
-						hydrogenGeometry.vertices[k].x + atoms[i].position.x, 
-						hydrogenGeometry.vertices[k].y + atoms[i].position.y, 
-						hydrogenGeometry.vertices[k].z + atoms[i].position.z );
-			}
-			else
-			{
-				bufferGeometry.attributes.position.setXYZ( atoms[i].firstVertexIndex + k, 
-						atomGeometry.vertices[k].x + atoms[i].position.x, 
-						atomGeometry.vertices[k].y + atoms[i].position.y, 
-						atomGeometry.vertices[k].z + atoms[i].position.z );
-			}
-			
 			bufferGeometry.attributes.normal.setXYZ( atoms[i].firstVertexIndex + k, 
 					atomGeometry.vertexNormals[k].x, 
 					atomGeometry.vertexNormals[k].y, 
@@ -421,12 +424,18 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 			
 			var bondRadius = DEFAULT_BOND_RADIUS;
  			if( i === 9) //hydrogen
+ 			{
 				bondRadius /= 3;
+ 			}
 			else if(bondData[i][j][2] )
+			{
 				bondRadius /= bondData[i][j][2];
+			}
  			
  			if(bondData[i][j][2] === 2)
+ 			{
  				console.log("double?")
+ 			}
 			
 			insertCylinderCoordsAndNormals( cylinderBeginning, cylinderEnd, bufferGeometry.attributes.position, bufferGeometry.attributes.normal, cylinderSides, firstVertexIndex, bondRadius );
 			
@@ -443,184 +452,3 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//function planesFromMesh( vertices, indices ) {
-//	// creates a clipping volume from a convex triangular mesh
-//	// specified by the arrays 'vertices' and 'indices'
-//	var n = indices.length / 3,
-//		result = new Array( n );
-//	for ( var i = 0, j = 0; i < n; ++ i, j += 3 ) {
-//		var a = vertices[ indices[   j   ] ],
-//			b = vertices[ indices[ j + 1 ] ],
-//			c = vertices[ indices[ j + 2 ] ];
-//		result[ i ] = new THREE.Plane().
-//				setFromCoplanarPoints( a, b, c );
-//	}
-//	return result;
-//}
-//function createPlanes( n ) {
-//	// creates an array of n uninitialized plane objects
-//	var result = new Array( n );
-//	for ( var i = 0; i !== n; ++ i )
-//		result[ i ] = new THREE.Plane();
-//	return result;
-//}
-//function cylindricalPlanes( n, innerRadius ) {
-//	var result = createPlanes( n );
-//	for ( var i = 0; i !== n; ++ i ) {
-//		var plane = result[ i ],
-//			angle = i * Math.PI * 2 / n;
-//		plane.normal.set(
-//				Math.cos( angle ), 0, Math.sin( angle ) );
-//		plane.constant = innerRadius;
-//	}
-//	return result;
-//}
-//var planeToMatrix = ( function() {
-//	// creates a matrix that aligns X/Y to a given plane
-//	// temporaries:
-//	var xAxis = new THREE.Vector3(),
-//		yAxis = new THREE.Vector3(),
-//		trans = new THREE.Vector3();
-//	return function planeToMatrix( plane ) {
-//		var zAxis = plane.normal,
-//			matrix = new THREE.Matrix4();
-//		if ( Math.abs( zAxis.x ) > Math.abs( zAxis.z ) ) {
-//			yAxis.set( -zAxis.y, zAxis.x, 0 );
-//		} else {
-//			yAxis.set( 0, -zAxis.z, zAxis.y );
-//		}
-//		xAxis.crossVectors( yAxis.normalize(), zAxis );
-//		plane.coplanarPoint( trans );
-//		return matrix.set(
-//			xAxis.x, yAxis.x, zAxis.x, trans.x,
-//			xAxis.y, yAxis.y, zAxis.y, trans.y,
-//			xAxis.z, yAxis.z, zAxis.z, trans.z,
-//				0,		0,		0,			1 );
-//	};
-//} )();
-//// A regular tetrahedron for the clipping volume:
-//var Vertices = [
-//		new THREE.Vector3( + 1,   0, + Math.SQRT1_2 ),
-//		new THREE.Vector3( - 1,   0, + Math.SQRT1_2 ),
-//		new THREE.Vector3(   0, + 1, - Math.SQRT1_2 ),
-//		new THREE.Vector3(   0, - 1, - Math.SQRT1_2 )
-//	],
-//	Indices = [
-//		0, 1, 2,	0, 2, 3,	0, 3, 1,	1, 3, 2
-//	],
-//	Planes = planesFromMesh( Vertices, Indices ),
-//	PlaneMatrices = Planes.map( planeToMatrix ),
-//	GlobalClippingPlanes = cylindricalPlanes( 5, 3.5 ),
-//	Empty = Object.freeze( [] );
-//function init()
-//{
-//	// Geometry
-//	clipMaterial = new THREE.MeshPhongMaterial( {
-//		color: 0xee0a10,
-//		shininess: 100,
-//		side: THREE.DoubleSide,
-//		// Clipping setup:
-//		clippingPlanes: createPlanes( Planes.length ),
-//		clipShadows: true
-//	} );
-//	object = new THREE.Group();
-//	var geometry = new THREE.BoxBufferGeometry( 0.18, 0.18, 0.18 );
-//	for ( var z = -2; z <= 2; ++ z )
-//	for ( var y = -2; y <= 2; ++ y )
-//	for ( var x = -2; x <= 2; ++ x ) {
-//		var mesh = new THREE.Mesh( geometry, clipMaterial );
-//		mesh.position.set( x / 5, y / 5, z / 5 );
-//		mesh.castShadow = true;
-//		object.add( mesh );
-//	}
-//	scene.add( object );
-//	var planeGeometry =
-//			new THREE.PlaneBufferGeometry( 3, 3, 1, 1 );
-//	volumeVisualization = new THREE.Group();
-//	volumeVisualization.visible = false;
-//	for ( var i = 0, n = Planes.length; i !== n; ++ i ) {
-//		var material = new THREE.MeshBasicMaterial( {
-//			color:  color.setHSL( i / n, 0.5, 0.5 ).getHex(),
-//			side: THREE.DoubleSide,
-//			opacity: 0.2,
-//			transparent: true,
-//			// clip to the others to show the volume (wildly
-//			// intersecting transparent planes look bad)
-//			clippingPlanes: clipMaterial.clippingPlanes.
-//					filter( function( _, j ) { return j !== i; } )
-//			// no need to enable shadow clipping - the plane
-//			// visualization does not cast shadows
-//		} );
-//		volumeVisualization.add(
-//				new THREE.Mesh( planeGeometry, material ) );
-//	}
-//	scene.add( volumeVisualization );
-//	var ground = new THREE.Mesh( planeGeometry,
-//			new THREE.MeshPhongMaterial( {
-//				color: 0xa0adaf, shininess: 150 } ) );
-//	ground.rotation.x = - Math.PI / 2;
-//	ground.scale.multiplyScalar( 3 );
-//	ground.receiveShadow = true;
-//	scene.add( ground );
-//	
-//	// Clipping setup:
-//	globalClippingPlanes = createPlanes( GlobalClippingPlanes.length );
-//	renderer.clippingPlanes = Empty;
-//	renderer.localClippingEnabled = true;
-//
-//	// GUI
-//	var gui = new dat.GUI(),
-//		folder = gui.addFolder( "Local Clipping" ),
-//		props = {
-//			get 'Enabled'() { return renderer.localClippingEnabled; },
-//			set 'Enabled'( v ) {
-//					renderer.localClippingEnabled = v;
-//					if ( ! v ) volumeVisualization.visible = false; },
-//			get 'Shadows'() { return clipMaterial.clipShadows; },
-//			set 'Shadows'( v ) { clipMaterial.clipShadows = v; },
-//			get 'Visualize'() { return volumeVisualization.visible; },
-//			set 'Visualize'( v ) {
-//					if ( renderer.localClippingEnabled )
-//						volumeVisualization.visible = v; }
-//		};
-//	folder.add( props, 'Enabled' );
-//	folder.add( props, 'Shadows' );
-//	folder.add( props, 'Visualize' ).listen();
-//	gui.addFolder( "Global Clipping" ).
-//			add( {
-//				get 'Enabled'() { return renderer.clippingPlanes !== Empty; },
-//				set 'Enabled'( v  ) { renderer.clippingPlanes = v ?
-//						globalClippingPlanes : Empty; }
-//			}, "Enabled" );
-//	// Start
-//	startTime = Date.now();
-//}
-//	
-//	clipMaterial.clippingPlanes and globalClippingPlanes are the culprits
-//	volumeVisualization.children is where the first comes from
-//}
-
-
-//it's a truncated cone (perspective), and the front face is as close to you as is comfortable. You grab the back rim and resize
-//Eh... if the lateral boundaries don't matter, probably you just need near and far!
-//Handle could be what you see when you look up with your eyes(not your head), but you don't see it normally, that's distracting
-//Spin the rim to make the front move away?
-//Jesus stereoscopy, you'd need different things happenning in the renderers. Don't do this, a cone is fine
-//Jesus... if people go far with this and it's a very thin slice, it is very much like a 2D screen
-//Ideally you also have lamps around your hands
-//hmm maybe your hands should be the planes, when you're not holding anything?
-//it's a very simple shader to make it spherical
