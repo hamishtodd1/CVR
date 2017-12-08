@@ -22,3 +22,5 @@ var scene = new THREE.Scene().add(camera);
 
 //------varying
 //mousePosition = new THREE.Vector2(); //[0,1],[0,1]
+
+var LABEL_MATERIAL = new THREE.MeshLambertMaterial( { color: 0x156289 });

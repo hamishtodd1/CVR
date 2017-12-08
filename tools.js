@@ -56,10 +56,15 @@ function initAtomDeleter(thingsToBeUpdated, holdables)
 	
 	var radius = 0.05;
 
-	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.3}));
+	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.7}));
 	atomDeleter.add( ball );
 	ball.geometry.computeBoundingSphere();
 	atomDeleter.boundingSphere = ball.geometry.boundingSphere;
+
+	// var label = new THREE.Mesh( new THREE.TextGeometry( "Deleter: \nhold with index finger and press\nbutton to delete highlighted atoms",
+	// 	{size: 0.03, height: 0.0001, font: THREE.defaultFont }), LABEL_MATERIAL );
+	// atomDeleter.add(label);
+	// label.visible = false;
 	
 	var highlightedAtoms = [];
 	

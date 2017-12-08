@@ -2,6 +2,17 @@
 Target remains: get coot connection working with "refine"
 Going to bring in laptop
 
+"undo"
+	could make it so that the atom array can only be changed by messages from coot
+	for every change, you have a log of the reverse change
+	a button on the controller is reserved for "undo"
+
+All tools that move atoms: Could make it so 
+	you can grab an atom or two anywhere, 
+	move it, 
+	it decides what tool would suit the current movement and shows you the "ghost"
+
+Make a video intro to controls for people at CCP4SW
 */
 
 function initialize()
@@ -39,8 +50,8 @@ function initialize()
 				 * oneAtomOneBond.txt
 				 * 3C0.lst
 				 */
-				loadModel("data/newData.txt", thingsToBeUpdated, visiBox.planes);
-				// initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
+				loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
+				initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
 				
 				render();
 			}

@@ -122,7 +122,6 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 			{
 				for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
 				{
-					console.log( atomDataFromCoot[i][j] )
 					model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]), atomDataFromCoot[i][j][2][0],atomDataFromCoot[i][j][2][1],atomDataFromCoot[i][j][2][2],atomDataFromCoot[i][j][2][3],atomDataFromCoot[i][j][2][4],atomDataFromCoot[i][j][2][5] );
 					
 					if( -1 !== atomDataFromCoot[i][j][3] )
@@ -183,12 +182,11 @@ function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
 //					this.lookAt(positionToLookAt);
 				}
 				
-				var labelMaterial = new THREE.MeshLambertMaterial( { color: 0x156289 });
 				model.toggleLabel = function(atomIndex)
 				{
 					if( this.atoms[atomIndex].label === undefined)
 					{
-						this.atoms[atomIndex].label = new THREE.Mesh( new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 16, font: THREE.defaultFont }), labelMaterial );
+						this.atoms[atomIndex].label = new THREE.Mesh( new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 16, font: THREE.defaultFont }), LABEL_MATERIAL );
 						this.atoms[atomIndex].label.update = updateLabel;
 						this.atoms[atomIndex].label.position.copy(this.atoms[atomIndex].position); //assigning them to be equal has no effect!
 						labels.push( this.atoms[atomIndex].label );

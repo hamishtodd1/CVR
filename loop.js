@@ -20,6 +20,9 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	frameDelta = ourClock.getDelta();
 	
 	vrInputSystem.update( socket );
+
+	if(!logged)console.log(holdables)
+		logged = 1
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
@@ -37,20 +40,28 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 		{
 			if( controllers[i].children.length === 1)
 			{
+				var distanceOfClosestObject = Infinity;
+				selectedHoldable = null;
 				for(var holdable in holdables )
 				{
 					if( controllers[i].overlappingHoldable(holdables[holdable]) )
 					{
-						if( controllers[i].children.length > 1)
-						{
-							console.warn("was going to attach something else")
-							break;
-						}
-						
-						THREE.SceneUtils.detach( holdables[holdable], holdables[holdable].parent, scene );
-						THREE.SceneUtils.attach( holdables[holdable], scene, controllers[i] );
+						selectedHoldable = holdables[holdable];
+						break;
 					}
 				}
+				if(selectedHoldable)
+				{
+					THREE.SceneUtils.detach( selectedHoldable, selectedHoldable.parent, scene );
+					THREE.SceneUtils.attach( selectedHoldable, scene, controllers[i] );
+				}
+				// else
+				// {
+				// 	for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
+				// 	{
+
+				// 	}
+				// }
 			}
 		}
 		else

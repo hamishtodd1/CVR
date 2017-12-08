@@ -5,7 +5,7 @@
 function initMap(mapURL, slabPlanes)
 {
 	modelAndMap.map = new THREE.LineSegments( new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-		color:0x4444AA, //0x777799 is coot 
+		color:0x4286F4, //0x777799 is coot 
 		linewidth: 1.2, 
 		clippingPlanes: slabPlanes}));
 //	modelAndMap.map = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({
