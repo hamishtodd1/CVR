@@ -92,39 +92,6 @@ function initVrInputSystem(controllers, launcher,renderer)
 		loadControllerModel(i);
 	}
 
-	{	
-		var affectedControllerIndex = 666;
-		if (gamepads[k] && gamepads[k].id === "Oculus Touch (Right)") //because some are undefined
-			affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
-		if (gamepads[k] && gamepads[k].id === "Oculus Touch (Left)")
-			affectedControllerIndex = LEFT_CONTROLLER_INDEX;
-		
-		
-		if(affectedControllerIndex === 666)
-			continue;
-		
-		if(gamepads[k].pose.position && gamepads[k].pose.orientation)
-		{
-			Controllers[affectedControllerIndex].position.x = gamepads[k].pose.position[0];
-			Controllers[affectedControllerIndex].position.y = gamepads[k].pose.position[1];
-			Controllers[affectedControllerIndex].position.z = gamepads[k].pose.position[2];
-			Controllers[affectedControllerIndex].quaternion.x = gamepads[k].pose.orientation[0];
-			Controllers[affectedControllerIndex].quaternion.y = gamepads[k].pose.orientation[1];
-			Controllers[affectedControllerIndex].quaternion.z = gamepads[k].pose.orientation[2];
-			Controllers[affectedControllerIndex].quaternion.w = gamepads[k].pose.orientation[3];
-		}
-		
-		for(var i = 0; i < gamepads[k].buttons.length; i++)
-		{
-			if( gamepads[k].buttons[i].pressed)
-			{
-				Controllers[affectedControllerIndex].Gripping = 1;
-				break;
-			}
-			if(i === gamepads[k].buttons.length-1)
-				Controllers[affectedControllerIndex].Gripping = 0;
-		}
-	}
 	
 	vrInputSystem.update = function(socket)
 	{

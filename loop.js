@@ -20,19 +20,18 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	frameDelta = ourClock.getDelta();
 	
 	vrInputSystem.update( socket );
-
-	if(!logged)console.log(holdables)
-		logged = 1
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		// if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
-		// {
-		// 	modelAndMap.scale.setScalar( modelAndMap.scale.x * (1+controllers[i].thumbStickAxes[1] / 100) );
-		// 	var minScale = 0.0000001;
-		// 	if( modelAndMap.scale.x < minScale )
-		// 		modelAndMap.scale.setScalar( minScale )
-		// }
+		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
+		{
+			// modelAndMap.scale.setScalar( modelAndMap.scale.x * (1+controllers[i].thumbStickAxes[1] / 100) );
+			// var minScale = 0.0000001;
+			// if( modelAndMap.scale.x < minScale )
+			// 	modelAndMap.scale.setScalar( minScale )
+
+			modelAndMap.map.contour(modelAndMap.map.isolevel + 0.1 * controllers[i].thumbStickAxes[1] );
+		}
 
 		controllers[i].controllerModel.pointer.visible = controllers[i].button1;
 		

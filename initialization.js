@@ -12,10 +12,14 @@ All tools that move atoms: Could make it so
 	move it, 
 	it decides what tool would suit the current movement and shows you the "ghost"
 
-Make a video intro to controls for people at CCP4SW
+Make a video intro to controls
+
+Could use a single web worker for contouring and loading file in, interactivity remains.
+
+Thumbstick could also be used for light intensity?
 */
 
-function initialize()
+function init()
 {
 	if(!WEBVR || !WEBVR.isAvailable())
 	{
@@ -84,6 +88,8 @@ function initialize()
 	
 	controllers = Array(2);
 	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer);
+	// var scaleStick = new THREE.Mesh(new THREE.CylinderBufferGeometryUncentered(0.01,0.01,1,),new THREE.MeshLambertMaterial({color:0xFF0000}));
+	// scaleStick.cylinders = Array()
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();

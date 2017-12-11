@@ -13,11 +13,11 @@
 function initVisiBox(thingsToBeUpdated,holdables)
 {
 	//should its edges only appear sometimes?
-	var visiBox = new THREE.Object3D();
+	visiBox = new THREE.Object3D();
 	
 	thingsToBeUpdated.visiBox = visiBox;
 	
-	visiBox.scale.set(0.9, 0.9, 0.4);
+	visiBox.scale.set(0.6, 0.6, 0.6);
 	visiBox.position.z = -FOCALPOINT_DISTANCE
 	scene.add(visiBox);
 	

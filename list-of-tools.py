@@ -27,7 +27,6 @@ One option:send python functions from javascript. Might end up doing this anyway
 
 Atom
 ----
-   Fix atom (as in anchor it down)
    Clear Fixed atom(s)
    Delete Atom
    Label (on and off) *
@@ -53,23 +52,6 @@ Single Residue - just look at changes in one residue!
    Add Alt-conformer
    Protein Ligand Interactions (say, Environment Distances)
 
-Residue Range
--------------
-   Pep-flip *
-   Triple-Refine *
-   Delete Residue Range
-   Refine Resize Range *
-   Mutate Residue Range
-   Rigid-body fit
-   Replace Fragment
-   Renumber Residue Range (tricky)
-   Change ChainID of residue range (tricky)
-
-Sphere
-------
-   Sphere Refine (How to show updating intermediate atoms and how to pull on them?
-                  This is the most tricky thing) * #Indeed this is interesting. Probably will work different to coot
-
 Chain
 -----
    Chain Refine #how is this different to residue range refine?
@@ -77,7 +59,7 @@ Chain
 
 Molecule
 -------
-   Copy Molecule #probably needs to happen in the "server"
+   Copy Molecule #
    Merge Molecules
    Change Representation (e.g. to CA-mode and back again) #interesting
 
