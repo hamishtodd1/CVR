@@ -49,7 +49,7 @@ function Atom(element,position,model,chainId,residue,insertionCode,name,alternat
 	this.residue = residue;
 	this.insertionCode = insertionCode;
 	this.name = name;
-	this.alternateConformer = alternateConformer;
+	this.alternateConformer = alternateConformer; //alternate location?
 
 	this.labelString = "";
 	for(var i = 2, il = arguments.length; i < il; i++)
@@ -86,165 +86,168 @@ Residue.prototype.updatePosition = function()
 	this.position.multiplyScalar( 1 / this.atoms.length );
 }
 
-async function loadModel(modelURL, thingsToBeUpdated, visiBoxPlanes)
+function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPlanes )
 {
-	return new Promise(function(resolve,reject)
+	var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
 	{
-		new THREE.FileLoader().load( modelURL,
-			function ( modelStringCoot )
-			{
-				var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
-				{
-			        if(p1) return "[";
-			        if(p2) return "]";
-			        if(p3) return "fa";
-			        if(p4) return "tr";
-			        if(p5) return "'model 1'";
-					// if(p6||p7) return ""; //|(\])|(\[)
-			    });
-			    var cootArray = eval(modelStringTranslated);
-			    if(cootArray.length>2)
-				{
-					console.error("got more than one model in there!")
-				}
-				//cootArray[0] is just the model number as a string. Is that necessary given the label?
-				var atomDataFromCoot = cootArray[1][0];
-				var bondDataFromCoot = cootArray[1][1];
-				
-				var model = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
-					vertexColors: THREE.VertexColors,
-					clippingPlanes: visiBoxPlanes
-				} ) );
-				
-				var numberOfAtoms = 0;
-				for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
-				{
-					numberOfAtoms += atomDataFromCoot[i].length;
-				}
-				model.atoms = Array(numberOfAtoms);
-				
-				var lowestUnusedAtom = 0;
-				model.residues = [];
-				// var a = new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3])
-				for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
-				{
-					for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
-					{
-						model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]), atomDataFromCoot[i][j][2][0],atomDataFromCoot[i][j][2][1],atomDataFromCoot[i][j][2][2],atomDataFromCoot[i][j][2][3],atomDataFromCoot[i][j][2][4],atomDataFromCoot[i][j][2][5] );
-						
-						if( -1 !== atomDataFromCoot[i][j][3] )
-						{
-							if( !model.residues[ atomDataFromCoot[i][j][3] ] )
-							{
-								model.residues[ atomDataFromCoot[i][j][3] ] = new Residue();
-							}
-							
-							model.residues[ atomDataFromCoot[i][j][3] ].atoms.push( model.atoms[lowestUnusedAtom] );
-							model.atoms[lowestUnusedAtom].residue = model.residues[ atomDataFromCoot[i][j][3] ];
-						}
-								
-						lowestUnusedAtom++;
-					}
-				}
-				console.log("hopefully we'll have more than one residue in here soon: ", model.residues )
-				for(var i = 0, il = model.residues.length; i < il; i++)
-				{
-					model.residues[i].updatePosition();
-				}
-				
-				model.moveAtom = function(atomIndex)
-				{
-					this.atoms[atomIndex].position.y += 1;
-					// console.log(this.atoms[atomIndex].position.y)
-					this.geometry.positionAtom(atomIndex);
-					
-					// if(this.atoms[atomIndex].residue)
-					// 	this.atoms[atomIndex].residue.updatePosition();
-					
-	//				socket.send("moveAtom|" + this.atoms[atomIndex].labelString )
-					
-					model.geometry.attributes.position.needsUpdate = true;
-				}
-				
-				makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
+        if(p1) return "[";
+        if(p2) return "]";
+        if(p3) return "fa";
+        if(p4) return "tr";
+        if(p5) return "'model 1'";
+		// if(p6||p7) return ""; //|(\])|(\[)
+    });
+    var cootArray = eval(modelStringTranslated);
 
-				// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
-				// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
-				// 		carbonAlphas.length*8, 0.1, 16 );
-				// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
-				
-				//-----Labels
+    if( typeof cootArray[0] === "string")
+    {
+    	//we have a bunch of things, preceded by their names. Necessary given the label?
+    	var modelNumber = cootArray[0]
+		var atomDataFromCoot = cootArray[1][0];
+		var bondDataFromCoot = cootArray[1][1];
+
+		if(cootArray.length>2)
+		{
+			console.error("got more than one model in there!")
+		}
+    }
+    else
+    {
+    	var atomDataFromCoot = cootArray[0];
+		var bondDataFromCoot = cootArray[1];
+    }
+	
+	var model = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
+		vertexColors: THREE.VertexColors,
+		clippingPlanes: visiBoxPlanes
+	} ) );
+	
+	var numberOfAtoms = 0;
+	for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
+	{
+		numberOfAtoms += atomDataFromCoot[i].length;
+	}
+	model.atoms = Array(numberOfAtoms);
+	
+	var lowestUnusedAtom = 0;
+	model.residues = [];
+	// var a = new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3])
+	for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
+	{
+		for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
+		{
+			if(!logged)console.log( atomDataFromCoot[i][j] )
+				logged = 1;
+			model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]), atomDataFromCoot[i][j][2][0],atomDataFromCoot[i][j][2][1],atomDataFromCoot[i][j][2][2],atomDataFromCoot[i][j][2][3],atomDataFromCoot[i][j][2][4],atomDataFromCoot[i][j][2][5] );
+			
+			if( -1 !== atomDataFromCoot[i][j][3] )
+			{
+				if( !model.residues[ atomDataFromCoot[i][j][3] ] )
 				{
-					var labels = [];
-					thingsToBeUpdated.labels = labels;
-					
-					var updateLabel = function()
-					{
-						if(!this.visible)
-							return;
-						this.scale.setScalar( 20 * Math.sqrt(this.getWorldPosition().distanceTo(camera.position)));
-						
-	//					var positionToLookAt = camera.position.clone();
-	//					this.worldToLocal(positionToLookAt);
-	//					//and something about up?
-	//					this.lookAt(positionToLookAt);
-					}
-					
-					model.toggleLabel = function(atomIndex)
-					{
-						if( this.atoms[atomIndex].label === undefined)
-						{
-							this.atoms[atomIndex].label = new THREE.Mesh( new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 16, font: THREE.defaultFont }), LABEL_MATERIAL );
-							this.atoms[atomIndex].label.update = updateLabel;
-							this.atoms[atomIndex].label.position.copy(this.atoms[atomIndex].position); //assigning them to be equal has no effect!
-							labels.push( this.atoms[atomIndex].label );
-							
-							this.add( this.atoms[atomIndex].label );
-							
-							return;
-						}
-						else
-						{
-							if( this.atoms[atomIndex].label.visible )
-							{
-								this.atoms[atomIndex].label.visible = false;
-							}
-							else
-							{
-								this.atoms[atomIndex].label.visible = true;
-							}
-						}
-					}
+					model.residues[ atomDataFromCoot[i][j][3] ] = new Residue();
 				}
 				
-				{
-					var averagePosition = new THREE.Vector3();
-					for(var i = 0, il = model.atoms.length; i < il; i++)
-					{
-						averagePosition.add(model.atoms[i].position);
-					}
-					averagePosition.multiplyScalar( 1  /model.atoms.length);
+				model.residues[ atomDataFromCoot[i][j][3] ].atoms.push( model.atoms[lowestUnusedAtom] );
+				model.atoms[lowestUnusedAtom].residue = model.residues[ atomDataFromCoot[i][j][3] ];
+			}
 					
-					var furthestDistanceSquared = -1;
-					for(var i = 0, il = model.atoms.length; i < il; i++)
-					{
-						var distSq = averagePosition.distanceToSquared(model.atoms[i].position)
-						if(distSq>furthestDistanceSquared)
-							furthestDistanceSquared = distSq;
-					}
-					
-					model.position.sub( averagePosition );
-					if( modelAndMap.map )
-						modelAndMap.map.position.sub(averagePosition);
-				}
+			lowestUnusedAtom++;
+		}
+	}
+	for(var i = 0, il = model.residues.length; i < il; i++)
+	{
+		model.residues[i].updatePosition();
+	}
+	
+	model.moveAtom = function(atomIndex)
+	{
+		this.atoms[atomIndex].position.y += 1;
+		// console.log(this.atoms[atomIndex].position.y)
+		this.geometry.positionAtom(atomIndex);
+		
+		// if(this.atoms[atomIndex].residue)
+		// 	this.atoms[atomIndex].residue.updatePosition();
+		
+//				socket.send("moveAtom|" + this.atoms[atomIndex].labelString )
+		
+		model.geometry.attributes.position.needsUpdate = true;
+	}
+	
+	makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
+
+	// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
+	// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
+	// 		carbonAlphas.length*8, 0.1, 16 );
+	// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
+	
+	//-----Labels
+	{
+		var labels = [];
+		thingsToBeUpdated.labels = labels;
+		
+		var updateLabel = function()
+		{
+			if(!this.visible)
+				return;
+			this.scale.setScalar( 20 * Math.sqrt(this.getWorldPosition().distanceTo(camera.position)));
+			
+//					var positionToLookAt = camera.position.clone();
+//					this.worldToLocal(positionToLookAt);
+//					//and something about up?
+//					this.lookAt(positionToLookAt);
+		}
+		
+		model.toggleLabel = function(atomIndex)
+		{
+			if( this.atoms[atomIndex].label === undefined)
+			{
+				//TODO canvastexture
+				this.atoms[atomIndex].label = new THREE.Mesh( new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 16, font: THREE.defaultFont }), LABEL_MATERIAL );
+				this.atoms[atomIndex].label.update = updateLabel;
+				this.atoms[atomIndex].label.position.copy(this.atoms[atomIndex].position); //assigning them to be equal has no effect!
+				labels.push( this.atoms[atomIndex].label );
 				
-				modelAndMap.model = model;
-				modelAndMap.add( model );
-			},
-			function ( xhr ) {}, //progression function
-			function ( xhr ) { reject(Error("couldn't load PDB")); }
-		);
-	});
+				this.add( this.atoms[atomIndex].label );
+				
+				return;
+			}
+			else
+			{
+				if( this.atoms[atomIndex].label.visible )
+				{
+					this.atoms[atomIndex].label.visible = false;
+				}
+				else
+				{
+					this.atoms[atomIndex].label.visible = true;
+				}
+			}
+		}
+	}
+	
+	{
+		var averagePosition = new THREE.Vector3();
+		for(var i = 0, il = model.atoms.length; i < il; i++)
+		{
+			averagePosition.add(model.atoms[i].position);
+		}
+		averagePosition.multiplyScalar( 1  /model.atoms.length);
+		
+		var furthestDistanceSquared = -1;
+		for(var i = 0, il = model.atoms.length; i < il; i++)
+		{
+			var distSq = averagePosition.distanceToSquared(model.atoms[i].position)
+			if(distSq>furthestDistanceSquared)
+				furthestDistanceSquared = distSq;
+		}
+		
+		model.position.sub( averagePosition );
+		if( modelAndMap.map )
+			modelAndMap.map.position.sub(averagePosition);
+	}
+	
+	modelAndMap.model = model;
+	modelAndMap.add( model );
 }
 
 function insertCylinderCoordsAndNormals(A,B, vertexAttribute, normalAttribute, cylinderSides, firstVertexIndex, radius )

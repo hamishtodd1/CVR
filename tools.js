@@ -50,7 +50,7 @@ Where:
 • at name is a string
 • altloc is a string
  */
-function initAtomDeleter(thingsToBeUpdated, holdables)
+function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 {
 	atomDeleter = new THREE.Object3D();
 	
@@ -66,7 +66,12 @@ function initAtomDeleter(thingsToBeUpdated, holdables)
 	// atomDeleter.add(label);
 	// label.visible = false;
 	
-	var highlightedAtoms = [];
+	var atomHighlightStatuses = null;
+	atomHighlightStatuses = Array(atoms.length);
+	for(var i = 0, il = atoms.length; i<il;i++)
+	{
+		atomHighlightStatuses[i] = false;
+	}
 	
 	atomDeleter.update = function()
 	{
@@ -83,50 +88,42 @@ function initAtomDeleter(thingsToBeUpdated, holdables)
 		
 		var highlightColor = new THREE.Color(1,1,1);
 
-		for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
+		for(var i = 0, il = atoms.length; i < il; i++)
 		{
-			if( modelAndMap.model.atoms[i].position.distanceToSquared( ourPosition ) < ourRadiusSq )
+			if( atoms[i].position.distanceToSquared( ourPosition ) < ourRadiusSq )
 			{
-				// for(var j = 0, jl = highlightedAtoms.length; j < jl; j++)
-				// {
-				// 	if(highlightedAtoms[j] === i)
-				// 	{
-				// 		console.log("yo")
-				// 		break;
-				// 	}
-				// 	if(j===jl-1)
-					{
-						modelAndMap.model.geometry.colorAtom(i, highlightColor);
-						highlightedAtoms.push(i);
-						modelAndMap.model.geometry.attributes.color.needsUpdate = true;
-					}
-				// }
+				atomHighlightStatuses[i] = true;
+				modelAndMap.model.geometry.colorAtom(i, highlightColor);
+				modelAndMap.model.geometry.attributes.color.needsUpdate = true;
 			}
-		}
-		for(var i = 0; i < highlightedAtoms.length; i++)
-		{
-			if( modelAndMap.model.atoms[ highlightedAtoms[i] ].position.distanceToSquared( ourPosition ) >= ourRadiusSq )
+			else if( atomHighlightStatuses[i] === true )
 			{
-				modelAndMap.model.geometry.colorAtom( highlightedAtoms[i] );
-				highlightedAtoms.splice(i,1);
-				i--;
+				atomHighlightStatuses[i] = false;
+				modelAndMap.model.geometry.colorAtom( i );
 				modelAndMap.model.geometry.attributes.color.needsUpdate = true;
 			}
 		}
 		
-		if( this.parent !== scene )
+
+		if( deleterOverride )//this.parent !== scene && this.parent.button1)
 		{
-			if( this.parent.button1 )
+			for(var i = 0, il = atomHighlightStatuses.length; i < il; i++)
 			{
-				for(var i = 0, il = highlightedAtoms.length; i < il; i++)
+				if(atomHighlightStatuses[i])
 				{
-//					socket.send("delete|" + highlightedAtoms[i].labelString);
-					modelAndMap.model.moveAtom( highlightedAtoms[i] );
+					console.log("asking to delete atom with label ",atoms[i].labelString)
+					socket.send("deleteAtom:" + atoms[i].labelString);
 				}
-				highlightedAtoms.length = 0;
 			}
 		}
 	}
+
+	socket.messageReactions.deleteAtom = function(messageContents)
+	{
+		console.log("we have been told to delete atom with description ", messageContents)
+	}
+
+	deleterOverride = false;
 	
 	thingsToBeUpdated.atomDeleter = atomDeleter;
 	holdables.atomDeleter = atomDeleter;

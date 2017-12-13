@@ -89,73 +89,41 @@ if os.name == "posix":
 class mainHandler(tornado.web.RequestHandler):
 	def get(self):
 		loader = tornado.template.Loader(".")
-		#self.write(loader.load("daydreamControllerTesting.html").generate())
 		self.write(loader.load("index.html").generate())
 
 class wsHandler(tornado.websocket.WebSocketHandler):
 	def check_origin(self, origin):
 		return True
 		
-	def sendMap(self):
-		print("going to send map")
-		#Hey Paul, what would be the size for the whole thing? Answer: unit cell dimensions
-		
-		mapString = 'Map,'
-		if runningInCoot == False:
-			mapString += "0,0,0,1,1,1,2,2,2,3,3,3,"
-		else:
-			map = map_contours(1, 0.6)
-			if map == False:
-				print( "no map loaded" )
-				mapString += "0,0,0,1,1,1,2,2,2,3,3,3,"
-			else:
-			#this data processing has to be done either here or in the browser so here it is. TODO have a function in coot that gives the precise string you want
-				for i in map: #lines
-					for j in i: #line ends
-						for k in j: #coordinates
-							mapString += str(k) + ","
-		print("made map, gonna send")
-		self.write_message(mapString)
-
 	def open(self):
-		#we change all these numbers to ensure that hard refresh actually works
-		indexFile = open('index.html', 'r')
-		modifiedIndexFile = ""
-		for line in indexFile:
-			newLine = ""
-			versionNumber = "0"
-			if line[len(line)-24:len(line)-18] != ".js?v=":
-				newLine = line
-			else:
-				newLine += line[:len(line)-18]
-				if versionNumber == "0":
-					versionNumber = int( line[ len(line)-18:len(line)-12 ] )
-					versionNumber += 1
-					versionNumber = str(versionNumber)
-				newLine += versionNumber
-				newLine += line[len(line)-12:]
-			modifiedIndexFile += newLine
-		indexFileWrite = open('index.html', 'w')
-		indexFileWrite.write(modifiedIndexFile)
-			
-		'''
-		type in "window.location.reload(true)" on the remote debugging console if it's not reloading. Ctrl+refresh once worked too
-		Note it only works through eduroam. Probably firewall crap
-		'''
 		self.set_nodelay(True) #doesn't hurt to have this hopefully...
 		
-		if runningInCoot:
-			set_map_radius(15)
-		self.sendMap()
-		
-		#-------update the version numbers so that the whole thing gets refreshed
-		
-		debug = True
+		if runningInCoot == False:
+			self.write_message("loadStandardStuff:")
+
+		else:
+			#send map
+			handle_read_draw_molecule_with_recentre( "/home/htodd/autobuild/coot-Linux-x86_64-fedora-26-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb",1 )
+			model = get_bonds_representation(0)
+			modelMessageString = "model:" + str(model)
+			self.write_message( modelMessageString ) #sub optimal to use string'''
 		
 	def on_message(self, message):
-		#time to send the next one. TODO make it sooner?
-		splitMessage = message.split(";")
-		messageHeader = splitMessage[0]
+		delimiterIndex = message.index(":") #need an exception
+		messageHeader = message[:delimiterIndex]
+		messageContents = message[delimiterIndex+1:]
+		print(message, delimiterIndex, messageHeader)
+
+		if messageHeader == "deleteAtom":
+			if runningInCoot:
+				atomDescription = messageContents.split(",")
+				print(message, messageContents,atomDescription)
+				#ARGH WE NEED TO UPDATE
+				delete_atom(int(atomDescription[0]),atomDescription[1],int(atomDescription[2]),atomDescription[3],atomDescription[4],atomDescription[5]);
+				print("deleted atom, sending back stuff")
+				self.write_message(message);
+				return;
+
 		
 		'''
 		if messageHeader == "refine": #no addition or deletion
@@ -196,16 +164,9 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		auto-fit-best-rotamer
 		view-matrix
 		set-view-matrix
-		
-		self.write_message("Didn't understand that")
-		print('received unrecognized message:', message)
 		'''
-			
-	def sendButtonState(self, buttonString):
-		buttonState = 0
-		if GetKeyState( VK_CODE[ buttonString ] ) < 0:
-			buttonState = 1
-		self.write_message( buttonString + "," + str( buttonState ) )
+		
+		print('received unrecognized message:', message,messageHeader)
 
 	def on_close(self):
 		print('connection closed...')

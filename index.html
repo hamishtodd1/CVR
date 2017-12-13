@@ -1,3 +1,31 @@
+<!--
+And by the way, go to top right arrow>settings>region & language>plus sign and put in eng UK and minus sign to get rid of fucking eng US
+
+Install procedure
+   You DO need pip install and you DO need to get tornado that way, within the coot python. It's horrendous
+
+Update procedure:
+   Switch virtual machine connection mode to NAT
+	in gitcoot/coot, git pull
+	in gitcoot/build, bash CIH (sets the configure stuff up?)
+	in gitcoot/build, make -j 4
+	in gitcoot/build, make install
+	in coot-Linux (?) it should be there
+
+Running procedure:
+   Switch virtual machine connection mode to host-only
+   hostname -I gets ip address to put in browser
+   For no graphics: /home/htodd/autobuild/coot-Lin.../bin/coot --no-graphics -s CVR/Server.py
+   To get out of coot:
+      ctrl C
+      ctrl D
+
+Workflow: save script, change window, ctrl+C to finish script in coot, ctrl+D to exit coot, up and enter to re-run coot
+Need to optimize this workflow.
+
+One option:send python functions from javascript. Might end up doing this anyway.  
+-->
+
 <html>
 	<head>
 		<title>cootVR</title>
@@ -50,8 +78,8 @@
 			}
 		</script>
 		
-		<script src="lib/three.min.js"></script> <!--change to v=something if you want reloading-->
-		<script src="lib/WireframeGeometry.js"></script> <!--change to v=something if you want reloading-->
+		<script src="lib/three.min.js"></script>
+		<script src="lib/WireframeGeometry.js"></script>
 
 		<script src="lib/SceneFromDemo.js"></script>
 		<script src="lib/THREEx.FullScreen.js"></script>
@@ -78,12 +106,7 @@
 		<script src="tools.js"></script>
 		<script src="visiBox.js"></script>
 		
-		<script src="initialization.js"></script>
 		<script src="loop.js"></script>
-		
-		<script>
-			init();
-		</script>
-		
+		<script src="initialization.js"></script>		
 	</body>
 </html>

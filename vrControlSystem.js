@@ -1,4 +1,4 @@
-function initVrInputSystem(controllers, launcher,renderer)
+function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 {
 	var vrInputSystem = {};
 	
@@ -13,11 +13,21 @@ function initVrInputSystem(controllers, launcher,renderer)
 			console.error("no vr input? Check steamVR or Oculus to make sure it's working correctly")
 		}
 			
-		cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }])
+		cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }]);
 		
 		scene.add( controllers[ 0 ] );
 		scene.add( controllers[ 1 ] );
 	}
+
+	document.addEventListener( 'keydown', function(event)
+	{
+		if(event.keyCode === 190 && ( navigator.getVRDisplays !== undefined || navigator.getVRDevices !== undefined ) )
+		{
+			event.preventDefault();
+			vrInputSystem.startGettingInput();
+			ourVrEffect.setFullScreen( true );
+		}
+	}, false );
 	
 	var riftControllerKeys = {
 			thumbstickButton:0,
@@ -92,7 +102,6 @@ function initVrInputSystem(controllers, launcher,renderer)
 		loadControllerModel(i);
 	}
 
-	
 	vrInputSystem.update = function(socket)
 	{
 		cameraRepositioner.update(); //positions the head

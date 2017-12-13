@@ -17,9 +17,11 @@ Make a video intro to controls
 Could use a single web worker for contouring and loading file in, interactivity remains.
 
 Thumbstick could also be used for light intensity?
+
+A big concern at some point will be navigating folders
 */
 
-function init()
+(function init()
 {
 	if(!WEBVR || !WEBVR.isAvailable())
 	{
@@ -39,28 +41,49 @@ function init()
 			for(var data in this.dataLoaded)
 			{
 				if( !this.dataLoaded[data] )
+				{
 					return;
+				}
 			}
 			if(!this.socketOpened )
+			{
 				return;
+			}
 			else
 			{
-				initMutator(thingsToBeUpdated, holdables);
-				initAtomDeleter(thingsToBeUpdated, holdables);
-				
-				/*
-				 * tutModelWithLigand
-				 * ribosome.txt
-				 * oneAtomOneBond.txt
-				 * 3C0.lst
-				 */
-				loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
-				initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
-				
 				render();
 			}
 		}
 	}
+
+	// var launcher = {
+	// 	requirementLevel: 0,
+	// 	requirements:[],
+	// 	subLaunchers:[],
+	// 	attemptLaunchHavingFulfilledRequirement:function(requirement)
+	// 	{
+	// 		this.requirements[this.requirementLevel][requirement] = true;
+	// 		for(var i = 0; i < this.requirements[requirementLevel].length; i++)
+	// 		{
+	// 			if( !this.requirements[requirementLevel][i] )
+	// 			{
+	// 				return;
+	// 			}
+	// 		}
+	// 		this.requirementLevel++;
+	// 		this.subLaunchers[requirementLevel]();
+	// 	}
+	// };
+
+	// launcher.subLaunchers[0] = //the rest of this function
+	// launcher.subLaunchers[1] = //the rest of this function
+	// function()
+	// {
+	// 	loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
+	// 	initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
+	// }
+
+
 
 	var renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
@@ -87,13 +110,13 @@ function init()
 	}
 	
 	controllers = Array(2);
-	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer);
+	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer, ourVrEffect);
 	// var scaleStick = new THREE.Mesh(new THREE.CylinderBufferGeometryUncentered(0.01,0.01,1,),new THREE.MeshLambertMaterial({color:0xFF0000}));
 	// scaleStick.cylinders = Array()
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.045 ); //0.028 is nice, 0.01 fits on screen
+	modelAndMap.scale.setScalar( 0.006 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return modelAndMap.scale.x;
@@ -169,42 +192,73 @@ function init()
 		thingsToBeUpdated.blinker = blinker;
 	}
 
-	//socket crap
+	//TODO local
+	socket = new WebSocket("ws://" + window.location.href.substring(7) + "ws");
+	if(!socket)
 	{
-		socket = initSocket();
-		
-		socket.onopen = function( )
-		{
-			launcher.socketOpened = true;
-			launcher.attemptLaunch();
-		}
-		
-		socket.messageResponses["This is the server"] = function(messageContents)
-		{}
-		
-		socket.messageResponses["mousePosition"] = function(messageContents)
-		{}
-		
-		socket.messageResponses["lmb"] = function(messageContents)
-		{}
-		
-		
-		
-		//A solution to narrow screens. Works fine but we can't record it!
-		//siiiiigh, it would introduce complexity for the user anyway
-//		else if( messageContents[0] === "o" && parseInt( messageContents[1] ) )
-//		{
-//			ourStereoEffect.stereoCamera.cameraL.projectionMatrix.elements[8] -= 0.01;
-//			ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8] += 0.01;
-//			console.log(ourStereoEffect.stereoCamera.cameraL.projectionMatrix.elements[8])
-//			console.log(ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8])
-//		}
-//		else if( messageContents[0] === "l" && parseInt( messageContents[1] ) )
-//		{
-//			ourStereoEffect.stereoCamera.cameraL.projectionMatrix.elements[8] += 0.01;
-//			ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8] -= 0.01;
-//			console.log(ourStereoEffect.stereoCamera.cameraL.projectionMatrix.elements[8])
-//			console.log(ourStereoEffect.stereoCamera.cameraR.projectionMatrix.elements[8])
-//		}
+		console.log("invalid socket");
+		return;
 	}
-}
+	socket.onclose = function()
+	{
+		console.log("The connection has been closed. Maybe you had no data loaded?");
+	}
+
+	function initTools()
+	{
+		initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
+		initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
+	}
+
+	socket.messageReactions = {};
+	socket.messageReactions["model"] = function(messageContents)
+	{
+		makeModelFromCootString( messageContents, thingsToBeUpdated, visiBox.planes );
+
+		initTools();
+	}
+	socket.messageReactions["loadStandardStuff"] = function(messageContents)
+	{
+		/*
+		 * tutModelWithLigand
+		 * ribosome.txt
+		 * oneAtomOneBond.txt
+		 * 3C0.lst
+		 */
+		new THREE.FileLoader().load( "data/tutModelWithLigand.txt",
+			function( modelStringCoot )
+			{
+				makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+				initTools();
+			},
+			function ( xhr ) {},
+			function ( xhr ) { console.error( "couldn't load basic model" ); }
+		);
+		initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
+	}
+	
+	socket.onmessage = function(msg)
+	{
+		//speedup opportunity no doubt
+		var indexOfDelimiter = msg.data.indexOf(":");
+		if(indexOfDelimiter === -1)
+		{
+			console.log("received message without header: ", msg.data)
+			return;
+		}
+		var header = msg.data.substring(0,indexOfDelimiter);
+		var messageContents = msg.data.substring( indexOfDelimiter+1);
+
+		if(!socket.messageReactions[header])
+		{
+			console.error("Mistyped header: ", header)
+		}
+		else socket.messageReactions[header](messageContents);
+	}
+	
+	socket.onopen = function()
+	{
+		launcher.socketOpened = true;
+		launcher.attemptLaunch();
+	}
+})();

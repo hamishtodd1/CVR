@@ -33,7 +33,7 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 			modelAndMap.map.contour(modelAndMap.map.isolevel + 0.1 * controllers[i].thumbStickAxes[1] );
 		}
 
-		controllers[i].controllerModel.pointer.visible = controllers[i].button1;
+		controllers[i].controllerModel.pointer.visible = (controllers[i].children.length === 1 && controllers[i].button1)
 		
 		if( controllers[i].grippingTop )
 		{
@@ -95,6 +95,8 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 		modelAndMap.position.multiplyScalar( 1 / modelAndMap.scale.x ); 
 		modelAndMap.scale.multiplyScalar( handSeparationDifferential );
 		modelAndMap.position.multiplyScalar(modelAndMap.scale.x);
+
+		//also that scaling line is visible and not otherwise
 	}
 	else
 	{
