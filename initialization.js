@@ -116,7 +116,7 @@ A big concern at some point will be navigating folders
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.006 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	modelAndMap.scale.setScalar( 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return modelAndMap.scale.x;
@@ -207,8 +207,9 @@ A big concern at some point will be navigating folders
 	function initTools()
 	{
 		initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
-		initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
+		initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, modelAndMap.model.geometry, socket);
 	}
+
 
 	socket.messageReactions = {};
 	socket.messageReactions["model"] = function(messageContents)

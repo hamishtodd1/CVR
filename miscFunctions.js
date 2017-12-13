@@ -20,6 +20,7 @@ function checkForNewGlobals()
 		numGlobalVariables = Object.keys(window).length + 1;
 	}	
 }
+//also nice would be "check for unused variables"
 
 function ArrayOfThisValueAndThisLength(value,length)
 {

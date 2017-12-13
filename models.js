@@ -88,6 +88,7 @@ Residue.prototype.updatePosition = function()
 
 function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPlanes )
 {
+	// console.log(modelStringCoot)
 	var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
 	{
         if(p1) return "[";
@@ -131,24 +132,25 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 	
 	var lowestUnusedAtom = 0;
 	model.residues = [];
-	// var a = new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0], atomDataFromCoot[i][j][3])
+	if(!logged)console.log( atomDataFromCoot[0][0] )
+	logged = 1;
 	for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
 	{
 		for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
-		{
-			if(!logged)console.log( atomDataFromCoot[i][j] )
-				logged = 1;
+		{ 
 			model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]), atomDataFromCoot[i][j][2][0],atomDataFromCoot[i][j][2][1],atomDataFromCoot[i][j][2][2],atomDataFromCoot[i][j][2][3],atomDataFromCoot[i][j][2][4],atomDataFromCoot[i][j][2][5] );
 			
-			if( -1 !== atomDataFromCoot[i][j][3] )
+			var residueIndex = atomDataFromCoot[i][j][3];
+			if( -1 !== residueIndex )
 			{
-				if( !model.residues[ atomDataFromCoot[i][j][3] ] )
+				if( !model.residues[ residueIndex ] )
 				{
-					model.residues[ atomDataFromCoot[i][j][3] ] = new Residue();
+					model.residues[ residueIndex ] = new Residue();
 				}
 				
-				model.residues[ atomDataFromCoot[i][j][3] ].atoms.push( model.atoms[lowestUnusedAtom] );
-				model.atoms[lowestUnusedAtom].residue = model.residues[ atomDataFromCoot[i][j][3] ];
+				//YO the atoms should be inserted according to some other aspect of them, some string that WITHIN THE RESIDUE identifies them, possibly their name
+				model.residues[ residueIndex ].atoms.push( model.atoms[lowestUnusedAtom] );
+				model.atoms[ lowestUnusedAtom ].residue = model.residues[ residueIndex ];
 			}
 					
 			lowestUnusedAtom++;
@@ -169,6 +171,40 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 		// 	this.atoms[atomIndex].residue.updatePosition();
 		
 //				socket.send("moveAtom|" + this.atoms[atomIndex].labelString )
+		
+		model.geometry.attributes.position.needsUpdate = true;
+	}
+	model.deleteAtom = function(atomSpecString)
+	{
+		for( var i = 0, il = model.atoms.length; i < il; i++ )
+		{
+			if( model.atoms[i].labelString === atomSpecString)
+			{
+				for(var k = 0; k < nSphereVertices; k++)
+				{
+					modelGeometry.attributes.position.setXYZ( model.atoms[i].firstVertexIndex + k, 0, 0, 0 );
+				}
+				//this could be avoided if the atom used its name in the residue identifier
+				for(var j = 0, jl = model.atoms[i].residue.atoms.length; j < jl; j++ )
+				{
+					if( model.atoms[i].residue.atoms[j] == model.atoms[i] )
+					{
+						model.atoms[i].residue.model.atoms.splice(j,1);
+						break;
+					}
+				}
+				model.atoms[i].residue.updatePosition();
+				model.atoms.splice(i,1); //or could leave a space for an atom to be injected
+
+				//need stuff in here about bonds!
+				//NEXT THING TO DO IS HAVE A DUMMY THING WORKING WHERE IT JUST SENDS YOU THIS BACK IMMEDIATELY
+
+				break;
+			}
+		}
+		
+		// if(this.atoms[atomIndex].residue)
+		this.atoms[atomIndex].residue.updatePosition();
 		
 		model.geometry.attributes.position.needsUpdate = true;
 	}
@@ -366,9 +402,9 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 		{
 			for(var k = 0; k < nSphereVertices; k++)
 			{
-				this.attributes.position.setXYZ( atoms[atomIndex].firstVertexIndex + k, 
-						hydrogenGeometry.vertices[k].x + atoms[atomIndex].position.x, 
-						hydrogenGeometry.vertices[k].y + atoms[atomIndex].position.y, 
+				this.attributes.position.setXYZ( atoms[atomIndex].firstVertexIndex + k,
+						hydrogenGeometry.vertices[k].x + atoms[atomIndex].position.x,
+						hydrogenGeometry.vertices[k].y + atoms[atomIndex].position.y,
 						hydrogenGeometry.vertices[k].z + atoms[atomIndex].position.z );
 			}
 		}

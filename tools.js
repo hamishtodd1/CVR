@@ -50,7 +50,7 @@ Where:
 • at name is a string
 • altloc is a string
  */
-function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
+function initAtomDeleter(thingsToBeUpdated, holdables, atoms, modelGeometry, socket)
 {
 	atomDeleter = new THREE.Object3D();
 	
@@ -72,6 +72,8 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 	{
 		atomHighlightStatuses[i] = false;
 	}
+
+	var deleteRequestTimer = -1;
 	
 	atomDeleter.update = function()
 	{
@@ -104,23 +106,38 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 			}
 		}
 		
-
-		if( deleterOverride )//this.parent !== scene && this.parent.button1)
+		if( deleterOverride ) //this.parent !== scene && this.parent.button1)
 		{
-			for(var i = 0, il = atomHighlightStatuses.length; i < il; i++)
+			if( deleteRequestTimer === -1 )
 			{
-				if(atomHighlightStatuses[i])
+				for(var i = 0, il = atomHighlightStatuses.length; i < il; i++)
 				{
-					console.log("asking to delete atom with label ",atoms[i].labelString)
-					socket.send("deleteAtom:" + atoms[i].labelString);
+					if(atomHighlightStatuses[i])
+					{
+						console.log("asking to delete atom with label ",atoms[i].labelString)
+						socket.send("deleteAtom:" + atoms[i].labelString);
+					}
 				}
+				deleteRequestTimer = 0;
 			}
+		}
+		if( 1 < deleteRequestTimer && deleteRequestTimer < 2 )
+		{
+			console.error( "delete was requested but not happened yet" );
+			deleteRequestTimer += 1;
+		}
+		else if( deleteRequestTimer !== -1 )
+		{
+			deleteRequestTimer += frameDelta;
 		}
 	}
 
 	socket.messageReactions.deleteAtom = function(messageContents)
 	{
+		deleteRequestTimer = -1;
+		deleterOverride = false;
 		console.log("we have been told to delete atom with description ", messageContents)
+		
 	}
 
 	deleterOverride = false;

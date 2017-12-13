@@ -109,7 +109,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			self.write_message( modelMessageString ) #sub optimal to use string'''
 		
 	def on_message(self, message):
-		delimiterIndex = message.index(":") #need an exception
+		delimiterIndex = message.index(":")
 		messageHeader = message[:delimiterIndex]
 		messageContents = message[delimiterIndex+1:]
 		print(message, delimiterIndex, messageHeader)
@@ -117,13 +117,14 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		if messageHeader == "deleteAtom":
 			if runningInCoot:
 				atomDescription = messageContents.split(",")
-				print(message, messageContents,atomDescription)
-				#ARGH WE NEED TO UPDATE
-				delete_atom(int(atomDescription[0]),atomDescription[1],int(atomDescription[2]),atomDescription[3],atomDescription[4],atomDescription[5]);
-				print("deleted atom, sending back stuff")
+				print(atomDescription)
+				#what to do about u'?
+
+				#delete_atom(int(atomDescription[0]),atomDescription[1],int(atomDescription[2]),atomDescription[3],atomDescription[4],atomDescription[5]);
+				
+				print("sending back stuff")
 				self.write_message(message);
 				return;
-
 		
 		'''
 		if messageHeader == "refine": #no addition or deletion
