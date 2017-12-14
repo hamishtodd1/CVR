@@ -160,6 +160,8 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 	{
 		model.residues[i].updatePosition();
 	}
+
+	var nSphereVertices = makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
 	
 	model.moveAtom = function(atomIndex)
 	{
@@ -174,6 +176,7 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 		
 		model.geometry.attributes.position.needsUpdate = true;
 	}
+	//works in theory
 	model.deleteAtom = function(atomSpecString)
 	{
 		for( var i = 0, il = model.atoms.length; i < il; i++ )
@@ -182,14 +185,14 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 			{
 				for(var k = 0; k < nSphereVertices; k++)
 				{
-					modelGeometry.attributes.position.setXYZ( model.atoms[i].firstVertexIndex + k, 0, 0, 0 );
+					model.geometry.attributes.position.setXYZ( model.atoms[i].firstVertexIndex + k, 0, 0, 0 );
 				}
 				//this could be avoided if the atom used its name in the residue identifier
 				for(var j = 0, jl = model.atoms[i].residue.atoms.length; j < jl; j++ )
 				{
 					if( model.atoms[i].residue.atoms[j] == model.atoms[i] )
 					{
-						model.atoms[i].residue.model.atoms.splice(j,1);
+						model.atoms[i].residue.atoms.splice(j,1);
 						break;
 					}
 				}
@@ -203,13 +206,9 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 			}
 		}
 		
-		// if(this.atoms[atomIndex].residue)
-		this.atoms[atomIndex].residue.updatePosition();
-		
 		model.geometry.attributes.position.needsUpdate = true;
 	}
 	
-	makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
 
 	// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
 	// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
@@ -497,4 +496,6 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 			firstFaceIndex += cylinderSides * 2;
 		}
 	}
+
+	return nSphereVertices;
 }

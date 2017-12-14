@@ -3,6 +3,7 @@ And by the way, go to top right arrow>settings>region & language>plus sign and p
 
 Install procedure
    You DO need pip install and you DO need to get tornado that way, within the coot python. It's horrendous
+   Tornado appears to be in there by default but you also need singledispatch
 
 Update procedure:
    Switch virtual machine connection mode to NAT
@@ -20,23 +21,11 @@ Running procedure:
       ctrl C
       ctrl D
 
-In file included from /home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/include/clipper/contrib/../core/hkl_datatypes.h:49:0,
-                 from /home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/include/clipper/contrib/function_object_bases.h:50,
-                 from /home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/include/clipper/contrib/skeleton.h:50,
-                 from ../../coot/build/CalphaBuild.hh:26,
-                 from ../../coot/src/molecule-class-info.h:62,
-                 from ../../coot/src/graphics-info.h:75,
-                 from ../../coot/src/flev.cc:41:
-/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/include/clipper/contrib/../core/hkl_data.h: In instantiation of ‘void clipper::HKL_data<T>::mask(const clipper::HKL_data_base&) [with T = clipper::datatypes::F_sigF<float>]’:
-../../coot/src/flev.cc:1971:1:   required from here
-/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/include/clipper/contrib/../core/hkl_data.h:421:24: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
-     for ( int i = 0; i < list.size(); i++ )
-/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/include/clipper/contrib/../core/hkl_data.h: In instantiation of ‘void clipper::HKL_data<T>::mask(const clipper::HKL_data_base&) [with T = clipper::datatypes::F_phi<float>]’:
-../../coot/src/flev.cc:1971:1:   required from here
-/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/include/clipper/contrib/../core/hkl_data.h:421:24: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
-mv -f .deps/flev.Tpo .deps/flev.Po
-make[1]: Leaving directory '/home/htodd/autobuild/gitCoot/build/src'
-make: *** [Makefile:705: all-recursive] Error 1
+pip is configured with locations that require TLS/SSL, however the ssl module in Python is not available.
+Collecting pip
+  Could not fetch URL https://pypi.python.org/simple/pip/: There was a problem confirming the ssl certificate: Can't connect to HTTPS URL because the SSL module is not available. - skipping
+  Could not find a version that satisfies the requirement pip (from versions: )
+No matching distribution found for pip
 
 
 Workflow: save script, change window, ctrl+C to finish script in coot, ctrl+D to exit coot, up and enter to re-run coot

@@ -137,7 +137,7 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, modelGeometry, soc
 		deleteRequestTimer = -1;
 		deleterOverride = false;
 		console.log("we have been told to delete atom with description ", messageContents)
-		
+		//modelAndMap.model.deleteAtom(messageContents)
 	}
 
 	deleterOverride = false;
