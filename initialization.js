@@ -97,7 +97,7 @@ A big concern at some point will be navigating folders
 	
 	var visiBox = initVisiBox(thingsToBeUpdated,holdables);
 	
-	var ourVrEffect = new THREE.VREffect( renderer );
+	var ourVrEffect = new THREE.VREffect( 1, renderer ); //0 is initial eye separation
 	var loopCallString = getStandardFunctionCallString(loop);
 	function render()
 	{
@@ -111,8 +111,51 @@ A big concern at some point will be navigating folders
 	
 	controllers = Array(2);
 	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer, ourVrEffect);
-	// var scaleStick = new THREE.Mesh(new THREE.CylinderBufferGeometryUncentered(0.01,0.01,1,),new THREE.MeshLambertMaterial({color:0xFF0000}));
-	// scaleStick.cylinders = Array()
+
+	var scaleStick = new THREE.Mesh(new THREE.Geometry(),new THREE.MeshLambertMaterial({color:0xFF0000}));
+	var numDots = 3;
+	var ssRadiusSegments = 15;
+	var ssRadius = 0.002;
+	scaleStick.geometry.vertices = Array(numDots*ssRadiusSegments*2);
+	scaleStick.geometry.faces = Array(numDots*ssRadiusSegments*2);
+	for(var i = 0; i < numDots; i++)
+	{
+		for( var j = 0; j < ssRadiusSegments; j++)
+		{
+			var bottomRightVertex = i*ssRadiusSegments*2+j;
+			scaleStick.geometry.vertices[bottomRightVertex]   				 = new THREE.Vector3(ssRadius,2*i,   0).applyAxisAngle(yAxis,TAU*j/ssRadiusSegments);
+			scaleStick.geometry.vertices[bottomRightVertex+ssRadiusSegments] = new THREE.Vector3(ssRadius,2*i+1, 0).applyAxisAngle(yAxis,TAU*j/ssRadiusSegments);
+
+			scaleStick.geometry.faces[i*ssRadiusSegments*2+j*2]   = new THREE.Face3(
+				bottomRightVertex+ssRadiusSegments,
+				bottomRightVertex,
+				i*ssRadiusSegments*2+(j+1)%ssRadiusSegments)
+			scaleStick.geometry.faces[i*ssRadiusSegments*2+j*2+1] = new THREE.Face3(
+				i*ssRadiusSegments*2+(j+1)%ssRadiusSegments+ssRadiusSegments,
+				bottomRightVertex+ssRadiusSegments,
+				i*ssRadiusSegments*2+(j+1)%ssRadiusSegments );
+		}
+	}
+	scaleStick.geometry.computeFaceNormals();
+	scaleStick.geometry.computeVertexNormals();
+	scaleStick.scale.y = 0.02
+	scaleStick.position.z = -FOCALPOINT_DISTANCE;
+	// scene.add(scaleStick);
+	scaleStick.update = function()
+	{
+		// this.scale.y = getAngstrom();
+		this.visible = (controllers[0].grippingSide && controllers[1].grippingSide);
+		
+		var newY = controllers[1].position.clone().sub(controllers[0].position);
+		var newX = randomPerpVector( newY ).normalize();
+		var newZ = newY.clone().cross(newX).normalize();
+		
+		this.matrix.makeBasis(newX,newY,newZ);
+		this.matrix.setPosition(controllers[0].position);
+		this.matrixAutoUpdate = false;
+	}
+	thingsToBeUpdated.scaleStick = scaleStick;
+
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
@@ -156,8 +199,6 @@ A big concern at some point will be navigating folders
 	
 	makeScene(true);
 	
-//	initSphereSelector(cursor);
-	
 	{
 		var blinker = new THREE.Mesh(new THREE.PlaneBufferGeometry(10,10),new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0}))
 		blinker.blinkProgress = 1;
@@ -192,74 +233,75 @@ A big concern at some point will be navigating folders
 		thingsToBeUpdated.blinker = blinker;
 	}
 
-	//TODO local
-	socket = new WebSocket("ws://" + window.location.href.substring(7) + "ws");
-	if(!socket)
 	{
-		console.log("invalid socket");
-		return;
-	}
-	socket.onclose = function()
-	{
-		console.log("The connection has been closed. Maybe you had no data loaded?");
-	}
-
-	function initTools()
-	{
-		initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
-		initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, modelAndMap.model.geometry, socket);
-	}
-
-
-	socket.messageReactions = {};
-	socket.messageReactions["model"] = function(messageContents)
-	{
-		makeModelFromCootString( messageContents, thingsToBeUpdated, visiBox.planes );
-
-		initTools();
-	}
-	socket.messageReactions["loadStandardStuff"] = function(messageContents)
-	{
-		/*
-		 * tutModelWithLigand
-		 * ribosome.txt
-		 * oneAtomOneBond.txt
-		 * 3C0.lst
-		 */
-		new THREE.FileLoader().load( "data/tutModelWithLigand.txt",
-			function( modelStringCoot )
-			{
-				makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
-				initTools();
-			},
-			function ( xhr ) {},
-			function ( xhr ) { console.error( "couldn't load basic model" ); }
-		);
-		initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
-	}
-	
-	socket.onmessage = function(msg)
-	{
-		//speedup opportunity no doubt
-		var indexOfDelimiter = msg.data.indexOf(":");
-		if(indexOfDelimiter === -1)
+		//TODO local
+		socket = new WebSocket("ws://" + window.location.href.substring(7) + "ws");
+		if(!socket)
 		{
-			console.log("received message without header: ", msg.data)
+			console.log("invalid socket");
 			return;
 		}
-		var header = msg.data.substring(0,indexOfDelimiter);
-		var messageContents = msg.data.substring( indexOfDelimiter+1);
-
-		if(!socket.messageReactions[header])
+		socket.onclose = function()
 		{
-			console.error("Mistyped header: ", header)
+			console.log("The connection has been closed. Maybe you had no data loaded?");
 		}
-		else socket.messageReactions[header](messageContents);
-	}
-	
-	socket.onopen = function()
-	{
-		launcher.socketOpened = true;
-		launcher.attemptLaunch();
+
+		function initTools()
+		{
+			// initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
+			initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
+		}
+
+		socket.messageReactions = {};
+		socket.messageReactions["model"] = function(messageContents)
+		{
+			makeModelFromCootString( messageContents, thingsToBeUpdated, visiBox.planes );
+
+			initTools();
+		}
+		socket.messageReactions["loadStandardStuff"] = function(messageContents)
+		{
+			/*
+			 * tutModelWithLigand
+			 * ribosome.txt
+			 * oneAtomOneBond.txt
+			 * 3C0.lst
+			 */
+			new THREE.FileLoader().load( "data/newData.txt",
+				function( modelStringCoot )
+				{
+					makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+					initTools();
+				},
+				function ( xhr ) {},
+				function ( xhr ) { console.error( "couldn't load basic model" ); }
+			);
+			initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
+		}
+		
+		socket.onmessage = function(msg)
+		{
+			//speedup opportunity no doubt
+			var indexOfDelimiter = msg.data.indexOf(":");
+			if(indexOfDelimiter === -1)
+			{
+				console.log("received message without header: ", msg.data)
+				return;
+			}
+			var header = msg.data.substring(0,indexOfDelimiter);
+			var messageContents = msg.data.substring( indexOfDelimiter+1);
+
+			if(!socket.messageReactions[header])
+			{
+				console.error("Mistyped header: ", header)
+			}
+			else socket.messageReactions[header](messageContents);
+		}
+		
+		socket.onopen = function()
+		{
+			launcher.socketOpened = true;
+			launcher.attemptLaunch();
+		}
 	}
 })();

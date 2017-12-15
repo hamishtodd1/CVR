@@ -177,11 +177,11 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 		model.geometry.attributes.position.needsUpdate = true;
 	}
 	//works in theory
-	model.deleteAtom = function(atomSpecString)
+	model.deleteAtom = function(atomLabel)
 	{
 		for( var i = 0, il = model.atoms.length; i < il; i++ )
 		{
-			if( model.atoms[i].labelString === atomSpecString)
+			if( model.atoms[i].labelString === atomLabel)
 			{
 				for(var k = 0; k < nSphereVertices; k++)
 				{
@@ -200,13 +200,12 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 				model.atoms.splice(i,1); //or could leave a space for an atom to be injected
 
 				//need stuff in here about bonds!
-				//NEXT THING TO DO IS HAVE A DUMMY THING WORKING WHERE IT JUST SENDS YOU THIS BACK IMMEDIATELY
+
+				model.geometry.attributes.position.needsUpdate = true;
 
 				break;
 			}
 		}
-		
-		model.geometry.attributes.position.needsUpdate = true;
 	}
 	
 

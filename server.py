@@ -117,16 +117,26 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		if messageHeader == "deleteAtom":
 			if runningInCoot:
 				atomDescription = messageContents.split(",")
-				print(atomDescription)
 				#what to do about u'?
 
 				#delete_atom(int(atomDescription[0]),atomDescription[1],int(atomDescription[2]),atomDescription[3],atomDescription[4],atomDescription[5]);
-				
-				print("sending back stuff")
-				self.write_message(message);
-				return;
-		
+			else:
+				print("sure, you can delete that atom")
+			self.write_message(message);
+
 		'''
+		#only if they've let go
+		elif messageHeader === "moveAtom":
+			atomDescription = messageContents.split(",")
+			newPosition = ???
+			if runningInCoot:
+				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "x", newPosition[0]);
+				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "y", newPosition[1]);
+				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "z", newPosition[2]);
+			else:
+				print("sure, you can move that atom")
+			self.write_message(message);
+		
 		if messageHeader == "refine": #no addition or deletion
 			if runningInCoot:
 				imol = splitMessage[1]
@@ -140,22 +150,13 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 				newModelData = get_bonds_representation(imol)
 				self.write_message(newModelData)
 			
-				
-		elif messageHeader == "increase radius":
-			if runningInCoot:
-				currentRadius = get_map_radius()
-				set_map_radius(currentRadius + 4)
-			self.sendMap()
-			
 		elif messageHeader == "mutateAndAutoFit":
 			if runningInCoot:
 				mutate_and_auto_fit( splitMessage[1],splitMessage[2],splitMessage[3],splitMessage[4] )
 				self.write_message(atomDeltas)
 				
 				refine_active_reside()
-		elif messageHeader === "moveAtom":
-			if runningInCoot:
-				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "x", attribute_value);
+		
 		
 		Also useful
 		pepflip-active-residue
@@ -166,8 +167,9 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		view-matrix
 		set-view-matrix
 		'''
-		
-		print('received unrecognized message:', message,messageHeader)
+
+		else:
+			print('received unrecognized message:', message,messageHeader)
 
 	def on_close(self):
 		print('connection closed...')

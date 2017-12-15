@@ -50,9 +50,9 @@ Where:
 • at name is a string
 • altloc is a string
  */
-function initAtomDeleter(thingsToBeUpdated, holdables, atoms, modelGeometry, socket)
+function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 {
-	atomDeleter = new THREE.Object3D();
+	var atomDeleter = new THREE.Object3D();
 	
 	var radius = 0.05;
 
@@ -106,7 +106,9 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, modelGeometry, soc
 			}
 		}
 		
-		if( deleterOverride ) //this.parent !== scene && this.parent.button1)
+		if( this.parent !== scene && this.parent.button1
+			//deleterOverride
+			) 
 		{
 			if( deleteRequestTimer === -1 )
 			{
@@ -114,11 +116,11 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, modelGeometry, soc
 				{
 					if(atomHighlightStatuses[i])
 					{
-						console.log("asking to delete atom with label ",atoms[i].labelString)
+						atomHighlightStatuses[i] = false;
 						socket.send("deleteAtom:" + atoms[i].labelString);
+						deleteRequestTimer = 0;
 					}
 				}
-				deleteRequestTimer = 0;
 			}
 		}
 		if( 1 < deleteRequestTimer && deleteRequestTimer < 2 )
@@ -132,15 +134,14 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, modelGeometry, soc
 		}
 	}
 
-	socket.messageReactions.deleteAtom = function(messageContents)
+	socket.messageReactions.deleteAtom = function(atomLabel)
 	{
 		deleteRequestTimer = -1;
-		deleterOverride = false;
-		console.log("we have been told to delete atom with description ", messageContents)
-		//modelAndMap.model.deleteAtom(messageContents)
+		// deleterOverride = false;
+		modelAndMap.model.deleteAtom(atomLabel)
 	}
 
-	deleterOverride = false;
+	// deleterOverride = false;
 	
 	thingsToBeUpdated.atomDeleter = atomDeleter;
 	holdables.atomDeleter = atomDeleter;
