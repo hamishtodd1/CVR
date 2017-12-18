@@ -97,17 +97,18 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		
 	def open(self):
 		self.set_nodelay(True) #doesn't hurt to have this hopefully...
+
+		print(runningInCoot)
 		
 		if runningInCoot == False:
 			self.write_message("loadStandardStuff:")
 
 		else:
-			#send map
-			handle_read_draw_molecule_with_recentre( "/home/htodd/autobuild/coot-Linux-x86_64-fedora-26-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb",1 )
+			handle_read_draw_molecule_with_recentre ("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb", 1)
 			model = get_bonds_representation(0)
 			modelMessageString = "model:" + str(model)
 			self.write_message( modelMessageString ) #sub optimal to use string'''
-		
+
 	def on_message(self, message):
 		delimiterIndex = message.index(":")
 		messageHeader = message[:delimiterIndex]

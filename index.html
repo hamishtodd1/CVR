@@ -2,21 +2,29 @@
 And by the way, go to top right arrow>settings>region & language>plus sign and put in eng UK and minus sign to get rid of fucking eng US
 
 Install procedure
-   You DO need pip install and you DO need to get tornado that way, within the coot python. It's horrendous
-   Tornado appears to be in there by default now but you also need singledispatch
+	work/setup-path to ensure python, pip, coot were all consistent
+	Needed pip to install python modules
+		To install pip needed python with SSL
+		Had to use 2.7.14
+		Edited Modules/setup to uncomment the SSL section
+	   		Changed library to lib64 from lib
+	   		--with-ensurepip=install
+	pip install singledispatch
+	pip install backports_abc
+	Never try to avoid pip
 
 Update procedure:
-   Switch virtual machine connection mode to NAT
+	Switch virtual machine connection mode to NAT
 	in gitcoot/coot, git pull
-	in gitcoot/build, bash CIH (sets the configure stuff up?)
-	in gitcoot/build, make -j 4
+	in gitcoot/build, bash CIH (usually unneeded, does configure stuff)
+	in gitcoot/build, make
 	in gitcoot/build, make install
-	in coot-Linux (?) it should be there
+	It is now in Linux-localhost
 
 Running procedure:
    Switch virtual machine connection mode to host-only
    hostname -I gets ip address to put in browser
-   For no graphics: /home/htodd/autobuild/coot-Lin.../bin/coot --no-graphics -s CVR/Server.py
+   For no graphics: /home/htodd/autobuild/Linux-localhost.../bin/coot --no-graphics -s CVR/Server.py
    To get out of coot:
       ctrl C
       ctrl D
@@ -25,8 +33,6 @@ Running procedure:
 
 Workflow: save script, change window, ctrl+C to finish script in coot, ctrl+D to exit coot, up and enter to re-run coot
 Need to optimize this workflow.
-
-One option:send python functions from javascript. Might end up doing this anyway.  
 -->
 
 <html>
