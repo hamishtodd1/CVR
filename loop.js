@@ -78,7 +78,7 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	
 	var bothAttachedController = RIGHT_CONTROLLER_INDEX;
 
-	if( controllers[RIGHT_CONTROLLER_INDEX].grippingSide && controllers[LEFT_CONTROLLER_INDEX].grippingSide )
+	if( controllers[0].grippingSide && controllers[1].grippingSide )
 	{
 		ensureDetachment(visiBox, controllers[1-bothAttachedController]);
 		
@@ -95,8 +95,6 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 		modelAndMap.position.multiplyScalar( 1 / modelAndMap.scale.x ); 
 		modelAndMap.scale.multiplyScalar( handSeparationDifferential );
 		modelAndMap.position.multiplyScalar(modelAndMap.scale.x);
-
-		//also that scaling line is visible and not otherwise
 	}
 	else
 	{
