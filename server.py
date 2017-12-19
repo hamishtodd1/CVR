@@ -58,6 +58,8 @@ import tornado.web
 import tornado.websocket
 import tornado.template
 
+# import unicodedata
+
 #------variables
 runningInCoot = True
 try:
@@ -83,6 +85,7 @@ if os.name == "nt":
 		print("no ip found, are you connected to the internet? Or not on windows?")
 if os.name == "posix":
 	import socket
+	#hostname -I
 	ourIP = socket.gethostname()
 
 
@@ -98,45 +101,62 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 	def open(self):
 		self.set_nodelay(True) #doesn't hurt to have this hopefully...
 
-		print(runningInCoot)
-		
 		if runningInCoot == False:
 			self.write_message("loadStandardStuff:")
 
 		else:
-			handle_read_draw_molecule_with_recentre ("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb", 1)
-			model = get_bonds_representation(0)
-			modelMessageString = "model:" + str(model)
-			self.write_message( modelMessageString ) #sub optimal to use string'''
+			handle_read_draw_molecule_with_recentre("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb", 1)
+			msg = {command:"model", modelData:str(get_bonds_representation(0))}
+			self.write_message( msg ) #speedup opportunity'''
 
-	def on_message(self, message):
-		delimiterIndex = message.index(":")
-		messageHeader = message[:delimiterIndex]
-		messageContents = message[delimiterIndex+1:]
-		print(message, delimiterIndex, messageHeader)
+	def on_message(self, msgContainer):
+		msg = eval(msgContainer.data)
 
-		if messageHeader == "deleteAtom":
+		if msg.command == "deleteAtom":
 			if runningInCoot:
-				atomDescription = messageContents.split(",")
-				#what to do about u'?
-
-				#delete_atom(int(atomDescription[0]),atomDescription[1],int(atomDescription[2]),atomDescription[3],atomDescription[4],atomDescription[5]);
+				delete_atom(msg.imol,msg.chainId,msg.residueNumber,msg.insertionCode,msg.name,msg.altloc);
 			else:
-				print("sure, you can delete that atom")
-			self.write_message(message);
+				print("deletion of atom permitted")
+			self.write_message(msgAsString);
+
+		#only if they've let go
+		elif msg.command == "moveAtom":
+			if runningInCoot:
+				set_atom_attribute(msg.imol, msg.chainId, msg.residueNumber, msg.insertionCode, msg.name, msg.altloc, "x", msg.x);
+				set_atom_attribute(msg.imol, msg.chainId, msg.residueNumber, msg.insertionCode, msg.name, msg.altloc, "y", msg.y);
+				set_atom_attribute(msg.imol, msg.chainId, msg.residueNumber, msg.insertionCode, msg.name, msg.altloc, "z", msg.z);
+			else:
+				print("movement of atom permitted")
+			self.write_message(msgAsString);
+
+		# elif messageHeader == "autoFitBestRotamer":
+		# 	if runningInCoot:
+		# 		fullResidueDescription = messageContents.split(",")
+
+		# 		residueNumber = int(fullResidueDescription[0])
+		# 		altloc = fullResidueDescription[1]
+		# 		insertionCode = fullResidueDescription[2]
+		# 		chainId = fullResidueDescription[3]
+		# 		imol = int(fullResidueDescription[4])
+
+		# 		imolMap = imol_refinement_map();
+		# 		clashFlag = 1;
+		# 		lowestProbability = 0.01;
+
+		# 		auto_fit_best_rotamer(
+		# 			residueNumber,altloc,insertionCode,chainId,imol,
+		# 			imolMap, clashFlag, lowestProbability);
+
+		# 		atomList = residue_info(imol,chainId, residueNumber, insertionCode);
+		# 		self.write_message("autoFitBestRotamerResult:"+str(atomList))
+		# 	else:
+		# 		print("requires coot")
+
+		else:
+			print('received unrecognized message:', message,messageHeader)
 
 		'''
-		#only if they've let go
-		elif messageHeader === "moveAtom":
-			atomDescription = messageContents.split(",")
-			newPosition = ???
-			if runningInCoot:
-				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "x", newPosition[0]);
-				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "y", newPosition[1]);
-				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "z", newPosition[2]);
-			else:
-				print("sure, you can move that atom")
-			self.write_message(message);
+		
 		
 		if messageHeader == "refine": #no addition or deletion
 			if runningInCoot:
@@ -164,13 +184,12 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		%coot-listener-socket
 		active_residue()
 		add-molecule
-		auto-fit-best-rotamer
 		view-matrix
 		set-view-matrix
+		
+		
 		'''
 
-		else:
-			print('received unrecognized message:', message,messageHeader)
 
 	def on_close(self):
 		print('connection closed...')

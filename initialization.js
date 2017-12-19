@@ -55,35 +55,7 @@ A big concern at some point will be navigating folders
 			}
 		}
 	}
-
-	// var launcher = {
-	// 	requirementLevel: 0,
-	// 	requirements:[],
-	// 	subLaunchers:[],
-	// 	attemptLaunchHavingFulfilledRequirement:function(requirement)
-	// 	{
-	// 		this.requirements[this.requirementLevel][requirement] = true;
-	// 		for(var i = 0; i < this.requirements[requirementLevel].length; i++)
-	// 		{
-	// 			if( !this.requirements[requirementLevel][i] )
-	// 			{
-	// 				return;
-	// 			}
-	// 		}
-	// 		this.requirementLevel++;
-	// 		this.subLaunchers[requirementLevel]();
-	// 	}
-	// };
-
-	// launcher.subLaunchers[0] = //the rest of this function
-	// launcher.subLaunchers[1] = //the rest of this function
-	// function()
-	// {
-	// 	loadModel("data/tutModelWithLigand.txt", thingsToBeUpdated, visiBox.planes);
-	// 	initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
-	// }
-
-
+	//TODO: async await for the various things. There was also different stuff here previously
 
 	var renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
@@ -233,75 +205,41 @@ A big concern at some point will be navigating folders
 		thingsToBeUpdated.blinker = blinker;
 	}
 
+	//TODO local
+	function initTools()
 	{
-		//TODO local
-		socket = new WebSocket("ws://" + window.location.href.substring(7) + "ws");
-		if(!socket)
-		{
-			console.log("invalid socket");
-			return;
-		}
-		socket.onclose = function()
-		{
-			console.log("The connection has been closed. Maybe you had no data loaded?");
-		}
+		// initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
+		initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
+	}
+	socket = initSocket();
+	socket.onopen = function()
+	{
+		launcher.socketOpened = true;
+		launcher.attemptLaunch();
+	}
+	socket.messageReactions["model"] = function(messageContents)
+	{
+		makeModelFromCootString( messageContents, thingsToBeUpdated, visiBox.planes );
 
-		function initTools()
-		{
-			// initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
-			initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
-		}
-
-		socket.messageReactions = {};
-		socket.messageReactions["model"] = function(messageContents)
-		{
-			makeModelFromCootString( messageContents, thingsToBeUpdated, visiBox.planes );
-
-			initTools();
-		}
-		socket.messageReactions["loadStandardStuff"] = function(messageContents)
-		{
-			/*
-			 * tutModelWithLigand
-			 * ribosome.txt
-			 * oneAtomOneBond.txt
-			 * 3C0.lst
-			 */
-			new THREE.FileLoader().load( "data/newData.txt",
-				function( modelStringCoot )
-				{
-					makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
-					initTools();
-				},
-				function ( xhr ) {},
-				function ( xhr ) { console.error( "couldn't load basic model" ); }
-			);
-			initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
-		}
-		
-		socket.onmessage = function(msg)
-		{
-			//speedup opportunity no doubt
-			var indexOfDelimiter = msg.data.indexOf(":");
-			if(indexOfDelimiter === -1)
+		initTools();
+	}
+	socket.messageReactions["loadStandardStuff"] = function(messageContents)
+	{
+		/*
+		 * tutModelWithLigand
+		 * ribosome.txt
+		 * oneAtomOneBond.txt
+		 * 3C0.lst
+		 */
+		new THREE.FileLoader().load( "data/newData.txt",
+			function( modelStringCoot )
 			{
-				console.log("received message without header: ", msg.data)
-				return;
-			}
-			var header = msg.data.substring(0,indexOfDelimiter);
-			var messageContents = msg.data.substring( indexOfDelimiter+1);
-
-			if(!socket.messageReactions[header])
-			{
-				console.error("Mistyped header: ", header)
-			}
-			else socket.messageReactions[header](messageContents);
-		}
-		
-		socket.onopen = function()
-		{
-			launcher.socketOpened = true;
-			launcher.attemptLaunch();
-		}
+				makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+				initTools();
+			},
+			function ( xhr ) {},
+			function ( xhr ) { console.error( "couldn't load basic model" ); }
+		);
+		initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
 	}
 })();

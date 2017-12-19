@@ -50,6 +50,10 @@ Where:
 • at name is a string
 • altloc is a string
  */
+
+//autofit best rotamer, remember strange order
+
+
 function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 {
 	var atomDeleter = new THREE.Object3D();
@@ -74,6 +78,8 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 	}
 
 	var deleteRequestTimer = -1;
+
+	deleterOverride = false;
 	
 	atomDeleter.update = function()
 	{
@@ -106,8 +112,8 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 			}
 		}
 		
-		if( this.parent !== scene && this.parent.button1
-			//deleterOverride
+		if( //this.parent !== scene && this.parent.button1
+			deleterOverride
 			) 
 		{
 			if( deleteRequestTimer === -1 )
@@ -117,6 +123,7 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 					if(atomHighlightStatuses[i])
 					{
 						atomHighlightStatuses[i] = false;
+						console.log(atoms[i].labelString)
 						socket.send("deleteAtom:" + atoms[i].labelString);
 						deleteRequestTimer = 0;
 					}
@@ -137,11 +144,18 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 	socket.messageReactions.deleteAtom = function(atomLabel)
 	{
 		deleteRequestTimer = -1;
-		// deleterOverride = false;
+		deleterOverride = false;
 		modelAndMap.model.deleteAtom(atomLabel)
 	}
 
-	// deleterOverride = false;
+	// socket.messageReactions.moveAtom = function(atomLabelAndNewPosition)
+	// {
+	// 	atomLabelAndPosition.split(",")
+	// 	modelAndMap.model.deleteAtom(atomLabel)
+	// 	makeModelFromCootString( messageContents, thingsToBeUpdated, visiBox.planes );
+
+	// 	initTools();
+	// }
 	
 	thingsToBeUpdated.atomDeleter = atomDeleter;
 	holdables.atomDeleter = atomDeleter;

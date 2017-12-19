@@ -16,7 +16,9 @@ Install procedure
 Update procedure:
 	Switch virtual machine connection mode to NAT
 	in gitcoot/coot, git pull
-	in gitcoot/build, bash CIH (usually unneeded, does configure stuff)
+	usually unneeded, does configure stuff:
+		in gitcoot/coot, bash autogen.sh
+		in gitcoot/build, bash CIH 
 	in gitcoot/build, make
 	in gitcoot/build, make install
 	It is now in Linux-localhost
@@ -107,7 +109,6 @@ Need to optimize this workflow.
 		<script src="variables.js"></script>
 		<script src="miscFunctions.js"></script>
 		<script src="vrControlSystem.js"></script>
-		<script src="socketCommunication.js"></script>
 		
 		<script src="models.js"></script>
 		<script src="maps.js"></script>
@@ -116,6 +117,7 @@ Need to optimize this workflow.
 		<script src="visiBox.js"></script>
 		
 		<script src="loop.js"></script>
-		<script src="initialization.js"></script>		
+		<script src="connection.js"></script>
+		<script src="initialization.js"></script>
 	</body>
 </html>

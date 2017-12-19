@@ -36,17 +36,22 @@ ATOM_COLORS[9].setRGB(1.0,1.0,1.0); //hydrogen
 
 DEFAULT_BOND_RADIUS = 0.055;
 
-function Atom(element,position,model,chainId,residue,insertionCode,name,alternateConformer)
+function Atom(element,position,model,chainId,residueNumber,insertionCode,name,alternateConformer)
 {
 	/*
 	position, isHydrogen, label elements, residue. Last unused
 	 */
 
+	if( model === -1)
+	{ //MAJOR HACK PAUL IS FIXING
+		model = 0;
+	}
+
 	this.position = position;
 
 	this.model = model;
 	this.chainId = chainId;
-	this.residue = residue;
+	this.residueNumber = residueNumber;
 	this.insertionCode = insertionCode;
 	this.name = name;
 	this.alternateConformer = alternateConformer; //alternate location?
@@ -100,6 +105,8 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
     });
     var cootArray = eval(modelStringTranslated);
 
+    //WE DON'T NEED THAT NUMBER AT THE END
+
     if( typeof cootArray[0] === "string")
     {
     	//we have a bunch of things, preceded by their names. Necessary given the label?
@@ -140,26 +147,26 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 		{ 
 			model.atoms[lowestUnusedAtom] = new Atom( i, new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]), atomDataFromCoot[i][j][2][0],atomDataFromCoot[i][j][2][1],atomDataFromCoot[i][j][2][2],atomDataFromCoot[i][j][2][3],atomDataFromCoot[i][j][2][4],atomDataFromCoot[i][j][2][5] );
 			
-			var residueIndex = atomDataFromCoot[i][j][3];
-			if( -1 !== residueIndex )
-			{
-				if( !model.residues[ residueIndex ] )
-				{
-					model.residues[ residueIndex ] = new Residue();
-				}
+			// var residueIndex = atomDataFromCoot[i][j][3];
+			// if( -1 !== residueIndex )
+			// {
+			// 	if( !model.residues[ residueIndex ] )
+			// 	{
+			// 		model.residues[ residueIndex ] = new Residue();
+			// 	}
 				
-				//YO the atoms should be inserted according to some other aspect of them, some string that WITHIN THE RESIDUE identifies them, possibly their name
-				model.residues[ residueIndex ].atoms.push( model.atoms[lowestUnusedAtom] );
-				model.atoms[ lowestUnusedAtom ].residue = model.residues[ residueIndex ];
-			}
+			// 	//YO the atoms should be inserted according to some other aspect of them, some string that WITHIN THE RESIDUE identifies them, possibly their name
+			// 	model.residues[ residueIndex ].atoms.push( model.atoms[lowestUnusedAtom] );
+			// 	model.atoms[ lowestUnusedAtom ].residue = model.residues[ residueIndex ];
+			// }
 					
 			lowestUnusedAtom++;
 		}
 	}
-	for(var i = 0, il = model.residues.length; i < il; i++)
-	{
-		model.residues[i].updatePosition();
-	}
+	// for(var i = 0, il = model.residues.length; i < il; i++)
+	// {
+	// 	model.residues[i].updatePosition();
+	// }
 
 	var nSphereVertices = makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
 	
@@ -188,15 +195,15 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 					model.geometry.attributes.position.setXYZ( model.atoms[i].firstVertexIndex + k, 0, 0, 0 );
 				}
 				//this could be avoided if the atom used its name in the residue identifier
-				for(var j = 0, jl = model.atoms[i].residue.atoms.length; j < jl; j++ )
-				{
-					if( model.atoms[i].residue.atoms[j] == model.atoms[i] )
-					{
-						model.atoms[i].residue.atoms.splice(j,1);
-						break;
-					}
-				}
-				model.atoms[i].residue.updatePosition();
+				// for(var j = 0, jl = model.atoms[i].residue.atoms.length; j < jl; j++ )
+				// {
+				// 	if( model.atoms[i].residue.atoms[j] == model.atoms[i] )
+				// 	{
+				// 		model.atoms[i].residue.atoms.splice(j,1);
+				// 		break;
+				// 	}
+				// }
+				// model.atoms[i].residue.updatePosition();
 				model.atoms.splice(i,1); //or could leave a space for an atom to be injected
 
 				//need stuff in here about bonds!
