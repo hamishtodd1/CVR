@@ -2,6 +2,18 @@
 Target remains: get coot connection working with "refine"
 Going to bring in laptop
 
+[
+	{ "keys": ["ctrl+shift+s"], "command": "save_all" },
+	{ "keys": ["ctrl+alt+s"], "command": "prompt_save_as" },
+
+	{ "keys": ["ctrl+pagedown"], "command": "next_view_in_stack" },
+	{ "keys": ["ctrl+pageup"], "command": "prev_view_in_stack" },
+
+	{ "keys": ["ctrl+tab"], "command": "next_view" },
+	{ "keys": ["ctrl+shift+tab"], "command": "prev_view" },
+]
+
+
 */
 
 function initialize()
