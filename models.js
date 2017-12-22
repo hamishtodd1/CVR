@@ -36,30 +36,26 @@ ATOM_COLORS[9].setRGB(1.0,1.0,1.0); //hydrogen
 
 DEFAULT_BOND_RADIUS = 0.055;
 
-function Atom(element,position,model,chainId,residueNumber,insertionCode,name,alternateConformer)
+function Atom(element,position,imol,chainId,residueNumber,insertionCode,name,altloc)
 {
 	/*
 	position, isHydrogen, label elements, residue. Last unused
 	 */
 
-	if( model === -1)
+	if( imol === -1)
 	{ //MAJOR HACK PAUL IS FIXING
-		model = 0;
+		imol = 0;
 	}
 
 	this.position = position;
 
-	this.model = model;
-	this.chainId = chainId;
-	this.residueNumber = residueNumber;
-	this.insertionCode = insertionCode;
-	this.name = name;
-	this.alternateConformer = alternateConformer; //alternate location?
-
-	this.labelString = "";
-	for(var i = 2, il = arguments.length; i < il; i++)
-	{
-		this.labelString += arguments[i] + ",";
+	this.spec = {
+		imol:imol,
+		chainId:chainId,
+		residueNumber:residueNumber,
+		insertionCode:insertionCode,
+		name:name,
+		altloc:altloc
 	}
 
 	if(typeof element === "number") //there are a lot of these things, best to keep it as a number
@@ -169,50 +165,80 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 	// }
 
 	var nSphereVertices = makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
-	
-	model.moveAtom = function(atomIndex)
+
+	function getIndexOfAtomWithSpecContainedInHere(spec)
 	{
-		this.atoms[atomIndex].position.y += 1;
-		// console.log(this.atoms[atomIndex].position.y)
-		this.geometry.positionAtom(atomIndex);
-		
-		// if(this.atoms[atomIndex].residue)
-		// 	this.atoms[atomIndex].residue.updatePosition();
-		
-//				socket.send("moveAtom|" + this.atoms[atomIndex].labelString )
-		
-		model.geometry.attributes.position.needsUpdate = true;
-	}
-	//works in theory
-	model.deleteAtom = function(atomLabel)
-	{
+		var itsThisOne = true;
 		for( var i = 0, il = model.atoms.length; i < il; i++ )
 		{
-			if( model.atoms[i].labelString === atomLabel)
+			itsThisOne = true;
+			for( var identifier in model.atoms[i].spec )
 			{
-				for(var k = 0; k < nSphereVertices; k++)
+				if( model.atoms[i].spec[identifier] !== spec[identifier] )
 				{
-					model.geometry.attributes.position.setXYZ( model.atoms[i].firstVertexIndex + k, 0, 0, 0 );
+					itsThisOne = false;
+					break;
 				}
-				//this could be avoided if the atom used its name in the residue identifier
-				// for(var j = 0, jl = model.atoms[i].residue.atoms.length; j < jl; j++ )
-				// {
-				// 	if( model.atoms[i].residue.atoms[j] == model.atoms[i] )
-				// 	{
-				// 		model.atoms[i].residue.atoms.splice(j,1);
-				// 		break;
-				// 	}
-				// }
-				// model.atoms[i].residue.updatePosition();
-				model.atoms.splice(i,1); //or could leave a space for an atom to be injected
-
-				//need stuff in here about bonds!
-
-				model.geometry.attributes.position.needsUpdate = true;
-
-				break;
+			}
+			if(itsThisOne)
+			{
+				return i;
 			}
 		}
+		console.error("couldn't find atom with requested spec")
+	}
+	/*
+	atom visible in page:
+		988
+		x:42.08
+		y:9.668
+		z:14.424
+	*/
+	
+	requestAtomMovement = function(atomIndex,newPosition)
+	{
+		var msg = {command:"moveAtom"};
+		Object.assign(msg,model.atoms[atomIndex].spec);
+		Object.assign(msg,newPosition);
+		socket.send(JSON.stringify(msg));
+		socket.setTimerOnExpectedCommand("moveAtom");
+	}
+	socket.messageReactions.moveAtom = function(msg)
+	{
+		var atomIndex = getIndexOfAtomWithSpecContainedInHere(msg)
+		model.atoms[atomIndex].position.copy(msg);
+		model.geometry.refreshAtomPositionInMesh(atomIndex);
+		model.geometry.attributes.position.needsUpdate = true;
+
+		// if(this.atoms[atomIndex].residue)
+		// {
+		// 	this.atoms[atomIndex].residue.updatePosition();
+		// }
+
+		//html text!
+	}
+
+	socket.messageReactions.deleteAtom = function(msg)
+	{
+		var atomIndex = getIndexOfAtomWithSpecContainedInHere(msg)
+		
+		for(var k = 0; k < nSphereVertices; k++)
+		{
+			model.geometry.attributes.position.setXYZ( model.atoms[atomIndex].firstVertexIndex + k, 0, 0, 0 );
+		}
+		model.geometry.attributes.position.needsUpdate = true;
+
+		//this could be avoided if the atom used its name in the residue identifier
+		// for(var j = 0, jl = model.atoms[i].residue.atoms.length; j < jl; j++ )
+		// {
+		// 	if( model.atoms[i].residue.atoms[j] == model.atoms[i] )
+		// 	{
+		// 		model.atoms[i].residue.atoms.splice(j,1);
+		// 		break;
+		// 	}
+		// }
+		// model.atoms[i].residue.updatePosition();
+		model.atoms.splice(i,1); //or could leave a space for an atom to be injected
 	}
 	
 
@@ -240,27 +266,29 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 		
 		model.toggleLabel = function(atomIndex)
 		{
-			if( this.atoms[atomIndex].label === undefined)
+			var atom = this.atoms[atomIndex];
+			if( atom.label === undefined)
 			{
 				//TODO canvastexture
-				this.atoms[atomIndex].label = new THREE.Mesh( new THREE.TextGeometry( this.atoms[atomIndex].labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 16, font: THREE.defaultFont }), LABEL_MATERIAL );
-				this.atoms[atomIndex].label.update = updateLabel;
-				this.atoms[atomIndex].label.position.copy(this.atoms[atomIndex].position); //assigning them to be equal has no effect!
-				labels.push( this.atoms[atomIndex].label );
+				var labelString = atom.spec.toString();
+				atom.label = new THREE.Mesh( new THREE.TextGeometry( labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 16, font: THREE.defaultFont }), LABEL_MATERIAL );
+				atom.label.update = updateLabel;
+				atom.label.position.copy(atom.position); //assigning them to be equal has no effect!
+				labels.push( atom.label );
 				
-				this.add( this.atoms[atomIndex].label );
+				this.add( atom.label );
 				
 				return;
 			}
 			else
 			{
-				if( this.atoms[atomIndex].label.visible )
+				if( atom.label.visible )
 				{
-					this.atoms[atomIndex].label.visible = false;
+					atom.label.visible = false;
 				}
 				else
 				{
-					this.atoms[atomIndex].label.visible = true;
+					atom.label.visible = true;
 				}
 			}
 		}
@@ -401,7 +429,7 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 		}
 	}
 
-	bufferGeometry.positionAtom = function( atomIndex )
+	bufferGeometry.refreshAtomPositionInMesh = function( atomIndex )
 	{
 		if(atoms[atomIndex].element === 9)
 		{
@@ -431,7 +459,7 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 		atoms[i].firstFaceIndex = i*nSphereFaces;
 		
 		bufferGeometry.colorAtom(i);
-		bufferGeometry.positionAtom(i)
+		bufferGeometry.refreshAtomPositionInMesh(i)
 		
 		for(var k = 0; k < nSphereVertices; k++)
 		{

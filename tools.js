@@ -78,8 +78,6 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 	}
 
 	var deleteRequestTimer = -1;
-
-	deleterOverride = false;
 	
 	atomDeleter.update = function()
 	{
@@ -112,50 +110,29 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 			}
 		}
 		
-		if( //this.parent !== scene && this.parent.button1
-			deleterOverride
-			) 
+		if( (this.parent !== scene && this.parent.button1)
+			// || deleterOverride
+		 ) 
 		{
-			if( deleteRequestTimer === -1 )
+			// deleterOverride = false;
+			if( !socket.queryCommandTimer("deleteAtom") )
 			{
 				for(var i = 0, il = atomHighlightStatuses.length; i < il; i++)
 				{
 					if(atomHighlightStatuses[i])
 					{
 						atomHighlightStatuses[i] = false;
-						console.log(atoms[i].labelString)
-						socket.send("deleteAtom:" + atoms[i].labelString);
-						deleteRequestTimer = 0;
+						var msg = {command:"deleteAtom"};
+						Object.assign(msg,atoms[i].spec);
+
+						socket.send(JSON.stringify(msg));
+						socket.setTimerOnExpectedCommand("deleteAtom");
 					}
 				}
 			}
 		}
-		if( 1 < deleteRequestTimer && deleteRequestTimer < 2 )
-		{
-			console.error( "delete was requested but not happened yet" );
-			deleteRequestTimer += 1;
-		}
-		else if( deleteRequestTimer !== -1 )
-		{
-			deleteRequestTimer += frameDelta;
-		}
 	}
-
-	socket.messageReactions.deleteAtom = function(atomLabel)
-	{
-		deleteRequestTimer = -1;
-		deleterOverride = false;
-		modelAndMap.model.deleteAtom(atomLabel)
-	}
-
-	// socket.messageReactions.moveAtom = function(atomLabelAndNewPosition)
-	// {
-	// 	atomLabelAndPosition.split(",")
-	// 	modelAndMap.model.deleteAtom(atomLabel)
-	// 	makeModelFromCootString( messageContents, thingsToBeUpdated, visiBox.planes );
-
-	// 	initTools();
-	// }
+	// deleterOverride = false;
 	
 	thingsToBeUpdated.atomDeleter = atomDeleter;
 	holdables.atomDeleter = atomDeleter;

@@ -135,4 +135,6 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 		modelAndMap.map.material.linewidth = 0.2 / modelAndMap.position.distanceTo(camera.position);
 		modelAndMap.map.material.needsUpdate = true;
 	}
+
+	socket.checkOnExpectedCommands();
 }

@@ -51,6 +51,7 @@ A big concern at some point will be navigating folders
 			}
 			else
 			{
+				document.body.appendChild( renderer.domElement );
 				render();
 			}
 		}
@@ -61,7 +62,6 @@ A big concern at some point will be navigating folders
 	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	document.body.appendChild( renderer.domElement );
 
 	var thingsToBeUpdated = {};
 	thingsToBeUpdated.labels = [];
@@ -217,13 +217,13 @@ A big concern at some point will be navigating folders
 		launcher.socketOpened = true;
 		launcher.attemptLaunch();
 	}
-	socket.messageReactions["model"] = function(messageContents)
+	socket.messageReactions["model"] = function(msg)
 	{
-		makeModelFromCootString( messageContents, thingsToBeUpdated, visiBox.planes );
+		makeModelFromCootString( msg.modelDataString, thingsToBeUpdated, visiBox.planes );
 
 		initTools();
 	}
-	socket.messageReactions["loadStandardStuff"] = function(messageContents)
+	socket.messageReactions["loadStandardStuff"] = function(msg)
 	{
 		/*
 		 * tutModelWithLigand

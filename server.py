@@ -106,28 +106,31 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 		else:
 			handle_read_draw_molecule_with_recentre("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb", 1)
-			msg = {command:"model", modelData:str(get_bonds_representation(0))}
+			msg = {'command':"model"}
+			msg['modelDataString'] = str( get_bonds_representation(0) )
 			self.write_message( msg ) #speedup opportunity'''
 
 	def on_message(self, msgContainer):
-		msg = eval(msgContainer.data)
+		msg = eval(msgContainer)
 
-		if msg.command == "deleteAtom":
+		#you have to use ["thing"] rather than .thing. Changeable, but not trivially
+
+		if msg["command"] == "deleteAtom":
 			if runningInCoot:
-				delete_atom(msg.imol,msg.chainId,msg.residueNumber,msg.insertionCode,msg.name,msg.altloc);
+				delete_atom(msg["imol"],msg["chainId"],msg["residueNumber"],msg["insertionCode"],msg["name"],msg["altloc"]);
 			else:
 				print("deletion of atom permitted")
-			self.write_message(msgAsString);
+			self.write_message(msgContainer);
 
-		#only if they've let go
-		elif msg.command == "moveAtom":
+		elif msg["command"] == "moveAtom":
+
 			if runningInCoot:
-				set_atom_attribute(msg.imol, msg.chainId, msg.residueNumber, msg.insertionCode, msg.name, msg.altloc, "x", msg.x);
-				set_atom_attribute(msg.imol, msg.chainId, msg.residueNumber, msg.insertionCode, msg.name, msg.altloc, "y", msg.y);
-				set_atom_attribute(msg.imol, msg.chainId, msg.residueNumber, msg.insertionCode, msg.name, msg.altloc, "z", msg.z);
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
 			else:
 				print("movement of atom permitted")
-			self.write_message(msgAsString);
+			self.write_message(msgContainer);
 
 		# elif messageHeader == "autoFitBestRotamer":
 		# 	if runningInCoot:
