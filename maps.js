@@ -4,23 +4,34 @@
 
 function initMap(mapURL, slabPlanes)
 {
-	modelAndMap.map = new THREE.LineSegments( new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-		color:0xFFFFFF, //0x777799 is coot 
-		linewidth: 1.2, 
-		clippingPlanes: slabPlanes}));
-//	modelAndMap.map = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({
-//		//side: THREE.DoubleSide, transparent:true, opacity:0.5, 
-//		side: THREE.BackSide, 
-//		clippingPlanes: camera.slabPlanes,
-//		color:0x777799
-//	}));
+	if(1)
+	{
+		modelAndMap.map = new THREE.LineSegments( new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+			color:0x4286F4, //0x777799 is coot 
+			linewidth: 1.2, 
+			clippingPlanes: slabPlanes}));
+	}
+	else
+	{
+		modelAndMap.map = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({
+			//side: THREE.DoubleSide, transparent:true, opacity:0.5,
+			side: THREE.BackSide,
+			clippingPlanes: camera.slabPlanes,
+			color:0x777799
+		}));
+	}
 	if(modelAndMap.model)
+	{
 		modelAndMap.map.position.copy(modelAndMap.model.position);
+	}
 	modelAndMap.add(modelAndMap.map);
+
+	modelAndMap.map.isolevel = 0.6;
 	
 	var cubeMarchingSystem = CubeMarchingSystem();
 	modelAndMap.map.contour = function(isolevel)
 	{
+		this.isolevel = isolevel;
 		if( !this.data )
 		{
 			return;
@@ -92,7 +103,7 @@ function initMap(mapURL, slabPlanes)
 			if( modelAndMap.map.data.array.length !== modelAndMap.map.data.sizeX * modelAndMap.map.data.sizeY * modelAndMap.map.data.sizeZ )
 				console.error("you may need to change map metadata");
 				
-			modelAndMap.map.contour(0.9);
+			modelAndMap.map.contour(modelAndMap.map.isolevel);
 		},
 		function ( xhr ) {}, //progression function
 		function ( xhr ) { console.error( "couldn't load PDB" ); }

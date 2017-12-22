@@ -50,63 +50,95 @@ Where:
 • at name is a string
 • altloc is a string
  */
-function initAtomDeleter(thingsToBeUpdated)
+
+//autofit best rotamer, remember strange order
+
+
+function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 {
-	atomDeleter = new THREE.Object3D();
+	var atomDeleter = new THREE.Object3D();
 	
-	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(1), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.3}));
+	var radius = 0.05;
+
+	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.7}));
 	atomDeleter.add( ball );
-	ball.scale.setScalar(0.05);
+	ball.geometry.computeBoundingSphere();
+	atomDeleter.boundingSphere = ball.geometry.boundingSphere;
+
+	// var label = new THREE.Mesh( new THREE.TextGeometry( "Deleter: \nhold with index finger and press\nbutton to delete highlighted atoms",
+	// 	{size: 0.03, height: 0.0001, font: THREE.defaultFont }), LABEL_MATERIAL );
+	// atomDeleter.add(label);
+	// label.visible = false;
 	
-	atomDeleter.highlightedAtoms = [];
+	var atomHighlightStatuses = null;
+	atomHighlightStatuses = Array(atoms.length);
+	for(var i = 0, il = atoms.length; i<il;i++)
+	{
+		atomHighlightStatuses[i] = false;
+	}
+
+	var deleteRequestTimer = -1;
 	
 	atomDeleter.update = function()
 	{
 		if(!modelAndMap.model )
+		{
 			return;
+		}
 		
 		var ourPosition = this.getWorldPosition();
 		modelAndMap.model.updateMatrixWorld();
 		modelAndMap.model.worldToLocal(ourPosition);
 		
-		var ourRadiusSq = sq( ball.scale.x / getAngstrom() );
+		var ourRadiusSq = sq( radius / getAngstrom() );
 		
 		var highlightColor = new THREE.Color(1,1,1);
-		
-		for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
+
+		for(var i = 0, il = atoms.length; i < il; i++)
 		{
-			if( modelAndMap.model.atoms[i].position.distanceToSquared( ourPosition ) < ourRadiusSq )
+			if( atoms[i].position.distanceToSquared( ourPosition ) < ourRadiusSq )
 			{
+				atomHighlightStatuses[i] = true;
 				modelAndMap.model.geometry.colorAtom(i, highlightColor);
-				this.highlightedAtoms.push(i);
+				modelAndMap.model.geometry.attributes.color.needsUpdate = true;
 			}
-		}
-		for(var i = 0; i < this.highlightedAtoms.length; i++)
-		{
-			if( modelAndMap.model.atoms[ this.highlightedAtoms[i] ].position.distanceToSquared( ourPosition ) >= ourRadiusSq )
+			else if( atomHighlightStatuses[i] === true )
 			{
-				modelAndMap.model.geometry.colorAtom( this.highlightedAtoms[i] );
-				this.highlightedAtoms.splice(i,1);
-				i--;
+				atomHighlightStatuses[i] = false;
+				modelAndMap.model.geometry.colorAtom( i );
+				modelAndMap.model.geometry.attributes.color.needsUpdate = true;
 			}
 		}
-		modelAndMap.model.geometry.attributes.color.needsUpdate = true;
 		
-		if( this.parent !== scene )
+		if( (this.parent !== scene && this.parent.button1)
+			// || deleterOverride
+		 ) 
 		{
-			if( this.parent.button1 || this.parent.button2 )
+			// deleterOverride = false;
+			if( !socket.queryCommandTimer("deleteAtom") )
 			{
-				for(var i = 0, il = this.highlightedAtoms.length; i < il; i++)
+				for(var i = 0, il = atomHighlightStatuses.length; i < il; i++)
 				{
-//					socket.send("delete|" + this.highlightedAtoms[i].labelString);
+					if(atomHighlightStatuses[i])
+					{
+						atomHighlightStatuses[i] = false;
+						var msg = {command:"deleteAtom"};
+						Object.assign(msg,atoms[i].spec);
+
+						socket.send(JSON.stringify(msg));
+						socket.setTimerOnExpectedCommand("deleteAtom");
+					}
 				}
-				this.highlightedAtoms.length = 0;
 			}
 		}
 	}
+	// deleterOverride = false;
 	
-	thingsToBeUpdated.push(atomDeleter);
-	scene.add(atomDeleter)	
+	thingsToBeUpdated.atomDeleter = atomDeleter;
+	holdables.atomDeleter = atomDeleter;
+	scene.add(atomDeleter);
+	atomDeleter.position.z = -FOCALPOINT_DISTANCE;
+	atomDeleter.ordinaryParent = atomDeleter.parent;
 }
 
 
@@ -147,11 +179,12 @@ function initAtomDeleter(thingsToBeUpdated)
 function initMutator(thingsToBeUpdated, holdables)
 {
 	mutator = new THREE.Object3D();
+	mutator.position.y = -0.1
 	
 	var handleRadius = 0.035;
 	var handleTubeRadius = handleRadius / 3;
 	var chunkOut = TAU / 4;
-	mutator.handle = new THREE.Mesh(new THREE.TorusGeometry(handleRadius, handleTubeRadius, 7, 31, TAU - chunkOut), new THREE.MeshBasicMaterial({transparent:true,color:0xFFFF00}));
+	mutator.handle = new THREE.Mesh(new THREE.TorusGeometry(handleRadius, handleTubeRadius, 7, 31, TAU - chunkOut), new THREE.MeshLambertMaterial({transparent:true,color:0xFFFF00}));
 	mutator.handle.rotation.y = TAU / 4;
 	mutator.handle.rotation.z = chunkOut / 2;
 	mutator.handle.geometry.computeBoundingSphere();
@@ -166,8 +199,8 @@ function initMutator(thingsToBeUpdated, holdables)
 	               "ASN","ASP","CYS","GLN","HIS","ILE","LYS","MET", "PHE","PRO","TRP","TYR"];
 	mutator.AAs = Array(aaNames.length);
 	var ourPDBLoader = new THREE.PDBLoader();
-	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(4*0.0108,32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5}) );
-	var innerCircleRadius = 0.1;
+	var innerCircleRadius = 0.12;
+	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(0.432 * innerCircleRadius, 32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5, side:THREE.DoubleSide}) );
 	var textWidth = innerCircleRadius / 3;
 	function singleLoop(aaIndex, position)
 	{
@@ -212,8 +245,8 @@ function initMutator(thingsToBeUpdated, holdables)
 				);
 			},
 			function ( xhr ) {}, //progression function
-			function ( xhr ) { console.error( "couldn't load PDB (maybe something about .txt): ", aaNames[aaIndex]  ); }
-		);
+			function ( xhr ) { console.error( "couldn't load PDB (maybe something about .txt): ", aaNames[aaIndex]  );
+		});
 	}
 	var numInLayer1 = 7;
 	for(var i = 0, il = mutator.AAs.length; i < il; i++)
@@ -249,32 +282,23 @@ function initMutator(thingsToBeUpdated, holdables)
 		 * You've selected an amino acid.
 		 * We send a message to coot. It mutates and autofits.
 		 */
+		var mutatorAaAngstrom = getAngstrom();
+		if(mutatorAaAngstrom > 0.0125)
+		{
+			mutatorAaAngstrom = 0.0125;
+		}
 		for(var i = 0, il = this.AAs.length; i < il; i++)
 		{
 			this.AAs[i].parent.visible = !(this.parent === scene);
 			this.AAs[i].parent.children[0].visible = !(this.parent === scene);
-			this.AAs[i].parent.children[1].visible = !(this.parent === scene);
+			// this.AAs[i].parent.children[1].visible = !(this.parent === scene);
 
-			this.AAs[i].scale.setScalar(getAngstrom());
+			this.AAs[i].scale.setScalar(mutatorAaAngstrom);
 		}
 
 		if(this.parent !== scene)
 		{
-			var closestAtomIndex = -1;
-			var closestAtomSqDistance = Infinity;
-			for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
-			{
-				if( modelAndMap.model.atoms[i].position.distanceToSquared(this.position) < closestAtomSqDistance )
-				{
-					closestAtomIndex = i;
-					closestAtomSqDistance = modelAndMap.model.atoms[i].position.distanceToSquared(this.position);
-				}
-			}
-
-			if( Math.sqrt(closestAtomSqDistance) < handleRadius )
-			{
-				// socket.send("mutateAndAutoFit|" + modelAndMap.model.atoms[closestAtomIndex]. residueNumber.toString() + "," + residue-number chain-id mol mol-for-map residue-type );
-			}
+			
 		}
 	}
 	
@@ -282,126 +306,4 @@ function initMutator(thingsToBeUpdated, holdables)
 	thingsToBeUpdated.mutator = mutator;
 	holdables.mutator = mutator;
 	scene.add(mutator);
-}
-
-function initVisiBox(thingsToBeUpdated,holdables)
-{
-	//should its edges only appear sometimes?
-	var visiBox = new THREE.Object3D();
-	
-	thingsToBeUpdated.visiBox = visiBox;
-	
-	visiBox.scale.setScalar(0.9)
-	visiBox.position.z = -FOCALPOINT_DISTANCE
-	scene.add(visiBox);
-	
-	var ourSquareGeometry = new THREE.RingGeometry( 0.9 * Math.sqrt( 2 ) / 2, Math.sqrt( 2 ) / 2,4,1);
-	ourSquareGeometry.applyMatrix( new THREE.Matrix4().makeRotationZ( TAU / 8 ) );
-	visiBox.planes = [];
-	for(var i = 0; i < 6; i++)
-	{
-		visiBox.add( new THREE.Mesh(ourSquareGeometry, new THREE.MeshLambertMaterial({color:0xFF0000,transparent:true, opacity:0.5, side:THREE.DoubleSide}) ) );
-		if( i === 1) visiBox.children[ visiBox.children.length-1 ].rotation.x = TAU/2;
-		if( i === 2) visiBox.children[ visiBox.children.length-1 ].rotation.x = TAU/4;
-		if( i === 3) visiBox.children[ visiBox.children.length-1 ].rotation.x = -TAU/4;
-		if( i === 4) visiBox.children[ visiBox.children.length-1 ].rotation.y = TAU/4;
-		if( i === 5) visiBox.children[ visiBox.children.length-1 ].rotation.y = -TAU/4;
-		visiBox.children[ visiBox.children.length-1 ].position.set(0,0,0.5);
-		visiBox.children[ visiBox.children.length-1 ].position.applyEuler( visiBox.children[ visiBox.children.length-1 ].rotation );
-		
-		visiBox.planes.push( new THREE.Plane() );
-	}
-	
-	//there's an argument for doing this with sides rather than corners, but corners are easier to aim for and give more power?
-	{
-		visiBox.corners = Array(8);
-		var cornerGeometry = new THREE.EfficientSphereBufferGeometry(1);
-		cornerGeometry.computeBoundingSphere();
-		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF, side:THREE.DoubleSide});
-		visiBox.updateMatrix();
-		
-		function assignPosition(i, position)
-		{
-			position.setScalar(0.5);
-			if( i%2 )
-				position.x *= -1;
-			if( i%4 >= 2 )
-				position.y *= -1;
-			if( i>=4 )
-				position.z *= -1;
-		}
-		for(var i = 0; i < visiBox.corners.length; i++)
-		{
-			visiBox.corners[i] = new THREE.Mesh( cornerGeometry, cornerMaterial );
-			visiBox.corners[i].scale.setScalar( 0.01 );
-			visiBox.corners[i].boundingSphere = cornerGeometry.boundingSphere;
-			visiBox.add( visiBox.corners[i] );
-			visiBox.corners[i].ordinaryParent = visiBox;
-
-			visiBox.updateMatrixWorld();
-			
-			assignPosition(i, visiBox.corners[i].position)
-			
-			holdables[ "visiBoxCorner" + i.toString() ] = visiBox.corners[i];
-		}
-	}
-	
-//	function setFaceToChangedVertex(changedIndex,xOrYOrZ, cornerIndices)
-//	{
-//		for(var i = 0; i < cornerIndices.length; i++)
-//		{
-//			visiBox.corners[cornerIndices[i]].position.setComponent(xOrYOrZ, visiBox.corners[cornerIndices[i]].position.getComponent(xOrYOrZ ) );
-//		}
-//	}
-	
-	visiBox.update = function()
-	{
-		visiBox.updateMatrixWorld();
-		for(var i = 0; i < visiBox.corners.length; i++)
-		{
-			if(visiBox.corners[i].parent !== visiBox)
-			{
-				var newCornerPosition = visiBox.corners[ i ].getWorldPosition();
-				visiBox.worldToLocal(newCornerPosition);
-				visiBox.scale.x *= ( Math.abs(newCornerPosition.x)-0.5 ) + 1;
-				visiBox.scale.y *= ( Math.abs(newCornerPosition.y)-0.5 ) + 1;
-				visiBox.scale.z *= ( Math.abs(newCornerPosition.z)-0.5 ) + 1;
-//				console.log(visiBox.scale)
-				
-				visiBox.updateMatrixWorld();
-				
-				var newNewCornerPosition = new THREE.Vector3();
-				assignPosition(i, newNewCornerPosition );
-				visiBox.localToWorld(newNewCornerPosition);
-				
-				var displacement = visiBox.corners[ i ].getWorldPosition().sub( newNewCornerPosition )//.multiply(visiBox.scale);
-				
-				visiBox.position.add(displacement)
-				
-				break;
-			}
-		}
-		
-		for(var i = 0; i < visiBox.corners.length; i++)
-		{
-			if(visiBox.corners[i].parent === visiBox)
-			{
-				visiBox.corners[i].scale.set(0.01/visiBox.scale.x,0.01/visiBox.scale.y,0.01/visiBox.scale.z);
-				visiBox.corners[i].rotation.set(0,0,0);
-			}
-		}
-		
-		//beware, the planes may be the negatives of what you expect, seemingly because of threejs bug
-		for(var i = 0; i < this.planes.length; i++)
-		{
-			var planeVector = new THREE.Vector3();
-			planeVector.applyMatrix4(this.children[i].matrix);
-			this.planes[i].normal.copy(planeVector).normalize();
-			this.planes[i].constant = planeVector.dot( this.planes[i].normal );
-			
-			this.planes[i].applyMatrix4(visiBox.matrixWorld);
-		}
-	}
-	
-	return visiBox;
 }

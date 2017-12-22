@@ -20,6 +20,31 @@ function checkForNewGlobals()
 		numGlobalVariables = Object.keys(window).length + 1;
 	}	
 }
+//also nice would be "check for unused variables"
+
+function ArrayOfThisValueAndThisLength(value,length)
+{
+	var array = Array(length);
+	for(var i = 0; i < length; i++)
+	{
+		array[i] = value;
+	}
+	return array;
+}
+
+THREE.CylinderBufferGeometryUncentered = function(radius, length, radiusSegments)
+{
+	if( !radiusSegments )
+	{
+		radiusSegments = 8;
+	}
+	var geometry = new THREE.CylinderBufferGeometry(radius, radius, length,radiusSegments,1,true);
+	for(var i = 0, il = geometry.attributes.position.array.length / 3; i < il; i++)
+	{
+		geometry.attributes.position.array[i*3+1] += length / 2;
+	}
+	return geometry;
+}
 
 THREE.Quaternion.prototype.distanceTo = function(q2)
 {
@@ -71,4 +96,19 @@ THREE.Face3.prototype.addOffset = function(offset)
 function getStandardFunctionCallString(myFunc)
 {
 	return myFunc.toString().split("\n",1)[0].substring(9);
+}
+
+function randomPerpVector(ourVector){
+	var perpVector = new THREE.Vector3();
+	
+	if( ourVector.equals(zAxis))
+	{
+		perpVector.crossVectors(ourVector, yAxis);
+	}
+	else
+	{
+		perpVector.crossVectors(ourVector, zAxis);
+	}
+	
+	return perpVector;
 }

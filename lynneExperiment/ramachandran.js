@@ -1,4 +1,4 @@
-function initRamachandran(allowedArray)
+	function initRamachandran(allowedArray)
 {
 	function normalizedAngle(angle)
 	{

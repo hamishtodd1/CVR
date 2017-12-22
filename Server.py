@@ -58,6 +58,8 @@ import tornado.web
 import tornado.websocket
 import tornado.template
 
+# import unicodedata
+
 #------variables
 runningInCoot = True
 try:
@@ -83,81 +85,82 @@ if os.name == "nt":
 		print("no ip found, are you connected to the internet? Or not on windows?")
 if os.name == "posix":
 	import socket
+	#hostname -I
 	ourIP = socket.gethostname()
 
 
 class mainHandler(tornado.web.RequestHandler):
 	def get(self):
 		loader = tornado.template.Loader(".")
-		#self.write(loader.load("daydreamControllerTesting.html").generate())
 		self.write(loader.load("index.html").generate())
 
 class wsHandler(tornado.websocket.WebSocketHandler):
 	def check_origin(self, origin):
 		return True
 		
-	def sendMap(self):
-		print("going to send map")
-		#Hey Paul, what would be the size for the whole thing? Answer: unit cell dimensions
-		
-		mapString = 'Map,'
-		if runningInCoot == False:
-			mapString += "0,0,0,1,1,1,2,2,2,3,3,3,"
-		else:
-			map = map_contours(1, 0.6)
-			if map == False:
-				print( "no map loaded" )
-				mapString += "0,0,0,1,1,1,2,2,2,3,3,3,"
-			else:
-			#this data processing has to be done either here or in the browser so here it is. TODO have a function in coot that gives the precise string you want
-				for i in map: #lines
-					for j in i: #line ends
-						for k in j: #coordinates
-							mapString += str(k) + ","
-		print("made map, gonna send")
-		self.write_message(mapString)
-
 	def open(self):
-		#we change all these numbers to ensure that hard refresh actually works
-		indexFile = open('index.html', 'r')
-		modifiedIndexFile = ""
-		for line in indexFile:
-			newLine = ""
-			versionNumber = "0"
-			if line[len(line)-24:len(line)-18] != ".js?v=":
-				newLine = line
-			else:
-				newLine += line[:len(line)-18]
-				if versionNumber == "0":
-					versionNumber = int( line[ len(line)-18:len(line)-12 ] )
-					versionNumber += 1
-					versionNumber = str(versionNumber)
-				newLine += versionNumber
-				newLine += line[len(line)-12:]
-			modifiedIndexFile += newLine
-		indexFileWrite = open('index.html', 'w')
-		indexFileWrite.write(modifiedIndexFile)
-			
-		'''
-		type in "window.location.reload(true)" on the remote debugging console if it's not reloading. Ctrl+refresh once worked too
-		Note it only works through eduroam. Probably firewall crap
-		'''
 		self.set_nodelay(True) #doesn't hurt to have this hopefully...
-		
-		if runningInCoot:
-			set_map_radius(15)
-		self.sendMap()
-		
-		#-------update the version numbers so that the whole thing gets refreshed
-		
-		debug = True
-		
-	def on_message(self, message):
-		#time to send the next one. TODO make it sooner?
-		splitMessage = message.split(";")
-		messageHeader = splitMessage[0]
-		
+
+		if runningInCoot == False:
+			self.write_message("loadStandardStuff:")
+
+		else:
+			handle_read_draw_molecule_with_recentre("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb", 1)
+			msg = {'command':"model"}
+			msg['modelDataString'] = str( get_bonds_representation(0) )
+			self.write_message( msg ) #speedup opportunity'''
+
+	def on_message(self, msgContainer):
+		msg = eval(msgContainer)
+
+		#you have to use ["thing"] rather than .thing. Changeable, but not trivially
+
+		if msg["command"] == "deleteAtom":
+			if runningInCoot:
+				delete_atom(msg["imol"],msg["chainId"],msg["residueNumber"],msg["insertionCode"],msg["name"],msg["altloc"]);
+			else:
+				print("deletion of atom permitted")
+			self.write_message(msgContainer);
+
+		elif msg["command"] == "moveAtom":
+
+			if runningInCoot:
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
+			else:
+				print("movement of atom permitted")
+			self.write_message(msgContainer);
+
+		# elif messageHeader == "autoFitBestRotamer":
+		# 	if runningInCoot:
+		# 		fullResidueDescription = messageContents.split(",")
+
+		# 		residueNumber = int(fullResidueDescription[0])
+		# 		altloc = fullResidueDescription[1]
+		# 		insertionCode = fullResidueDescription[2]
+		# 		chainId = fullResidueDescription[3]
+		# 		imol = int(fullResidueDescription[4])
+
+		# 		imolMap = imol_refinement_map();
+		# 		clashFlag = 1;
+		# 		lowestProbability = 0.01;
+
+		# 		auto_fit_best_rotamer(
+		# 			residueNumber,altloc,insertionCode,chainId,imol,
+		# 			imolMap, clashFlag, lowestProbability);
+
+		# 		atomList = residue_info(imol,chainId, residueNumber, insertionCode);
+		# 		self.write_message("autoFitBestRotamerResult:"+str(atomList))
+		# 	else:
+		# 		print("requires coot")
+
+		else:
+			print('received unrecognized message:', message,messageHeader)
+
 		'''
+		
+		
 		if messageHeader == "refine": #no addition or deletion
 			if runningInCoot:
 				imol = splitMessage[1]
@@ -171,41 +174,25 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 				newModelData = get_bonds_representation(imol)
 				self.write_message(newModelData)
 			
-				
-		elif messageHeader == "increase radius":
-			if runningInCoot:
-				currentRadius = get_map_radius()
-				set_map_radius(currentRadius + 4)
-			self.sendMap()
-			
 		elif messageHeader == "mutateAndAutoFit":
 			if runningInCoot:
 				mutate_and_auto_fit( splitMessage[1],splitMessage[2],splitMessage[3],splitMessage[4] )
 				self.write_message(atomDeltas)
 				
 				refine_active_reside()
-		elif messageHeader === "moveAtom":
-			if runningInCoot:
-				set_atom_attribute(imol, chain_id, res_no, ins_code, atom_name, alt_conf, "x", attribute_value);
+		
 		
 		Also useful
 		pepflip-active-residue
 		%coot-listener-socket
 		active_residue()
 		add-molecule
-		auto-fit-best-rotamer
 		view-matrix
 		set-view-matrix
 		
-		self.write_message("Didn't understand that")
-		print('received unrecognized message:', message)
+		
 		'''
-			
-	def sendButtonState(self, buttonString):
-		buttonState = 0
-		if GetKeyState( VK_CODE[ buttonString ] ) < 0:
-			buttonState = 1
-		self.write_message( buttonString + "," + str( buttonState ) )
+
 
 	def on_close(self):
 		print('connection closed...')

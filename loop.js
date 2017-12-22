@@ -25,30 +25,42 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	{
 		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
 		{
-			modelAndMap.scale.setScalar( modelAndMap.scale.x * (1+controllers[i].thumbStickAxes[1] / 100) );
-			var minScale = 0.0000001;
-			if( modelAndMap.scale.x < minScale )
-				modelAndMap.scale.setScalar( minScale )
+			// modelAndMap.scale.setScalar( modelAndMap.scale.x * (1+controllers[i].thumbStickAxes[1] / 100) );
+			// var minScale = 0.0000001;
+			// if( modelAndMap.scale.x < minScale )
+			// 	modelAndMap.scale.setScalar( minScale )
+
+			modelAndMap.map.contour(modelAndMap.map.isolevel + 0.1 * controllers[i].thumbStickAxes[1] );
 		}
+
+		controllers[i].controllerModel.pointer.visible = (controllers[i].children.length === 1 && controllers[i].button1)
 		
 		if( controllers[i].grippingTop )
 		{
 			if( controllers[i].children.length === 1)
 			{
+				var distanceOfClosestObject = Infinity;
+				selectedHoldable = null;
 				for(var holdable in holdables )
 				{
 					if( controllers[i].overlappingHoldable(holdables[holdable]) )
 					{
-						if( controllers[i].children.length > 1)
-						{
-							console.warn("was going to attach something else")
-							break;
-						}
-						
-						THREE.SceneUtils.detach( holdables[holdable], holdables[holdable].parent, scene );
-						THREE.SceneUtils.attach( holdables[holdable], scene, controllers[i] );
+						selectedHoldable = holdables[holdable];
+						break;
 					}
 				}
+				if(selectedHoldable)
+				{
+					THREE.SceneUtils.detach( selectedHoldable, selectedHoldable.parent, scene );
+					THREE.SceneUtils.attach( selectedHoldable, scene, controllers[i] );
+				}
+				// else
+				// {
+				// 	for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
+				// 	{
+
+				// 	}
+				// }
 			}
 		}
 		else
@@ -65,8 +77,8 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	}
 	
 	var bothAttachedController = RIGHT_CONTROLLER_INDEX;
-	
-	if( controllers[RIGHT_CONTROLLER_INDEX].grippingSide && controllers[LEFT_CONTROLLER_INDEX].grippingSide )
+
+	if( controllers[0].grippingSide && controllers[1].grippingSide )
 	{
 		ensureDetachment(visiBox, controllers[1-bothAttachedController]);
 		
@@ -77,11 +89,11 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 			controllers[0].oldPosition.distanceTo( controllers[1].oldPosition );
 		
 		visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 
-		visiBox.scale.setScalar( visiBox.scale.x * handSeparationDifferential );
+		visiBox.scale.multiplyScalar( handSeparationDifferential );
 		visiBox.position.multiplyScalar(visiBox.scale.x);
 		
 		modelAndMap.position.multiplyScalar( 1 / modelAndMap.scale.x ); 
-		modelAndMap.scale.setScalar( modelAndMap.scale.x * handSeparationDifferential );
+		modelAndMap.scale.multiplyScalar( handSeparationDifferential );
 		modelAndMap.position.multiplyScalar(modelAndMap.scale.x);
 	}
 	else
@@ -123,4 +135,6 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 		modelAndMap.map.material.linewidth = 0.2 / modelAndMap.position.distanceTo(camera.position);
 		modelAndMap.map.material.needsUpdate = true;
 	}
+
+	socket.checkOnExpectedCommands();
 }

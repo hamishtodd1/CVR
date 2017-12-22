@@ -1,3 +1,42 @@
+<!--
+And by the way, go to top right arrow>settings>region & language>plus sign and put in eng UK and minus sign to get rid of fucking eng US
+
+Install procedure
+	work/setup-path to ensure python, pip, coot were all consistent
+	Needed pip to install python modules
+		To install pip needed python with SSL
+		Had to use 2.7.14
+		Edited Modules/setup to uncomment the SSL section
+	   		Changed library to lib64 from lib
+	   		--with-ensurepip=install
+	pip install singledispatch
+	pip install backports_abc
+	Never try to avoid pip
+
+Update procedure:
+	Switch virtual machine connection mode to NAT
+	in gitcoot/coot, git pull
+	usually unneeded, does configure stuff:
+		in gitcoot/coot, bash autogen.sh
+		in gitcoot/build, bash CIH 
+	in gitcoot/build, make
+	in gitcoot/build, make install
+	It is now in Linux-localhost
+
+Running procedure:
+   Switch virtual machine connection mode to host-only
+   hostname -I gets ip address to put in browser
+   For no graphics: /home/htodd/autobuild/Linux-localhost.../bin/coot --no-graphics -s CVR/Server.py
+   To get out of coot:
+      ctrl C
+      ctrl D
+
+
+
+Workflow: save script, change window, ctrl+C to finish script in coot, ctrl+D to exit coot, up and enter to re-run coot
+Need to optimize this workflow.
+-->
+
 <html>
 	<head>
 		<title>cootVR</title>
@@ -50,8 +89,8 @@
 			}
 		</script>
 		
-		<script src="lib/three.min.js"></script> <!--change to v=something if you want reloading-->
-		<script src="lib/WireframeGeometry.js"></script> <!--change to v=something if you want reloading-->
+		<script src="lib/three.min.js"></script>
+		<script src="lib/WireframeGeometry.js"></script>
 
 		<script src="lib/SceneFromDemo.js"></script>
 		<script src="lib/THREEx.FullScreen.js"></script>
@@ -70,19 +109,15 @@
 		<script src="variables.js"></script>
 		<script src="miscFunctions.js"></script>
 		<script src="vrControlSystem.js"></script>
-		<script src="socketCommunication.js"></script>
 		
 		<script src="models.js"></script>
 		<script src="maps.js"></script>
 		<script src="holdables.js"></script>
 		<script src="tools.js"></script>
+		<script src="visiBox.js"></script>
 		
-		<script src="initialization.js"></script>
 		<script src="loop.js"></script>
-		
-		<script>
-			initialize();
-		</script>
-		
+		<script src="connection.js"></script>
+		<script src="initialization.js"></script>
 	</body>
 </html>
