@@ -2,36 +2,31 @@ function CubeMarchingSystem()
 {
 	var cubeMarchingSystem = {};
 	
-	// {
-	// 	var numWorkers = 1;
-	// 	if( navigator && navigator.hardwareConcurrency )
-	// 	{
-	// 		numWorkers = navigator.hardwareConcurrency;
-	// 		//it may well be that phone browsers do not support web workers
-	// 	}
-	// 	if(numWorkers > 1)
-	// 	{
-	// 		console.log("Nice, we can have ", numWorkers, " workers")
-	// 	}
-			
-	// 	this.workers = Array(numWorkers);
-	// 	if (typeof(Worker) === "undefined")
-	// 	{
-	// 	    console.error("web workers not supported")
-	// 	}
-	// 	for(var i = 0; i < workers.length; i++)
-	// 	{
-	// 		workers[i] = new Worker("cubeMarchWorker.js?2");
-			
-	// 		workers[i].addEventListener('message', function(e)
-	// 		{
-	// 			console.log('Got a message from this worker: ', e.data);
-	// 		}, false);
-			
-	// 		workers[i].postMessage("yo");
-	// 		// workers[i].terminate();
-	// 	}
-	// }
+//	var numWorkers = 1;
+//	if( navigator && navigator.hardwareConcurrency )
+//	{
+//		numWorkers = navigator.hardwareConcurrency;
+//		//it may well be that phone browsers do not support web workers
+//	}
+//	if(numWorkers > 1)
+//		console.log("Nice, we can have ", numWorkers, " workers")
+//		
+//	this.workers = Array(numWorkers);
+//	if (typeof(Worker) === "undefined")
+//	{
+//	    console.error("web workers not supported")
+//	}
+//	for(var i = 0; i < workers.length; i++)
+//	{
+//		workers[i] = new Worker("cubeMarchWorker.js");
+//		
+//		workers[i].addEventListener('message', function(e) {
+//			console.log('Got a message from this worker: ', e.data);
+//		}, false);
+//		
+//		workers[i].postMessage("yo");
+//	}
+//	workers[i].terminate();
 	
 	cubeMarchingSystem.createGeometry = function(mapData, isolevel)
 	{
