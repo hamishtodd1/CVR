@@ -25,15 +25,8 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	{
 		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
 		{
-			// modelAndMap.scale.setScalar( modelAndMap.scale.x * (1+controllers[i].thumbStickAxes[1] / 100) );
-			// var minScale = 0.0000001;
-			// if( modelAndMap.scale.x < minScale )
-			// 	modelAndMap.scale.setScalar( minScale )
-
 			modelAndMap.map.contour(modelAndMap.map.isolevel + 0.1 * controllers[i].thumbStickAxes[1] );
 		}
-
-		controllers[i].controllerModel.pointer.visible = (controllers[i].children.length === 1 && controllers[i].button1)
 		
 		if( controllers[i].grippingTop )
 		{
@@ -54,13 +47,6 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 					THREE.SceneUtils.detach( selectedHoldable, selectedHoldable.parent, scene );
 					THREE.SceneUtils.attach( selectedHoldable, scene, controllers[i] );
 				}
-				// else
-				// {
-				// 	for(var i = 0, il = modelAndMap.model.atoms.length; i < il; i++)
-				// 	{
-
-				// 	}
-				// }
 			}
 		}
 		else
@@ -69,6 +55,7 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 			{
 				if( holdables[holdable].parent === controllers[i])
 				{
+					console.log("yea?")
 					THREE.SceneUtils.detach( holdables[holdable], controllers[i], scene );
 					THREE.SceneUtils.attach( holdables[holdable], scene, holdables[ holdable ].ordinaryParent );
 				}

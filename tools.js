@@ -201,7 +201,7 @@ function initMutator(thingsToBeUpdated, holdables)
 	var ourPDBLoader = new THREE.PDBLoader();
 	var innerCircleRadius = 0.12;
 	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(0.432 * innerCircleRadius, 32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5, side:THREE.DoubleSide}) );
-	var textWidth = innerCircleRadius / 3;
+	var textHeight = innerCircleRadius / 9;
 	function singleLoop(aaIndex, position)
 	{
 		ourPDBLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
@@ -222,27 +222,21 @@ function initMutator(thingsToBeUpdated, holdables)
 			 	mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
 				newPlaque.add( mutator.AAs[aaIndex] );
 				
-				var textureLoader = new THREE.TextureLoader();
-				textureLoader.crossOrigin = true;
-				textureLoader.load( "data/AAs/" + aaNames[aaIndex] + ".png", function(texture) 
-					{
-						var nameMesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( textWidth, textWidth * (texture.image.naturalHeight/texture.image.naturalWidth) ), new THREE.MeshBasicMaterial({ map: texture }) );
-						nameMesh.position.copy(mutator.AAs[aaIndex].position)
-						nameMesh.position.y -= 0.01;
-						nameMesh.position.z = 0.01;
-						newPlaque.add(nameMesh);
+				var nameMesh = makeTextSign( aaNames[aaIndex] );
+				nameMesh.scale.setScalar(textHeight);
+				nameMesh.position.copy(mutator.AAs[aaIndex].position)
+				nameMesh.position.y -= 0.014;
+				nameMesh.position.z = 0.01;
+				newPlaque.add(nameMesh);
 
-						for(var i = 0, il = mutator.AAs.length; i < il; i++)
-						{
-							if(!mutator.AAs[i])
-							{
-								return;
-							}
-						}
-						mutator.update = properUpdate;
-					},
-					function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
-				);
+				for(var i = 0, il = mutator.AAs.length; i < il; i++)
+				{
+					if(!mutator.AAs[i])
+					{
+						return;
+					}
+				}
+				mutator.update = properUpdate;
 			},
 			function ( xhr ) {}, //progression function
 			function ( xhr ) { console.error( "couldn't load PDB (maybe something about .txt): ", aaNames[aaIndex]  );
@@ -289,8 +283,8 @@ function initMutator(thingsToBeUpdated, holdables)
 		}
 		for(var i = 0, il = this.AAs.length; i < il; i++)
 		{
-			this.AAs[i].parent.visible = !(this.parent === scene);
-			this.AAs[i].parent.children[0].visible = !(this.parent === scene);
+			// this.AAs[i].parent.visible = !(this.parent === scene);
+			// this.AAs[i].parent.children[0].visible = !(this.parent === scene);
 			// this.AAs[i].parent.children[1].visible = !(this.parent === scene);
 
 			this.AAs[i].scale.setScalar(mutatorAaAngstrom);
@@ -306,4 +300,48 @@ function initMutator(thingsToBeUpdated, holdables)
 	thingsToBeUpdated.mutator = mutator;
 	holdables.mutator = mutator;
 	scene.add(mutator);
+}
+
+function initPointer(thingsToBeUpdated, holdables)
+{
+	var pointerRadius = 0.03;
+	var pointer = new THREE.Mesh(
+		new THREE.CylinderBufferGeometry( pointerRadius,pointerRadius, pointerRadius * 4,32 ),
+		new THREE.MeshPhongMaterial({color:0x00FFFF })
+	);
+	pointer.geometry.computeBoundingSphere();
+	pointer.boundingSphere = pointer.geometry.boundingSphere;
+
+	var laserRadius = 0.001;
+	var laser = new THREE.Mesh(
+		new THREE.CylinderBufferGeometryUncentered( laserRadius, 2), 
+		new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) 
+	);
+	pointer.add(laser);
+	laser.visible = false;
+
+	var label = makeTextSign( "pointer" );
+	label.position.z = pointerRadius;
+	label.rotation.z = -TAU/4;
+	label.scale.setScalar(pointerRadius)
+	pointer.add(label);
+	pointer.rotation.z = TAU/4;
+
+	pointer.update = function()
+	{
+		if( this.parent !== scene )
+		{
+			laser.visible = this.parent.button1;
+		}
+		else
+		{
+			laser.visible = false;
+		}
+	}
+
+	thingsToBeUpdated.pointer = pointer;
+	holdables.pointer = pointer;
+	pointer.ordinaryParent = scene;
+
+	scene.add(pointer);
 }

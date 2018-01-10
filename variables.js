@@ -20,7 +20,7 @@ var camera = new THREE.PerspectiveCamera( 70, //can be changed by VR effect
 		0.1, 700);
 var scene = new THREE.Scene().add(camera);
 
+var TEST_SPHERE = new THREE.Mesh(new THREE.EfficientSphereGeometry(0.1), new THREE.MeshBasicMaterial({color:0xFF0000}));
+
 //------varying
 //mousePosition = new THREE.Vector2(); //[0,1],[0,1]
-
-var LABEL_MATERIAL = new THREE.MeshLambertMaterial( { color: 0x156289 });

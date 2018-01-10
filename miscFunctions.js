@@ -1,26 +1,50 @@
 //to be called every frame from the start
 function checkForNewGlobals()
 {
-	if( typeof numGlobalVariables === 'undefined')
+	var previouslyLoggedGlobals = Object.keys(window);
+	console.error("if you want to use this, make the above global")
+	if( previouslyLoggedGlobals.length < Object.keys(window).length)
 	{
-		numGlobalVariables = Object.keys(window).length + 1;
-	}
-	else if( numGlobalVariables > Object.keys(window).length)
-	{
-		console.log("new global variable(s): ")
-		for(var i = numGlobalVariables; i < Object.keys(window).length; i++ )
+		var errorMessagePrinted = false;
+		var currentGlobals = Object.keys(window);
+		for(var i = 0, il = currentGlobals.length; i < il; i++ )
 		{
-			if( Object.keys(window)[i] !== location && //these ones are ok
-				Object.keys(window)[i] !== name &&
-				Object.keys(window)[i] !== window &&
-				Object.keys(window)[i] !== self &&
-				Object.keys(window)[i] !== document )
-				console.log( Object.keys(window)[i] );
+			var alreadyKnewAboutThisOne = false;
+			for(var j = 0, jl = previouslyLoggedGlobals.length; j < jl; j++)
+			{
+				if(currentGlobals[i] === previouslyLoggedGlobals[j])
+				{
+					alreadyKnewAboutThisOne = true;
+				}
+			}
+			if(alreadyKnewAboutThisOne)
+			{
+				continue;
+			}
+
+			if( currentGlobals[i] !== "location" && //these ones are ok
+				currentGlobals[i] !== "name" &&
+				currentGlobals[i] !== "window" &&
+				currentGlobals[i] !== "self" &&
+				currentGlobals[i] !== "document" )
+			{
+				if(!errorMessagePrinted)
+				{
+					console.error("new global variable(s): ")
+					errorMessagePrinted = true;
+				}
+				console.log( currentGlobals[i] );
+			}
 		}
-		numGlobalVariables = Object.keys(window).length + 1;
-	}	
+		previouslyLoggedGlobals = currentGlobals;
+	} 
 }
 //also nice would be "check for unused variables"
+
+THREE.Object3D.prototype.getUnitVectorInObjectSpace = function(axis)
+{
+	return axis.clone().applyMatrix4(this.matrixWorld).sub(this.getWorldPosition()).normalize();
+}
 
 function ArrayOfThisValueAndThisLength(value,length)
 {

@@ -102,7 +102,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		self.set_nodelay(True) #doesn't hurt to have this hopefully...
 
 		if runningInCoot == False:
-			self.write_message("loadStandardStuff:")
+			self.write_message({"command":"loadStandardStuff"})
 
 		else:
 			handle_read_draw_molecule_with_recentre("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb", 1)

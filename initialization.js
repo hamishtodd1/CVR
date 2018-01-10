@@ -1,6 +1,8 @@
 /*
-Target remains: get coot connection working with "refine"
-Going to bring in laptop
+1) choose a tool to move the atoms - and move them
+2) read and display maps
+3) display intermediate atoms???
+4) display inter-atomic contacts
 
 [
 	{ "keys": ["ctrl+shift+s"], "command": "save_all" },
@@ -19,19 +21,24 @@ Going to bring in laptop
 	for every change, you have a log of the reverse change
 	a button on the controller is reserved for "undo"
 
+	At any time you'd like to be able to point at the ramachandran
+
 All tools that move atoms: Could make it so 
 	you can grab an atom or two anywhere, 
 	move it, 
 	it decides what tool would suit the current movement and shows you the "ghost"
-
-Make a video intro to controls
 
 Could use a single web worker for contouring and loading file in, interactivity remains.
 
 Thumbstick could also be used for light intensity?
 
 A big concern at some point will be navigating folders
+
+https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes it's a bit old.
 */
+
+
+
 
 (function init()
 {
@@ -96,54 +103,12 @@ A big concern at some point will be navigating folders
 	controllers = Array(2);
 	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer, ourVrEffect);
 
-	var scaleStick = new THREE.Mesh(new THREE.Geometry(),new THREE.MeshLambertMaterial({color:0xFF0000}));
-	var numDots = 3;
-	var ssRadiusSegments = 15;
-	var ssRadius = 0.002;
-	scaleStick.geometry.vertices = Array(numDots*ssRadiusSegments*2);
-	scaleStick.geometry.faces = Array(numDots*ssRadiusSegments*2);
-	for(var i = 0; i < numDots; i++)
-	{
-		for( var j = 0; j < ssRadiusSegments; j++)
-		{
-			var bottomRightVertex = i*ssRadiusSegments*2+j;
-			scaleStick.geometry.vertices[bottomRightVertex]   				 = new THREE.Vector3(ssRadius,2*i,   0).applyAxisAngle(yAxis,TAU*j/ssRadiusSegments);
-			scaleStick.geometry.vertices[bottomRightVertex+ssRadiusSegments] = new THREE.Vector3(ssRadius,2*i+1, 0).applyAxisAngle(yAxis,TAU*j/ssRadiusSegments);
-
-			scaleStick.geometry.faces[i*ssRadiusSegments*2+j*2]   = new THREE.Face3(
-				bottomRightVertex+ssRadiusSegments,
-				bottomRightVertex,
-				i*ssRadiusSegments*2+(j+1)%ssRadiusSegments)
-			scaleStick.geometry.faces[i*ssRadiusSegments*2+j*2+1] = new THREE.Face3(
-				i*ssRadiusSegments*2+(j+1)%ssRadiusSegments+ssRadiusSegments,
-				bottomRightVertex+ssRadiusSegments,
-				i*ssRadiusSegments*2+(j+1)%ssRadiusSegments );
-		}
-	}
-	scaleStick.geometry.computeFaceNormals();
-	scaleStick.geometry.computeVertexNormals();
-	scaleStick.scale.y = 0.02
-	scaleStick.position.z = -FOCALPOINT_DISTANCE;
-	// scene.add(scaleStick);
-	scaleStick.update = function()
-	{
-		// this.scale.y = getAngstrom();
-		this.visible = (controllers[0].grippingSide && controllers[1].grippingSide);
-		
-		var newY = controllers[1].position.clone().sub(controllers[0].position);
-		var newX = randomPerpVector( newY ).normalize();
-		var newZ = newY.clone().cross(newX).normalize();
-		
-		this.matrix.makeBasis(newX,newY,newZ);
-		this.matrix.setPosition(controllers[0].position);
-		this.matrixAutoUpdate = false;
-	}
-	thingsToBeUpdated.scaleStick = scaleStick;
-
+	//scaleStick. Need a clipping plane
+	initScaleStick(thingsToBeUpdated);
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	modelAndMap.scale.setScalar( 0.045 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return modelAndMap.scale.x;
@@ -220,8 +185,9 @@ A big concern at some point will be navigating folders
 	//TODO local
 	function initTools()
 	{
+		initPointer(thingsToBeUpdated, holdables);
 		// initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
-		initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
+		// initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
 	}
 	socket = initSocket();
 	socket.onopen = function()

@@ -90,10 +90,6 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 		controllers[ i ].controllerModel = new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() );
 		controllers[ i ].add( controllers[ i ].controllerModel );
 
-		controllers[ i ].controllerModel.pointer = new THREE.Mesh( new THREE.CylinderBufferGeometryUncentered(0.001, 2), new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) );
-		controllers[ i ].controllerModel.pointer.rotation.x = -TAU/4;
-		controllers[ i ].controllerModel.add( controllers[ i ].controllerModel.pointer );
-
 		controllers[ i ].oldPosition = controllers[ i ].position.clone();
 		controllers[ i ].oldQuaternion = controllers[ i ].quaternion.clone();
 		

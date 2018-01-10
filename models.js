@@ -252,33 +252,39 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 		var labels = [];
 		thingsToBeUpdated.labels = labels;
 		
-		var updateLabel = function()
+		function updateLabel()
 		{
-			if(!this.visible)
-				return;
-			this.scale.setScalar( 20 * Math.sqrt(this.getWorldPosition().distanceTo(camera.position)));
-			
-//					var positionToLookAt = camera.position.clone();
-//					this.worldToLocal(positionToLookAt);
-//					//and something about up?
-//					this.lookAt(positionToLookAt);
+			this.scale.setScalar( 1 * Math.sqrt(this.position.distanceTo(camera.position)));
+
+			camera.updateMatrix();
+			var cameraUp = yAxis.clone().applyQuaternion(camera.quaternion);
+			cameraUp.add(this.parent.getWorldPosition())
+			this.parent.worldToLocal(cameraUp)
+			this.up.copy(cameraUp);
+
+			this.parent.updateMatrixWorld()
+			var localCameraPosition = camera.position.clone()
+			this.parent.worldToLocal(localCameraPosition);
+			this.lookAt(localCameraPosition);
 		}
 		
 		model.toggleLabel = function(atomIndex)
 		{
 			var atom = this.atoms[atomIndex];
+
 			if( atom.label === undefined)
 			{
-				//TODO canvastexture
-				var labelString = atom.spec.toString();
-				atom.label = new THREE.Mesh( new THREE.TextGeometry( labelString, {size: DEFAULT_BOND_RADIUS * 2, height: DEFAULT_BOND_RADIUS / 16, font: THREE.defaultFont }), LABEL_MATERIAL );
+				var labelString = "";
+				for(var propt in atom.spec)
+				{
+					labelString += atom.spec[propt] + ","
+				}
+				atom.label = makeTextSign(labelString);
+				atom.label.position.copy(atom.position);
 				atom.label.update = updateLabel;
-				atom.label.position.copy(atom.position); //assigning them to be equal has no effect!
+
+				model.add( atom.label );
 				labels.push( atom.label );
-				
-				this.add( atom.label );
-				
-				return;
 			}
 			else
 			{
