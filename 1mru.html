@@ -18,16 +18,16 @@
    a { color: #59C; }
   </style>
 
-  <script src="uglymolThree.min.js"></script>
-  <!-- <script src="minimalUglymol.js"></script> -->
-  <script src="updatedUglymol.js"></script>
+  <script src="lib/three.min.js"></script>
+  <script src="minimalUglymol.js"></script>
+  <!-- <script src="updatedUglymol.js"></script> -->
   <script src="map.js"></script>
 
 </head>
 <body style="background-color: black">
   <div id="viewer"></div>
   <script>
-    var map = Map( "1mru.map", false );
+    var map = Map( "data/1mru.map", false );
     
     if(UM.Viewer)
     {

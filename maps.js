@@ -16,7 +16,7 @@ function initMap(mapURL, slabPlanes)
 		modelAndMap.map = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({
 			//side: THREE.DoubleSide, transparent:true, opacity:0.5,
 			side: THREE.BackSide,
-			clippingPlanes: camera.slabPlanes,
+			clippingPlanes: slabPlanes,
 			color:0x777799
 		}));
 	}

@@ -10,14 +10,14 @@
 //hmm maybe your hands should be the planes, when you're not holding anything?
 //it's a very simple shader to make it spherical
 
-function initVisiBox(thingsToBeUpdated,holdables)
+function initVisiBox(thingsToBeUpdated, holdables, initialScale)
 {
 	//should its edges only appear sometimes?
 	visiBox = new THREE.Object3D();
 	
 	thingsToBeUpdated.visiBox = visiBox;
 	
-	visiBox.scale.set(0.6, 0.6, 0.6);
+	visiBox.scale.setScalar(initialScale);
 	visiBox.position.z = -FOCALPOINT_DISTANCE
 	scene.add(visiBox);
 	

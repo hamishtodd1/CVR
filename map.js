@@ -1,7 +1,9 @@
 //if you update uglymol there may be problems
 //note there used to be a "cubicles" thing that was good for searching
 //also there was pdbe and dsn9
-function Map(url, isDiffMap, blockCenter, blockRadius, isolevel)
+//TODO turn into proper object so you don't have to repeat the functions
+//For Iain we should have a map on a molecule
+function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 {
 	var map = new THREE.Object3D();
 	var unitCellMesh = null;
@@ -10,7 +12,7 @@ function Map(url, isDiffMap, blockCenter, blockRadius, isolevel)
 	var types = isDiffMap ? ['map_pos', 'map_neg'] : ['map_den'];
 	var style = "squarish";
 	if(!isolevel) isolevel = isDiffMap ? 3.0 : 1.5; //units of rmsd
-	if(!blockRadius) blockRadius = 9; //seems nonlinear?
+	if(!blockRadius) blockRadius = 20; //seems nonlinear?
 	if(!blockCenter) blockCenter = [0,0,0];
 
 	var req = new XMLHttpRequest();
@@ -58,10 +60,14 @@ function Map(url, isDiffMap, blockCenter, blockRadius, isolevel)
 
 		for (var i = 0; i < types.length; i += 1)
 		{
-			var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-				color: colors[types[i]],
-				linewidth: lineWidth,
-			}));
+			if(1)
+			{
+				var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+					color: colors[types[i]],
+					linewidth: lineWidth,
+					clippingPlanes: slabPlanes
+				}));
+			}
 
 			var isolevelMultiplier = 1;
 			if( types[i] === 'map_neg' )

@@ -86,7 +86,7 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	thingsToBeUpdated.labels = [];
 	var holdables = {};
 	
-	var visiBox = initVisiBox(thingsToBeUpdated,holdables);
+	var visiBox = initVisiBox(thingsToBeUpdated,holdables, 1.4);
 	
 	var ourVrEffect = new THREE.VREffect( 1, renderer ); //0 is initial eye separation
 	var loopCallString = getStandardFunctionCallString(loop);
@@ -108,7 +108,7 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.045 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	modelAndMap.scale.setScalar( 0.028 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return modelAndMap.scale.x;
@@ -186,8 +186,8 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	function initTools()
 	{
 		initPointer(thingsToBeUpdated, holdables);
-		// initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
-		// initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
+		initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
+		initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
 	}
 	socket = initSocket();
 	socket.onopen = function()
@@ -218,6 +218,8 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 			function ( xhr ) {},
 			function ( xhr ) { console.error( "couldn't load basic model" ); }
 		);
-		initMap("data/try-2-map-fragment.tab.txt", visiBox.planes);
+
+		// modelAndMap.map = Map("data/1mru.map", false, visiBox.planes);
+		// modelAndMap.add(modelAndMap.map)
 	}
 })();

@@ -283,9 +283,9 @@ function initMutator(thingsToBeUpdated, holdables)
 		}
 		for(var i = 0, il = this.AAs.length; i < il; i++)
 		{
-			// this.AAs[i].parent.visible = !(this.parent === scene);
-			// this.AAs[i].parent.children[0].visible = !(this.parent === scene);
-			// this.AAs[i].parent.children[1].visible = !(this.parent === scene);
+			this.AAs[i].parent.visible = !(this.parent === scene);
+			this.AAs[i].parent.children[0].visible = !(this.parent === scene);
+			this.AAs[i].parent.children[1].visible = !(this.parent === scene);
 
 			this.AAs[i].scale.setScalar(mutatorAaAngstrom);
 		}

@@ -25,7 +25,7 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	{
 		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
 		{
-			modelAndMap.map.contour(modelAndMap.map.isolevel + 0.1 * controllers[i].thumbStickAxes[1] );
+			modelAndMap.map.setIsolevel( modelAndMap.map.getIsolevel() + 0.1 * controllers[i].thumbStickAxes[1])
 		}
 		
 		if( controllers[i].grippingTop )
@@ -117,11 +117,11 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 			thingsToBeUpdated[thing].update();
 	}
 	
-	if( modelAndMap.map )
-	{
-		modelAndMap.map.material.linewidth = 0.2 / modelAndMap.position.distanceTo(camera.position);
-		modelAndMap.map.material.needsUpdate = true;
-	}
+	// if( modelAndMap.map )
+	// {
+	// 	modelAndMap.map.material.linewidth = 0.2 / modelAndMap.position.distanceTo(camera.position);
+	// 	modelAndMap.map.material.needsUpdate = true;
+	// }
 
 	socket.checkOnExpectedCommands();
 }
