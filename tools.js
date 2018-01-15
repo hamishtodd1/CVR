@@ -137,7 +137,7 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 	thingsToBeUpdated.atomDeleter = atomDeleter;
 	holdables.atomDeleter = atomDeleter;
 	scene.add(atomDeleter);
-	atomDeleter.position.z = -FOCALPOINT_DISTANCE;
+	atomDeleter.position.set(0,-0.4,0)
 	atomDeleter.ordinaryParent = atomDeleter.parent;
 }
 
@@ -179,7 +179,6 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 function initMutator(thingsToBeUpdated, holdables)
 {
 	mutator = new THREE.Object3D();
-	mutator.position.y = -0.1
 	
 	var handleRadius = 0.035;
 	var handleTubeRadius = handleRadius / 3;
@@ -296,9 +295,9 @@ function initMutator(thingsToBeUpdated, holdables)
 		}
 	}
 	
-	mutator.position.z = -FOCALPOINT_DISTANCE;
 	thingsToBeUpdated.mutator = mutator;
 	holdables.mutator = mutator;
+	mutator.position.set(0,-0.4,-0.1)
 	scene.add(mutator);
 }
 
@@ -343,5 +342,6 @@ function initPointer(thingsToBeUpdated, holdables)
 	holdables.pointer = pointer;
 	pointer.ordinaryParent = scene;
 
+	pointer.position.set(0,-0.4,0.1)
 	scene.add(pointer);
 }

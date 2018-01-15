@@ -2,8 +2,7 @@
 //note there used to be a "cubicles" thing that was good for searching
 //also there was pdbe and dsn9
 //TODO turn into proper object so you don't have to repeat the functions
-//For Iain we should have a map on a molecule
-function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
+function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 {
 	var map = new THREE.Object3D();
 	var unitCellMesh = null;
@@ -12,8 +11,6 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 	var types = isDiffMap ? ['map_pos', 'map_neg'] : ['map_den'];
 	var style = "squarish";
 	if(!isolevel) isolevel = isDiffMap ? 3.0 : 1.5; //units of rmsd
-	if(!blockRadius) blockRadius = 20; //seems nonlinear?
-	if(!blockCenter) blockCenter = [0,0,0];
 
 	var req = new XMLHttpRequest();
 	req.open('GET', url, true);
@@ -37,7 +34,17 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 
 	function extractAndRepresentBlock()
 	{
-		data.extract_block( blockRadius, blockCenter);
+		blockCenterVector = visiBox.position.clone()
+		modelAndMap.updateMatrixWorld();
+		modelAndMap.worldToLocal( blockCenterVector );
+
+		//cubewidth is surely in the data, but it may not be relevant
+		var cubeWidth = 0.98 //Math.abs(data.block._points[0][2] - data.block._points[1][2]);
+		var blockRadius = Math.min( visiBox.corners[0].position.x * visiBox.scale.x, visiBox.corners[0].position.y * visiBox.scale.y, visiBox.corners[0].position.z * visiBox.scale.z) / getAngstrom() / cubeWidth
+		//blockRadius *= 1.05 //you should surely be able to get a number up there such that this does nothing due to clipping planes. Though the box is not a perfect cube...
+		console.log(blockRadius)
+
+		data.extract_block( blockRadius, [ blockCenterVector.x, blockCenterVector.y, blockCenterVector.z ] );
 		refreshMeshesFromBlock();
 	}
 
@@ -60,14 +67,11 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 
 		for (var i = 0; i < types.length; i += 1)
 		{
-			if(1)
-			{
-				var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-					color: colors[types[i]],
-					linewidth: lineWidth,
-					clippingPlanes: slabPlanes
-				}));
-			}
+			var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+				color: colors[types[i]],
+				linewidth: lineWidth,
+				clippingPlanes: visiBox.planes
+			}));
 
 			var isolevelMultiplier = 1;
 			if( types[i] === 'map_neg' )
@@ -101,56 +105,31 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 		unitCellMesh.visible = !unitCellMesh.visible;
 	}
 
-	map.getIsolevel = function()
+	map.addToIsolevel = function(addition)
 	{
-		return isolevel;
-	}
-	map.setIsolevel = function(newIsolevel)
-	{
-		isolevel = newIsolevel;
+		isolevel += addition;
 		refreshMeshesFromBlock();
 	}
 
-	map.getBlockRadius = function()
+	function removeAndDispose(obj)
 	{
-		return blockRadius;
-	}
-	map.setBlockRadius = function(newBlockRadius)
-	{
-		blockRadius = newBlockRadius;
-		extractAndRepresentBlock();
-	}
+		obj.parent.remove(obj);
+		if (obj.geometry) { obj.geometry.dispose(); }
+		if (obj.material)
+		{
+			if (obj.material.uniforms && obj.material.uniforms.map) 
+			{
+				obj.material.uniforms.map.value.dispose();
+			}
+			obj.material.dispose();
+		}
+		for (var i = 0, list = obj.children; i < list.length; i += 1)
+		{
+			var o = list[i];
 
-	//happens in units of cube?
-	map.getBlockCenter = function()
-	{
-		var copy = [blockCenter[0],blockCenter[1],blockCenter[2]]
-		return copy;
-	}
-	map.setBlockCenter = function(newBlockCenter)
-	{
-		blockCenter = newBlockCenter;
-		extractAndRepresentBlock();
+			removeAndDispose(o);
+		}
 	}
 
 	return map;
-}
-
-function removeAndDispose(obj) {
-	obj.parent.remove(obj);
-	if (obj.geometry) { obj.geometry.dispose(); }
-	if (obj.material)
-	{
-		if (obj.material.uniforms && obj.material.uniforms.map) 
-		{
-			obj.material.uniforms.map.value.dispose();
-		}
-		obj.material.dispose();
-	}
-	for (var i = 0, list = obj.children; i < list.length; i += 1)
-	{
-		var o = list[i];
-
-		removeAndDispose(o);
-	}
 }

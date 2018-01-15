@@ -87,7 +87,7 @@ Residue.prototype.updatePosition = function()
 	this.position.multiplyScalar( 1 / this.atoms.length );
 }
 
-function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPlanes )
+function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPlanes, callback )
 {
 	// console.log(modelStringCoot)
 	var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
@@ -135,7 +135,7 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 	
 	var lowestUnusedAtom = 0;
 	model.residues = [];
-	if(!logged)console.log( atomDataFromCoot[0][0] )
+	// if(!logged)console.log( atomDataFromCoot[0][0] )
 	logged = 1;
 	for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
 	{
@@ -316,9 +316,7 @@ function makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBoxPla
 				furthestDistanceSquared = distSq;
 		}
 		
-		model.position.sub( averagePosition );
-		if( modelAndMap.map )
-			modelAndMap.map.position.sub(averagePosition);
+		modelAndMap.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
 	}
 	
 	modelAndMap.model = model;
@@ -517,10 +515,10 @@ function makeMoleculeMesh(bufferGeometry, atoms, bondDataFromCoot )
 				bondRadius /= bondData[i][j][2];
 			}
  			
- 			if(bondData[i][j][2] === 2)
- 			{
- 				console.log("double?")
- 			}
+ 			// if(bondData[i][j][2] === 2)
+ 			// {
+ 			// 	console.log("double? TODO draw properly")
+ 			// }
 			
 			insertCylinderCoordsAndNormals( cylinderBeginning, cylinderEnd, bufferGeometry.attributes.position, bufferGeometry.attributes.normal, cylinderSides, firstVertexIndex, bondRadius );
 			

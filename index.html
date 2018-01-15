@@ -7,8 +7,8 @@ Install procedure
 		To install pip needed python with SSL
 		Had to use 2.7.14
 		Edited Modules/setup to uncomment the SSL section
-	   		Changed library to lib64 from lib
-	   		--with-ensurepip=install
+		   	Changed library to lib64 from lib
+		   	--with-ensurepip=install
 	pip install singledispatch
 	pip install backports_abc
 	Never try to avoid pip
@@ -24,12 +24,14 @@ Update procedure:
 	It is now in Linux-localhost
 
 Running procedure:
-   Switch virtual machine connection mode to host-only
-   hostname -I gets ip address to put in browser
-   For no graphics: /home/htodd/autobuild/Linux-localhost.../bin/coot --no-graphics -s CVR/Server.py
-   To get out of coot:
-      ctrl C
-      ctrl D
+	Switch virtual machine connection mode to host-only
+		May say "invalid settings". Go to file > host network manager
+		Create one and enable DCPH
+	hostname -I gets ip address to put in browser
+	For no graphics: /home/htodd/autobuild/Linux-localhost.../bin/coot --no-graphics -s CVR/Server.py
+	To get out of coot:
+		ctrl C
+		ctrl D
 
 
 
@@ -108,7 +110,7 @@ Need to optimize this workflow.
 		<script src="maps.js"></script> -->
 
 		<script src="minimalUglymol.js"></script>
-		<script src="map.js"></script>
+		<script src="map.js?v=3"></script>
 		
 		<script src="miscFunctions.js"></script>
 		<script src="variables.js"></script>
@@ -124,6 +126,6 @@ Need to optimize this workflow.
 		
 		<script src="loop.js"></script>
 		<script src="connection.js"></script>
-		<script src="initialization.js"></script>
+		<script src="initialization.js?v=9"></script>
 	</body>
 </html>

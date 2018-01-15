@@ -23,9 +23,9 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
+		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001 && modelAndMap.map)
 		{
-			modelAndMap.map.setIsolevel( modelAndMap.map.getIsolevel() + 0.1 * controllers[i].thumbStickAxes[1])
+			modelAndMap.map.addToIsolevel( 0.1 * controllers[i].thumbStickAxes[1] )
 		}
 		
 		if( controllers[i].grippingTop )
@@ -55,7 +55,6 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 			{
 				if( holdables[holdable].parent === controllers[i])
 				{
-					console.log("yea?")
 					THREE.SceneUtils.detach( holdables[holdable], controllers[i], scene );
 					THREE.SceneUtils.attach( holdables[holdable], scene, holdables[ holdable ].ordinaryParent );
 				}

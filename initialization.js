@@ -1,6 +1,5 @@
 /*
 1) choose a tool to move the atoms - and move them
-2) read and display maps
 3) display intermediate atoms???
 4) display inter-atomic contacts
 
@@ -86,8 +85,6 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	thingsToBeUpdated.labels = [];
 	var holdables = {};
 	
-	var visiBox = initVisiBox(thingsToBeUpdated,holdables, 1.4);
-	
 	var ourVrEffect = new THREE.VREffect( 1, renderer ); //0 is initial eye separation
 	var loopCallString = getStandardFunctionCallString(loop);
 	function render()
@@ -108,13 +105,16 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	
 	//rename when it's more than model and map. "the workspace" or something
 	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.028 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	var debuggingWithoutVR = true;
+	modelAndMap.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.06 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return modelAndMap.scale.x;
 	}
 	modelAndMap.position.z = -FOCALPOINT_DISTANCE;
 	scene.add(modelAndMap);
+
+	var visiBox = initVisiBox(thingsToBeUpdated,holdables, getAngstrom() * debuggingWithoutVR?0.06:7);
 	
 	new THREE.FontLoader().load( "data/gentilis.js", function ( gentilis )
 		{
@@ -199,6 +199,9 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	{
 		makeModelFromCootString( msg.modelDataString, thingsToBeUpdated, visiBox.planes );
 
+		modelAndMap.map = Map("data/1mru.map", false, visiBox);
+		modelAndMap.add(modelAndMap.map)
+
 		initTools();
 	}
 	socket.messageReactions["loadStandardStuff"] = function(msg)
@@ -221,5 +224,7 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 
 		// modelAndMap.map = Map("data/1mru.map", false, visiBox.planes);
 		// modelAndMap.add(modelAndMap.map)
+
+		//hmm so we need the thingy
 	}
 })();

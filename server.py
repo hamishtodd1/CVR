@@ -105,10 +105,18 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			self.write_message({"command":"loadStandardStuff"})
 
 		else:
-			handle_read_draw_molecule_with_recentre("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb", 1)
-			msg = {'command':"model"}
-			msg['modelDataString'] = str( get_bonds_representation(0) )
-			self.write_message( msg ) #speedup opportunity'''
+			# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
+			# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
+			pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
+			handle_read_draw_molecule_with_recentre(pdbFileString, 1)
+
+			modelMsg = {'command':"model"}
+			modelMsg['modelDataString'] = str( get_bonds_representation(0) )
+			self.write_message( modelMsg ) #speedup opportunity
+
+			# mapMsg = {'command':"map"}
+			# mapMsg['mapDataString'] = str( get_bonds_representation(0) )
+			# self.write_message( mapMsg ) #speedup opportunity
 
 	def on_message(self, msgContainer):
 		msg = eval(msgContainer)
