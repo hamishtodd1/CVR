@@ -1,20 +1,9 @@
 /*
 1) choose a tool to move the atoms - and move them
-2) read and display maps
 3) display intermediate atoms???
 4) display inter-atomic contacts
 
-[
-	{ "keys": ["ctrl+shift+s"], "command": "save_all" },
-	{ "keys": ["ctrl+alt+s"], "command": "prompt_save_as" },
-
-	{ "keys": ["ctrl+pagedown"], "command": "next_view_in_stack" },
-	{ "keys": ["ctrl+pageup"], "command": "prev_view_in_stack" },
-
-	{ "keys": ["ctrl+tab"], "command": "next_view" },
-	{ "keys": ["ctrl+shift+tab"], "command": "prev_view" },
-]
-
+Left and right on stick = contour, up and down is for currently selected menu?
 
 "undo"
 	could make it so that the atom array can only be changed by messages from coot
@@ -51,7 +40,6 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	var launcher = {
 		socketOpened: false,
 		dataLoaded:{
-			font: false,
 			controllerModel0: false,
 			controllerModel1: false
 		},
@@ -82,11 +70,11 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
-	var thingsToBeUpdated = {};
-	thingsToBeUpdated.labels = [];
-	var holdables = {};
-	
-	var visiBox = initVisiBox(thingsToBeUpdated,holdables, 1.4);
+	var maps = [];
+	var atoms = null; //because fixed length
+
+	var thingsToBeUpdated = [];
+	var holdables = [];
 	
 	var ourVrEffect = new THREE.VREffect( 1, renderer ); //0 is initial eye separation
 	var loopCallString = getStandardFunctionCallString(loop);
@@ -106,27 +94,17 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	//scaleStick. Need a clipping plane
 	initScaleStick(thingsToBeUpdated);
 	
-	//rename when it's more than model and map. "the workspace" or something
-	modelAndMap = new THREE.Object3D();
-	modelAndMap.scale.setScalar( 0.028 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	var debuggingWithoutVR = false;
+	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.01 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
-		return modelAndMap.scale.x;
+		return assemblage.scale.x;
 	}
-	modelAndMap.position.z = -FOCALPOINT_DISTANCE;
-	scene.add(modelAndMap);
-	
-	new THREE.FontLoader().load( "data/gentilis.js", function ( gentilis )
-		{
-			THREE.defaultFont = gentilis;
-			
-			launcher.dataLoaded.font = true;
-			launcher.attemptLaunch();
-		},
-		function ( xhr ) {}, //progression function
-		function ( xhr ) { console.error( "couldn't load font" ); }
-	);
-	
+	assemblage.position.z = -FOCALPOINT_DISTANCE;
+	scene.add(assemblage);
+
+	var visiBox = initVisiBox(thingsToBeUpdated,holdables, getAngstrom() * debuggingWithoutVR?0.06:0.5);
+
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
 	window.addEventListener( 'resize', function(){
@@ -179,17 +157,21 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 			}
 		}
 		
-		thingsToBeUpdated.blinker = blinker;
+		thingsToBeUpdated.push( blinker );
 	}
-
-	//TODO local
+	
+	//---------------"init part 2"
 	function initTools()
 	{
-		initPointer(thingsToBeUpdated, holdables);
-		initMutator(thingsToBeUpdated, holdables, modelAndMap.model.atoms);
-		initAtomDeleter(thingsToBeUpdated, holdables, modelAndMap.model.atoms, socket);
+		// initPointer(thingsToBeUpdated, holdables).position.set(-0.1,-0.4,-0.2);
+		// initMutator(thingsToBeUpdated, holdables).position.set(0,-0.4,-0.2);
+		initAtomDeleter(thingsToBeUpdated, holdables, socket, models).position.set(0.1,-0.4,-0.2);
 	}
+
 	socket = initSocket();
+
+	var models = initModelCreationSystem(socket);
+
 	socket.onopen = function()
 	{
 		launcher.socketOpened = true;
@@ -198,6 +180,10 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	socket.messageReactions["model"] = function(msg)
 	{
 		makeModelFromCootString( msg.modelDataString, thingsToBeUpdated, visiBox.planes );
+
+		var newMap = Map("data/1mru.map", false, visiBox);
+		maps.push(newMap);
+		assemblage.add(newMap)
 
 		initTools();
 	}
@@ -212,14 +198,41 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 		new THREE.FileLoader().load( "data/newData.txt",
 			function( modelStringCoot )
 			{
-				makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+				var newModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+				newModel.imol = newModel.atoms[0].spec.imol;
+				assemblage.add(newModel);
+				models.push(newModel);
+
+				var averagePosition = new THREE.Vector3();
+				for(var i = 0, il = newModel.atoms.length; i < il; i++)
+				{
+					averagePosition.add(newModel.atoms[i].position);
+				}
+				averagePosition.multiplyScalar( 1 / newModel.atoms.length);
+				assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
+
+				var duplicateModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+				assemblage.add(duplicateModel);
+				for(var i = 0, il = duplicateModel.atoms.length; i < il; i++)
+				{
+					duplicateModel.atoms[i].spec.imol = duplicateModel.atoms[i].spec.imol + 1;
+				}
+				duplicateModel.imol = duplicateModel.atoms[0].spec.imol;
+				duplicateModel.position.set(0,2,0);
+				models.push(duplicateModel);
+
 				initTools();
 			},
 			function ( xhr ) {},
 			function ( xhr ) { console.error( "couldn't load basic model" ); }
 		);
 
-		// modelAndMap.map = Map("data/1mru.map", false, visiBox.planes);
-		// modelAndMap.add(modelAndMap.map)
+		// var newMap = Map("data/1mru_diff.map", true, visiBox);
+		var newMap = Map("data/1mru.map", false, visiBox)
+		maps.push( newMap );
+		assemblage.add( newMap )
+		var diffMap = Map("data/1mru_diff.map", true, visiBox)
+		maps.push( diffMap );
+		assemblage.add( diffMap )
 	}
 })();

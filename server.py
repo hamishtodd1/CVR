@@ -105,10 +105,25 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			self.write_message({"command":"loadStandardStuff"})
 
 		else:
-			handle_read_draw_molecule_with_recentre("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb", 1)
-			msg = {'command':"model"}
-			msg['modelDataString'] = str( get_bonds_representation(0) )
-			self.write_message( msg ) #speedup opportunity'''
+			# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
+			# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
+			pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
+			handle_read_draw_molecule_with_recentre(pdbFileString, 1)
+
+			modelImol = 0
+			modelMsg = {'command':"model"}
+			modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
+			self.write_message( modelMsg ) #speedup opportunity
+
+			# but paul, the difference map is changing all the time surely? ;_;
+			# if is_valid_map_molecule(mapImol):
+			#     fn = molecule_name(mapImol) + "_tmp_for_export.map"
+			#     export_map(mapImol, fn)
+			#     f = open(fn)
+			#     mapMsg = {'command':"map"}
+			#     mapMsg['mapDataString'] = f.read()
+			#     f.close()
+			#     self.write_message( mapMsg ) #speedup opportunity
 
 	def on_message(self, msgContainer):
 		msg = eval(msgContainer)

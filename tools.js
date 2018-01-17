@@ -1,9 +1,6 @@
 /*
- * It starts out on your belt
- * Take it off, but leave it in midair, it stays
- * Put it in proximity to your belt and look away from it and it'll go there
- * 
- * If you look down, all your thingsToBeUpdated return to your belt
+ * It's on the right wall, you grab it, but it's connected with elastic
+ 	Or could have two copies of it
  */
 
 /* Other thingsToBeUpdated
@@ -41,25 +38,14 @@ Where:
 • altconf
  */
 
-/*
- * atom deleter
- * imol is an integer number
-• chain id is a string
-• resno is an integer number
-• ins code is a string
-• at name is a string
-• altloc is a string
- */
+//autofit best rotamer
 
-//autofit best rotamer, remember strange order
-
-
-function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
+//TODO turning white is a bad way to highlight, they're inside a ball
+function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 {
 	var atomDeleter = new THREE.Object3D();
 	
 	var radius = 0.05;
-
 	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.7}));
 	atomDeleter.add( ball );
 	ball.geometry.computeBoundingSphere();
@@ -71,74 +57,92 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 	// label.visible = false;
 	
 	var atomHighlightStatuses = null;
-	atomHighlightStatuses = Array(atoms.length);
-	for(var i = 0, il = atoms.length; i<il;i++)
+	atomHighlightStatuses = Array(models.length);
+	for(var i = 0, il = models.length; i<il;i++)
 	{
-		atomHighlightStatuses[i] = false;
+		atomHighlightStatuses[i] = Array(models[i].atoms.length);
+		for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+		{
+			atomHighlightStatuses[i][j] = false;
+		}
 	}
-
-	var deleteRequestTimer = -1;
 	
 	atomDeleter.update = function()
 	{
-		if(!modelAndMap.model )
+		if( models.length === 0 )
 		{
 			return;
 		}
-		
-		var ourPosition = this.getWorldPosition();
-		modelAndMap.model.updateMatrixWorld();
-		modelAndMap.model.worldToLocal(ourPosition);
-		
+
 		var ourRadiusSq = sq( radius / getAngstrom() );
-		
 		var highlightColor = new THREE.Color(1,1,1);
 
-		for(var i = 0, il = atoms.length; i < il; i++)
+		if(this.parent !== scene)
 		{
-			if( atoms[i].position.distanceToSquared( ourPosition ) < ourRadiusSq )
+			for(var i = 0; i < models.length; i++)
 			{
-				atomHighlightStatuses[i] = true;
-				modelAndMap.model.geometry.colorAtom(i, highlightColor);
-				modelAndMap.model.geometry.attributes.color.needsUpdate = true;
+				var ourPosition = this.getWorldPosition();
+				models[i].updateMatrixWorld();
+				models[i].worldToLocal(ourPosition);
+				
+				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+				{
+					if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
+					{
+						atomHighlightStatuses[i][j] = true;
+						models[i].geometry.colorAtom(j, highlightColor);
+						models[i].geometry.attributes.color.needsUpdate = true;
+					}
+					else if( atomHighlightStatuses[i][j] === true )
+					{
+						atomHighlightStatuses[i][j] = false;
+						models[i].geometry.colorAtom( j );
+						models[i].geometry.attributes.color.needsUpdate = true;
+					}
+				}
 			}
-			else if( atomHighlightStatuses[i] === true )
+
+			//you can send out many at once, but not for multiple atoms
+			if( this.parent.button1 && !socket.expectationExists("deleteAtom") )
 			{
-				atomHighlightStatuses[i] = false;
-				modelAndMap.model.geometry.colorAtom( i );
-				modelAndMap.model.geometry.attributes.color.needsUpdate = true;
+				for(var i = 0; i < models.length; i++)
+				{
+					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					{
+						if(atomHighlightStatuses[i][j])
+						{
+							var msg = {command:"deleteAtom"};
+							Object.assign(msg,models[i].atoms[j].spec);
+
+							socket.send(JSON.stringify(msg));
+						}
+					}
+				}
 			}
 		}
-		
-		if( (this.parent !== scene && this.parent.button1)
-			// || deleterOverride
-		 ) 
+		else
 		{
-			// deleterOverride = false;
-			if( !socket.queryCommandTimer("deleteAtom") )
+			for(var i = 0; i < models.length; i++)
 			{
-				for(var i = 0, il = atomHighlightStatuses.length; i < il; i++)
+				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 				{
-					if(atomHighlightStatuses[i])
+					if(atomHighlightStatuses[i][j])
 					{
-						atomHighlightStatuses[i] = false;
-						var msg = {command:"deleteAtom"};
-						Object.assign(msg,atoms[i].spec);
-
-						socket.send(JSON.stringify(msg));
-						socket.setTimerOnExpectedCommand("deleteAtom");
+						atomHighlightStatuses[i][j] = false;
+						models[i].geometry.colorAtom( j );
+						models[i].geometry.attributes.color.needsUpdate = true;
 					}
 				}
 			}
 		}
 	}
-	// deleterOverride = false;
 	
-	thingsToBeUpdated.atomDeleter = atomDeleter;
-	holdables.atomDeleter = atomDeleter;
+	thingsToBeUpdated.push(atomDeleter);
+	holdables.push(atomDeleter)
 	scene.add(atomDeleter);
-	atomDeleter.position.z = -FOCALPOINT_DISTANCE;
 	atomDeleter.ordinaryParent = atomDeleter.parent;
+
+	return atomDeleter;
 }
 
 
@@ -179,7 +183,6 @@ function initAtomDeleter(thingsToBeUpdated, holdables, atoms, socket)
 function initMutator(thingsToBeUpdated, holdables)
 {
 	mutator = new THREE.Object3D();
-	mutator.position.y = -0.1
 	
 	var handleRadius = 0.035;
 	var handleTubeRadius = handleRadius / 3;
@@ -296,10 +299,10 @@ function initMutator(thingsToBeUpdated, holdables)
 		}
 	}
 	
-	mutator.position.z = -FOCALPOINT_DISTANCE;
-	thingsToBeUpdated.mutator = mutator;
-	holdables.mutator = mutator;
+	thingsToBeUpdated.push(mutator);
+	holdables.push(mutator);
 	scene.add(mutator);
+	return mutator;
 }
 
 function initPointer(thingsToBeUpdated, holdables)
@@ -339,9 +342,10 @@ function initPointer(thingsToBeUpdated, holdables)
 		}
 	}
 
-	thingsToBeUpdated.pointer = pointer;
-	holdables.pointer = pointer;
+	thingsToBeUpdated.push(pointer);
+	holdables.push(pointer);
 	pointer.ordinaryParent = scene;
 
 	scene.add(pointer);
+	return pointer;
 }

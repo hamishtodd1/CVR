@@ -1,10 +1,9 @@
 function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 {
 	var vrInputSystem = {};
-	
+
 	var cameraRepositioner = new THREE.VRControls( camera );
-	
-	//wouldn't it make sense if moving whole was better without clipping planes?
+	var cameraAddendum = new THREE.Vector3(); //doesn't work, very weird
 	
 	vrInputSystem.startGettingInput = function()
 	{
@@ -101,7 +100,8 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 	vrInputSystem.update = function(socket)
 	{
 		cameraRepositioner.update(); //positions the head
-
+		// camera.position.add(cameraAddendum);
+		
 		var gamepads = navigator.getGamepads();
 		for(var k = 0; k < 2 && k < gamepads.length; ++k)
 		{
@@ -142,12 +142,20 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 			controllers[affectedControllerIndex].grippingTop = gamepads[k].buttons[riftControllerKeys.grippingTop].pressed;
 			
 			controllers[affectedControllerIndex].button1 = gamepads[k].buttons[riftControllerKeys.button1].pressed;
+
+			if( gamepads[k].buttons[riftControllerKeys.thumbstickButton].pressed )
+			{
+				cameraAddendum.add(camera.position.clone().negate())
+			}
 			
 //			if( affectedControllerIndex === RIGHT_CONTROLLER_INDEX )
 //			{
 //				eyeSeparation = gamepads[k].buttons[riftControllerKeys.grippingTop].value;
 //			}
 		}
+
+		// controllers[0].position.add(cameraAddendum);
+		// controllers[1].position.add(cameraAddendum);
 	}
 	
 	return vrInputSystem;

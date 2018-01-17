@@ -56,6 +56,17 @@ function ArrayOfThisValueAndThisLength(value,length)
 	return array;
 }
 
+function removeSingleElementFromArray(array, element)
+{
+	var index = array.indexOf(element);
+	if (index > -1)
+	{
+	    array.splice(index, 1);
+	    return;
+	}
+	else console.error("no such element");
+}
+
 THREE.CylinderBufferGeometryUncentered = function(radius, length, radiusSegments)
 {
 	if( !radiusSegments )
@@ -68,6 +79,24 @@ THREE.CylinderBufferGeometryUncentered = function(radius, length, radiusSegments
 		geometry.attributes.position.array[i*3+1] += length / 2;
 	}
 	return geometry;
+}
+
+function insertCylinderCoordsAndNormals(A,B, vertexAttribute, normalAttribute, cylinderSides, firstVertexIndex, radius )
+{
+	var aToB = new THREE.Vector3().subVectors(B,A);
+	aToB.normalize();
+	var tickVector = randomPerpVector(aToB);
+	tickVector.normalize(); 
+	for( var i = 0; i < cylinderSides; i++)
+	{
+		vertexAttribute.setXYZ(  firstVertexIndex + i*2, tickVector.x*radius + A.x,tickVector.y*radius + A.y,tickVector.z*radius + A.z );
+		vertexAttribute.setXYZ(firstVertexIndex + i*2+1, tickVector.x*radius + B.x,tickVector.y*radius + B.y,tickVector.z*radius + B.z );
+		
+		normalAttribute.setXYZ(  firstVertexIndex + i*2, tickVector.x,tickVector.y,tickVector.z );
+		normalAttribute.setXYZ(firstVertexIndex + i*2+1, tickVector.x,tickVector.y,tickVector.z );
+		
+		tickVector.applyAxisAngle(aToB, TAU / cylinderSides);
+	}
 }
 
 THREE.Quaternion.prototype.distanceTo = function(q2)

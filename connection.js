@@ -12,70 +12,91 @@ function initSocket()
 	}
 
 	socket.messageReactions = {};
-
-	var timer = Infinity;
-	var expectedCommand;
-
-	socket.setTimerOnExpectedCommand = function(specificExpectedCommand,length)
-	{
-		if(timer !== Infinity)
-		{
-			console.error("already waiting on something!");
-			return;
-		}
-		if(length === undefined)
-		{
-			length = 1;
-		}
-		timer = length;
-		expectedCommand = specificExpectedCommand;
-	}
-
-	function resetCommandExpectation()
-	{
-		expectedCommand = "";
-		timer = Infinity;
-	}
-
-	socket.checkOnExpectedCommands = function()
-	{
-		timer -= frameDelta;
-		if( timer < 0 )
-		{
-			console.error( "request not granted: ", expectedCommand );
-			resetCommandExpectation();
-		}
-	}
-
-	socket.queryCommandTimer = function(specificExpectedCommand)
-	{
-		return expectedCommand === specificExpectedCommand;
-	}
-	
 	socket.onmessage = function(msgContainer)
 	{
-		//speedup opportunity... hrmm... what if it's a massive one?
-		//to be sure it would be nice if they came as json
 		//parse and stringify are both linear in number of characters
+		//does it have to be with strings? Take it to a connections expert at some point
+		//You could use ASCII?
 		var msg = JSON.parse(msgContainer.data);
 
-		if(msg.command === expectedCommand)
-		{
-			resetCommandExpectation();
-		}
-
-		if(!msg.command)
-		{
-			console.log("received message without command: ", msg)
-			return;
-		}
 		if(!socket.messageReactions[msg.command])
 		{
 			console.error("Mistyped header: ", msg.command)
 			return;
 		}
 
-		socket.messageReactions[msg.command](msg);
+		var commandExecutedSuccessfully = socket.messageReactions[msg.command](msg);
+
+		if( commandExecutedSuccessfully !== false )
+		{
+			for(var i = 0; i < commandExpectations.length; i++)
+			{
+				if( commandExpectations[i].command === msg.command )
+				{
+					//if you have a bunch of identical ones you won't know which is which
+					console.log("expectation resolved: ", msg.command)
+					commandExpectations.splice(i, 1);
+					break;
+				}
+			}
+		}
+	}
+
+	{
+		var commandExpectations = [];
+
+		function CommandExpectation(command,length)
+		{
+			if(length === undefined)
+			{
+				length = 1;
+			}
+			this.timer = length;
+			this.command = command;
+		}
+		CommandExpectation.prototype = {
+			constructor:CommandExpectation,
+		}
+
+		socket.expectCommand = function(specificExpectedCommand,length)
+		{
+			for(var i = 0; i < commandExpectations.length; i++)
+			{
+				if( commandExpectations[i].command === specificExpectedCommand )
+				{
+					return;
+				}
+			}
+
+			var commandExpectation = new CommandExpectation(specificExpectedCommand,length);
+			commandExpectations.push(commandExpectation);
+		}
+
+		socket.expectationExists = function(command)
+		{
+			for(var i = 0; i < commandExpectations.length; i++)
+			{
+				if( commandExpectations[i].command === command )
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		socket.checkOnExpectedCommands = function()
+		{
+			for(var i = 0, il = commandExpectations.length; i < il; i++)
+			{
+				commandExpectations[i].timer -= frameDelta;
+				if( commandExpectations[i].timer < 0 )
+				{
+					console.error( "request not granted: ", commandExpectations[i].command );
+					delete commandExpectations[i];
+					commandExpectations.splice(i, 1);
+				}
+			}
+		}
 	}
 
 	return socket;

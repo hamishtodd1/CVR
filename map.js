@@ -1,9 +1,6 @@
-//if you update uglymol there may be problems
-//note there used to be a "cubicles" thing that was good for searching
-//also there was pdbe and dsn9
+//there is a "cubicles" thing in uglymol's molecules that was good for searching
 //TODO turn into proper object so you don't have to repeat the functions
-//For Iain we should have a map on a molecule
-function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
+function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 {
 	var map = new THREE.Object3D();
 	var unitCellMesh = null;
@@ -12,8 +9,6 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 	var types = isDiffMap ? ['map_pos', 'map_neg'] : ['map_den'];
 	var style = "squarish";
 	if(!isolevel) isolevel = isDiffMap ? 3.0 : 1.5; //units of rmsd
-	if(!blockRadius) blockRadius = 20; //seems nonlinear?
-	if(!blockCenter) blockCenter = [0,0,0];
 
 	var req = new XMLHttpRequest();
 	req.open('GET', url, true);
@@ -23,7 +18,7 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 		if (req.readyState === 4)
 		{
 			data = new UM.ElMap();
-			data.from_ccp4(req.response, true);
+			data.from_ccp4(req.response, true); //pdbe and dsn9 exist
 
 			var unitCellGetter = data.unit_cell.orthogonalize.bind(data.unit_cell);
 			unitCellMesh = UM.makeRgbBox(unitCellGetter, {color: {r:1,g:1,b:1}});
@@ -37,8 +32,14 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 
 	function extractAndRepresentBlock()
 	{
-		data.extract_block( blockRadius, blockCenter);
-		refreshMeshesFromBlock();
+		blockCenterVector = visiBox.position.clone()
+		assemblage.updateMatrixWorld();
+		assemblage.worldToLocal( blockCenterVector );
+
+		var blockRadius = 2 + Math.ceil(Math.min( visiBox.corners[0].position.x * visiBox.scale.x, visiBox.corners[0].position.y * visiBox.scale.y, visiBox.corners[0].position.z * visiBox.scale.z) / getAngstrom());
+
+		data.extract_block( blockRadius, [ blockCenterVector.x, blockCenterVector.y, blockCenterVector.z ] );
+		map.refreshMeshesFromBlock();
 	}
 
 	var lineWidth = 1.25;
@@ -48,7 +49,7 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 		map_neg: 0x8B2E2E,
 	}
 
-	function refreshMeshesFromBlock()
+	map.refreshMeshesFromBlock = function()
 	{
 		for (var i = 0; i < map.children.length; i++)
 		{
@@ -60,14 +61,11 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 
 		for (var i = 0; i < types.length; i += 1)
 		{
-			if(1)
-			{
-				var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-					color: colors[types[i]],
-					linewidth: lineWidth,
-					clippingPlanes: slabPlanes
-				}));
-			}
+			var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+				color: colors[types[i]],
+				linewidth: lineWidth,
+				clippingPlanes: visiBox.planes
+			}));
 
 			var isolevelMultiplier = 1;
 			if( types[i] === 'map_neg' )
@@ -92,7 +90,7 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 		{
 			style = "marching cubes"
 		}
-		refreshMeshesFromBlock();
+		map.refreshMeshesFromBlock();
 	}
 
 	//could be good to make it so that this is movable
@@ -101,56 +99,35 @@ function Map(url, isDiffMap, slabPlanes, blockCenter, blockRadius, isolevel)
 		unitCellMesh.visible = !unitCellMesh.visible;
 	}
 
-	map.getIsolevel = function()
+	map.addToIsolevel = function(addition)
 	{
-		return isolevel;
-	}
-	map.setIsolevel = function(newIsolevel)
-	{
-		isolevel = newIsolevel;
-		refreshMeshesFromBlock();
-	}
-
-	map.getBlockRadius = function()
-	{
-		return blockRadius;
-	}
-	map.setBlockRadius = function(newBlockRadius)
-	{
-		blockRadius = newBlockRadius;
-		extractAndRepresentBlock();
+		isolevel += addition;
+		if(map.children.length === 0)
+		{
+			return;
+		}
+		map.refreshMeshesFromBlock();
 	}
 
-	//happens in units of cube?
-	map.getBlockCenter = function()
+	function removeAndDispose(obj)
 	{
-		var copy = [blockCenter[0],blockCenter[1],blockCenter[2]]
-		return copy;
-	}
-	map.setBlockCenter = function(newBlockCenter)
-	{
-		blockCenter = newBlockCenter;
-		extractAndRepresentBlock();
+		obj.parent.remove(obj);
+		if (obj.geometry) { obj.geometry.dispose(); }
+		if (obj.material)
+		{
+			if (obj.material.uniforms && obj.material.uniforms.map) 
+			{
+				obj.material.uniforms.map.value.dispose();
+			}
+			obj.material.dispose();
+		}
+		for (var i = 0, list = obj.children; i < list.length; i += 1)
+		{
+			var o = list[i];
+
+			removeAndDispose(o);
+		}
 	}
 
 	return map;
-}
-
-function removeAndDispose(obj) {
-	obj.parent.remove(obj);
-	if (obj.geometry) { obj.geometry.dispose(); }
-	if (obj.material)
-	{
-		if (obj.material.uniforms && obj.material.uniforms.map) 
-		{
-			obj.material.uniforms.map.value.dispose();
-		}
-		obj.material.dispose();
-	}
-	for (var i = 0, list = obj.children; i < list.length; i += 1)
-	{
-		var o = list[i];
-
-		removeAndDispose(o);
-	}
 }

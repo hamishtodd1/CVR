@@ -53,5 +53,5 @@ function initScaleStick(thingsToBeUpdated)
 		clippingPlane.normal.copy( direction ).negate();
 		clippingPlane.constant = end.dot( direction );
 	}
-	thingsToBeUpdated.scaleStick = scaleStick;
+	thingsToBeUpdated.push( scaleStick );
 }

@@ -1,4 +1,4 @@
-//we assume natural parent is scene
+//wrappers assuming natural parent is scene
 function ensureAttachment(child, parent)
 {
 	if(child.parent !== parent)
@@ -15,7 +15,23 @@ function ensureDetachment(child, parent)
 	}
 }
 
-function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, holdables )
+// controller.ensureAttachment = function(child)
+// {
+// 	if(child.parent === this)
+// 	{
+// 		return;
+// 	}
+// 	if(child.parent !== scene )
+// 	{
+// 		THREE.SceneUtils.detach( child, parent, scene );
+// 	}
+// 	ensureAttachment(child,this);
+// }
+
+//detachment only ever happens from either the controller or the holdable's ordinary parent
+//
+
+function loop( socket, maps, models, controllers, vrInputSystem, visiBox, thingsToBeUpdated, holdables )
 {
 	frameDelta = ourClock.getDelta();
 	
@@ -23,9 +39,12 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001)
+		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001 )
 		{
-			modelAndMap.map.setIsolevel( modelAndMap.map.getIsolevel() + 0.1 * controllers[i].thumbStickAxes[1])
+			for(var j = 0; j < maps.length; j++)
+			{
+				maps[j].addToIsolevel( 0.1 * controllers[i].thumbStickAxes[1] )
+			}
 		}
 		
 		if( controllers[i].grippingTop )
@@ -34,30 +53,29 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 			{
 				var distanceOfClosestObject = Infinity;
 				selectedHoldable = null;
-				for(var holdable in holdables )
+				for(var j = 0; j < holdables.length; j++ )
 				{
-					if( controllers[i].overlappingHoldable(holdables[holdable]) )
+					if( controllers[i].overlappingHoldable(holdables[j]) )
 					{
-						selectedHoldable = holdables[holdable];
+						selectedHoldable = holdables[j];
 						break;
 					}
 				}
 				if(selectedHoldable)
 				{
-					THREE.SceneUtils.detach( selectedHoldable, selectedHoldable.parent, scene );
-					THREE.SceneUtils.attach( selectedHoldable, scene, controllers[i] );
+					ensureDetachment( selectedHoldable, selectedHoldable.parent );
+					ensureAttachment( selectedHoldable, controllers[i] );
 				}
 			}
 		}
 		else
 		{
-			for(var holdable in holdables )
+			for(var j = 0; j < holdables.length; j++ )
 			{
-				if( holdables[holdable].parent === controllers[i])
+				if( holdables[j].parent === controllers[i])
 				{
-					console.log("yea?")
-					THREE.SceneUtils.detach( holdables[holdable], controllers[i], scene );
-					THREE.SceneUtils.attach( holdables[holdable], scene, holdables[ holdable ].ordinaryParent );
+					ensureDetachment( holdables[j], controllers[i] );
+					ensureAttachment( holdables[j], holdables[j].ordinaryParent );
 				}
 			}
 		}
@@ -70,7 +88,7 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 		ensureDetachment(visiBox, controllers[1-bothAttachedController]);
 		
 		ensureAttachment(visiBox, controllers[bothAttachedController]);
-		ensureAttachment(modelAndMap, controllers[bothAttachedController]);
+		ensureAttachment(assemblage, controllers[bothAttachedController]);
 		
 		var handSeparationDifferential = controllers[0].position.distanceTo( controllers[1].position ) / 
 			controllers[0].oldPosition.distanceTo( controllers[1].oldPosition );
@@ -79,21 +97,21 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 		visiBox.scale.multiplyScalar( handSeparationDifferential );
 		visiBox.position.multiplyScalar(visiBox.scale.x);
 		
-		modelAndMap.position.multiplyScalar( 1 / modelAndMap.scale.x ); 
-		modelAndMap.scale.multiplyScalar( handSeparationDifferential );
-		modelAndMap.position.multiplyScalar(modelAndMap.scale.x);
+		assemblage.position.multiplyScalar( 1 / assemblage.scale.x ); 
+		assemblage.scale.multiplyScalar( handSeparationDifferential );
+		assemblage.position.multiplyScalar(assemblage.scale.x);
 	}
 	else
 	{
 		if( controllers[bothAttachedController].grippingSide )
 		{
 			ensureAttachment(visiBox, controllers[bothAttachedController]);
-			ensureAttachment(modelAndMap, controllers[bothAttachedController]);
+			ensureAttachment(assemblage, controllers[bothAttachedController]);
 		}
 		else
 		{
 			ensureDetachment(visiBox, controllers[bothAttachedController]);
-			ensureDetachment(modelAndMap, controllers[bothAttachedController]);
+			ensureDetachment(assemblage, controllers[bothAttachedController]);
 		}
 		
 		if( controllers[1-bothAttachedController].grippingSide )
@@ -106,22 +124,34 @@ function loop( socket, controllers, vrInputSystem, visiBox, thingsToBeUpdated, h
 		}
 	}
 	
-	for( var thing in thingsToBeUpdated)
+	for( var i = 0; i < thingsToBeUpdated.length; i++)
 	{
-		if( thingsToBeUpdated[thing].length !== undefined)
+		if( thingsToBeUpdated[i].length !== undefined )
 		{
-			for(var i = 0, il = thingsToBeUpdated[thing].length; i < il; i++)
-				thingsToBeUpdated[thing][i].update();
+			for(var j = 0, jl = thingsToBeUpdated[i].length; j < jl; j++)
+			{
+				thingsToBeUpdated[i][j].update();
+			}
 		}
 		else
-			thingsToBeUpdated[thing].update();
+		{
+			thingsToBeUpdated[i].update();
+		}
+	}
+	for( var thing in thingsToBeUpdated)
+	{
+		if(typeof thing == "number")
+		console.log("get rid of thingsToBeUpdated.", thing)
 	}
 	
-	// if( modelAndMap.map )
-	// {
-	// 	modelAndMap.map.material.linewidth = 0.2 / modelAndMap.position.distanceTo(camera.position);
-	// 	modelAndMap.map.material.needsUpdate = true;
-	// }
+	for(var i = 0; i < maps.length; i++)
+	{
+		for(var j = 0; j < maps[i].children.length; j++)
+		{
+			maps[i].children[j].material.linewidth = 0.2 / assemblage.position.distanceTo(camera.position);
+			maps[i].children[j].material.needsUpdate = true;
+		}
+	}
 
 	socket.checkOnExpectedCommands();
 }

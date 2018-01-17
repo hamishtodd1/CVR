@@ -15,7 +15,7 @@ function initVisiBox(thingsToBeUpdated, holdables, initialScale)
 	//should its edges only appear sometimes?
 	visiBox = new THREE.Object3D();
 	
-	thingsToBeUpdated.visiBox = visiBox;
+	thingsToBeUpdated.push(visiBox)
 	
 	visiBox.scale.setScalar(initialScale);
 	visiBox.position.z = -FOCALPOINT_DISTANCE
@@ -47,6 +47,15 @@ function initVisiBox(thingsToBeUpdated, holdables, initialScale)
 		cornerGeometry.computeBoundingSphere();
 		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF, side:THREE.DoubleSide});
 		visiBox.updateMatrix();
+
+		visiBox.onLetGo = function()
+		{
+			for(var i = 0; i < maps.length; i++)
+			{
+				console.log("happenning")
+				maps[i].refreshMeshesFromBlock();
+			}
+		}
 		
 		function putOnCubeCorner(i, position)
 		{
@@ -63,6 +72,7 @@ function initVisiBox(thingsToBeUpdated, holdables, initialScale)
 			visiBox.corners[i] = new THREE.Mesh( cornerGeometry, cornerMaterial );
 			visiBox.corners[i].scale.setScalar( 0.01 );
 			visiBox.corners[i].boundingSphere = cornerGeometry.boundingSphere;
+			visiBox.corners[i].onLetGo = visiBox.onLetGo;
 			visiBox.add( visiBox.corners[i] );
 			visiBox.corners[i].ordinaryParent = visiBox;
 
@@ -70,7 +80,7 @@ function initVisiBox(thingsToBeUpdated, holdables, initialScale)
 			
 			putOnCubeCorner(i, visiBox.corners[i].position)
 			
-			holdables[ "visiBoxCorner" + i.toString() ] = visiBox.corners[i];
+			holdables.push( visiBox.corners[i] );
 		}
 	}
 
@@ -96,9 +106,11 @@ function initVisiBox(thingsToBeUpdated, holdables, initialScale)
 				putOnCubeCorner(i, newNewCornerPosition );
 				visiBox.localToWorld(newNewCornerPosition);
 				
-				var displacement = visiBox.corners[ i ].getWorldPosition().sub( newNewCornerPosition )//.multiply(visiBox.scale);
+				var displacement = visiBox.corners[ i ].getWorldPosition().sub( newNewCornerPosition )
 				
-				visiBox.position.add(displacement)
+				visiBox.position.add(displacement);
+
+				//could do the map refresh thing too
 				
 				break;
 			}
