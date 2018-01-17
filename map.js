@@ -33,6 +33,7 @@ function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 	function extractAndRepresentBlock()
 	{
 		blockCenterVector = visiBox.position.clone()
+
 		assemblage.updateMatrixWorld();
 		assemblage.worldToLocal( blockCenterVector );
 
@@ -128,6 +129,5 @@ function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 			removeAndDispose(o);
 		}
 	}
-
 	return map;
 }

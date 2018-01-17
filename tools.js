@@ -346,6 +346,7 @@ function initPointer(thingsToBeUpdated, holdables)
 	holdables.push(pointer);
 	pointer.ordinaryParent = scene;
 
+	pointer.position.set(0,-0.4,0.1)
 	scene.add(pointer);
 	return pointer;
 }
