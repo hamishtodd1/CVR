@@ -15,18 +15,18 @@ function ensureDetachment(child, parent)
 	}
 }
 
-// controller.ensureAttachment = function(child)
-// {
-// 	if(child.parent === this)
-// 	{
-// 		return;
-// 	}
-// 	if(child.parent !== scene )
-// 	{
-// 		THREE.SceneUtils.detach( child, parent, scene );
-// 	}
-// 	ensureAttachment(child,this);
-// }
+controller.ensureAttachment = function(child)
+{
+	if(child.parent === this)
+	{
+		return;
+	}
+	if(child.parent !== scene )
+	{
+		THREE.SceneUtils.detach( child, parent, scene );
+	} 
+	ensureAttachment(child,this);
+}
 
 //detachment only ever happens from either the controller or the holdable's ordinary parent
 //

@@ -163,14 +163,14 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	//---------------"init part 2"
 	function initTools()
 	{
-		// initPointer(thingsToBeUpdated, holdables).position.set(-0.1,-0.4,-0.2);
-		// initMutator(thingsToBeUpdated, holdables).position.set(0,-0.4,-0.2);
-		initAtomDeleter(thingsToBeUpdated, holdables, socket, models).position.set(0.1,-0.4,-0.2);
+		initPointer(thingsToBeUpdated, holdables).position.set(-0.15,-0.4,-0.2);
+		initMutator(thingsToBeUpdated, holdables).position.set(0,-0.4,-0.2);
+		initAtomDeleter(thingsToBeUpdated, holdables, socket, models).position.set(0.15,-0.4,-0.2);
 	}
 
 	socket = initSocket();
 
-	var models = initModelCreationSystem(socket);
+	models = initModelCreationSystem(socket, visiBox.planes);
 
 	socket.onopen = function()
 	{
@@ -199,7 +199,7 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 			function( modelStringCoot )
 			{
 				var newModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
-				newModel.imol = newModel.atoms[0].spec.imol;
+				newModel.imol = newModel.atoms[0].imol;
 				assemblage.add(newModel);
 				models.push(newModel);
 
@@ -215,9 +215,9 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 				assemblage.add(duplicateModel);
 				for(var i = 0, il = duplicateModel.atoms.length; i < il; i++)
 				{
-					duplicateModel.atoms[i].spec.imol = duplicateModel.atoms[i].spec.imol + 1;
+					duplicateModel.atoms[i].imol++;
 				}
-				duplicateModel.imol = duplicateModel.atoms[0].spec.imol;
+				duplicateModel.imol = duplicateModel.atoms[0].imol;
 				duplicateModel.position.set(0,2,0);
 				models.push(duplicateModel);
 

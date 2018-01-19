@@ -51,10 +51,10 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 	ball.geometry.computeBoundingSphere();
 	atomDeleter.boundingSphere = ball.geometry.boundingSphere;
 
-	// var label = new THREE.Mesh( new THREE.TextGeometry( "Deleter: \nhold with index finger and press\nbutton to delete highlighted atoms",
-	// 	{size: 0.03, height: 0.0001, font: THREE.defaultFont }), LABEL_MATERIAL );
-	// atomDeleter.add(label);
-	// label.visible = false;
+	var label = makeTextSign( "Deleter" );
+	label.position.z = radius;
+	label.scale.setScalar(radius/1.5)
+	atomDeleter.add(label);
 	
 	var atomHighlightStatuses = null;
 	atomHighlightStatuses = Array(models.length);
@@ -73,6 +73,8 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 		{
 			return;
 		}
+
+		label.visible = this.parent === scene;
 
 		var ourRadiusSq = sq( radius / getAngstrom() );
 		var highlightColor = new THREE.Color(1,1,1);
@@ -112,8 +114,7 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 						if(atomHighlightStatuses[i][j])
 						{
 							var msg = {command:"deleteAtom"};
-							Object.assign(msg,models[i].atoms[j].spec);
-
+							models[i].atoms[j].assignToMessage( msg );
 							socket.send(JSON.stringify(msg));
 						}
 					}
@@ -182,7 +183,7 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
  */
 function initMutator(thingsToBeUpdated, holdables)
 {
-	mutator = new THREE.Object3D();
+	var mutator = new THREE.Object3D();
 	
 	var handleRadius = 0.035;
 	var handleTubeRadius = handleRadius / 3;
@@ -191,9 +192,14 @@ function initMutator(thingsToBeUpdated, holdables)
 	mutator.handle.rotation.y = TAU / 4;
 	mutator.handle.rotation.z = chunkOut / 2;
 	mutator.handle.geometry.computeBoundingSphere();
-	mutator.add(mutator.handle);	
+	mutator.add(mutator.handle);
 	mutator.boundingSphere = mutator.handle.geometry.boundingSphere;
 	mutator.ordinaryParent = scene;
+
+	var label = makeTextSign( "Mutator" );
+	label.position.z = handleRadius+handleTubeRadius;
+	label.scale.setScalar(handleTubeRadius)
+	mutator.add(label);
 
 	var labelMaterial = new THREE.MeshLambertMaterial( { color: 0x156289 } );
 	var aaNames = ["leucine","alanine","serine","glycine","valine","glutamic acid","arginine","threonine", //most common
@@ -213,14 +219,13 @@ function initMutator(thingsToBeUpdated, holdables)
 				newPlaque.position.copy(position);
 				mutator.add( newPlaque );
 
-				mutator.AAs[aaIndex] = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( {vertexColors:THREE.VertexColors} ) );
-				mutator.AAs[aaIndex].atoms = Array(geometryAtoms.elements.length);
-			 	for(var i = 0; i < mutator.AAs[aaIndex].atoms.length; i++)
+				var aaAtoms = Array(geometryAtoms.elements.length);
+			 	for(var i = 0; i < aaAtoms.length; i++)
 			 	{
-			 		mutator.AAs[aaIndex].atoms[i] = new Atom( geometryAtoms.elements[i], new THREE.Vector3().fromArray(geometryAtoms.attributes.position.array,3*i) );
+			 		aaAtoms[i] = new Atom( geometryAtoms.elements[i], new THREE.Vector3().fromArray(geometryAtoms.attributes.position.array,3*i) );
 			 	}
-
-			 	makeMoleculeMesh( mutator.AAs[aaIndex].geometry, mutator.AAs[aaIndex].atoms );
+			 	
+			 	mutator.AAs[aaIndex] = makeMoleculeMesh( aaAtoms, false );
 			 	
 			 	mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
 				newPlaque.add( mutator.AAs[aaIndex] );
@@ -293,10 +298,7 @@ function initMutator(thingsToBeUpdated, holdables)
 			this.AAs[i].scale.setScalar(mutatorAaAngstrom);
 		}
 
-		if(this.parent !== scene)
-		{
-			
-		}
+		label.visible = this.parent === scene;
 	}
 	
 	thingsToBeUpdated.push(mutator);
@@ -332,6 +334,8 @@ function initPointer(thingsToBeUpdated, holdables)
 
 	pointer.update = function()
 	{
+		label.visible = this.parent === scene;
+		
 		if( this.parent !== scene )
 		{
 			laser.visible = this.parent.button1;

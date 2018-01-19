@@ -5,7 +5,6 @@
 /*
  * Ribbon
  * 
- * 
 	1. Get all carbon alphas, ribbon will go through all of them
 	2. For all points, look at point just before and just after. Normal+tangent vector is in the same plane as all 3.
 	3. For all carbon alphas, look at the one just in front and cubic bezier to get a curve connecting the two
@@ -16,18 +15,60 @@
 	6. AAs which are part of an alpha helix or beta sheet are listed in pdb file
  */
 
-function initModelCreationSystem( socket)
+
+
+var elementToNumber = {
+		C: 0,
+		S: 1,
+		O: 2,
+		N: 3,
+		P: 6,
+		H: 9
+}
+
+function Atom(element,position,imol,chainId,residueNumber,insertionCode,name,altloc)
+{
+	if( imol === -1)
+	{ //MAJOR HACK PAUL IS FIXING
+		imol = 0;
+	}
+
+	this.position = position;
+
+	this.imol = imol;
+	this.chainId = chainId;
+	this.residueNumber = residueNumber;
+	this.insertionCode = insertionCode;
+	this.name = name;
+	this.altloc = altloc;
+
+	if(typeof element === "number") //there are a lot of these things, best to keep it as a number
+	{
+		this.element = element;
+	}
+	else
+	{
+		this.element = elementToNumber[ element ];
+	}
+
+	if(this.element === undefined)
+	{
+		console.error("unrecognized element: ", element)
+	}
+}
+Atom.prototype.assignToMessage = function(msg)
+{
+	msg.imol = this.imol;
+	msg.chainId = this.chainId;
+	msg.residueNumber = this.residueNumber;
+	msg.insertionCode = this.insertionCode;
+	msg.name = this.name;
+	msg.altloc = this.altloc;
+}
+
+function initModelCreationSystem( socket, visiBoxPlanes)
 {
 	var models = [];
-
-	var elementToNumber = {
-			C: 0,
-			S: 1,
-			O: 2,
-			N: 3,
-			P: 6,
-			H: 9
-	}
 
 	function getModelWithImol(imol)
 	{
@@ -43,42 +84,6 @@ function initModelCreationSystem( socket)
 
 	DEFAULT_BOND_RADIUS = 0.055;
 
-	function Atom(element,position,imol,chainId,residueNumber,insertionCode,name,altloc)
-	{
-		/*
-		position, isHydrogen, spec, residue. Last unused
-		 */
-
-		if( imol === -1)
-		{ //MAJOR HACK PAUL IS FIXING
-			imol = 0;
-		}
-
-		this.position = position;
-
-		this.spec = {
-			imol:imol,
-			chainId:chainId,
-			residueNumber:residueNumber,
-			insertionCode:insertionCode,
-			name:name,
-			altloc:altloc
-		}
-
-		if(typeof element === "number") //there are a lot of these things, best to keep it as a number
-		{
-			this.element = element;
-		}
-		else
-		{
-			this.element = elementToNumber[ element ];
-		}
-
-		if(this.element === undefined)
-		{
-			console.error("unrecognized element: ", element)
-		}
-	}
 	function Residue()
 	{
 		this.atoms = [];
@@ -106,7 +111,7 @@ function initModelCreationSystem( socket)
 
 	makeModelFromCootString = function( modelStringCoot, thingsToBeUpdated, visiBoxPlanes, callback )
 	{
-		// console.log(modelStringCoot)
+		//position, isHydrogen, spec, "residue"
 		var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
 		{
 	        if(p1) return "[";
@@ -136,27 +141,22 @@ function initModelCreationSystem( socket)
 			var bondDataFromCoot = cootArray[1];
 	    }
 		
-		var model = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
-			vertexColors: THREE.VertexColors,
-			clippingPlanes: visiBoxPlanes
-		} ) );
-		
 		var numberOfAtoms = 0;
 		for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
 		{
 			numberOfAtoms += atomDataFromCoot[i].length;
 		}
-		model.atoms = Array(numberOfAtoms);
+		var modelAtoms = Array(numberOfAtoms);
 		
 		var lowestUnusedAtom = 0;
-		model.residues = [];
+		var modelResidues = [];
 		// if(!logged)console.log( atomDataFromCoot[0][0] )
 		logged = 1;
 		for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
 		{
 			for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
 			{ 
-				model.atoms[lowestUnusedAtom] = new Atom(
+				modelAtoms[lowestUnusedAtom] = new Atom(
 					i, 
 					new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]),
 					atomDataFromCoot[i][j][2][0],
@@ -169,25 +169,26 @@ function initModelCreationSystem( socket)
 				// var residueIndex = atomDataFromCoot[i][j][3]; //is this number reliable though?
 				// if( -1 !== residueIndex )
 				// {
-				// 	if( !model.residues[ residueIndex ] )
+				// 	if( !modelResidues[ residueIndex ] )
 				// 	{
-				// 		model.residues[ residueIndex ] = new Residue();
+				// 		modelResidues[ residueIndex ] = new Residue();
 				// 	}
 					
 				// 	//YO the atoms should be inserted according to some other aspect of them, some string that WITHIN THE RESIDUE identifies them, possibly their name
-				// 	model.residues[ residueIndex ].atoms.push( model.atoms[lowestUnusedAtom] );
-				// 	model.atoms[ lowestUnusedAtom ].residue = model.residues[ residueIndex ];
+				// 	modelResidues[ residueIndex ].atoms.push( model.atoms[lowestUnusedAtom] );
+				// 	modelAtoms[ lowestUnusedAtom ].residue = modelResidues[ residueIndex ];
 				// }
 						
 				lowestUnusedAtom++;
 			}
 		}
-		// for(var i = 0, il = model.residues.length; i < il; i++)
+		// for(var i = 0, il = modelResidues.length; i < il; i++)
 		// {
-		// 	model.residues[i].updatePosition();
+		// 	modelResidues[i].updatePosition();
 		// }
 
-		makeMoleculeMesh(model.geometry, model.atoms, bondDataFromCoot);
+		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
+		model.residues = modelResidues;
 
 		// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
 		// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
@@ -222,10 +223,13 @@ function initModelCreationSystem( socket)
 				if( atom.label === undefined)
 				{
 					var labelString = "";
-					for(var propt in atom.spec)
-					{
-						labelString += atom.spec[propt] + ","
-					}
+					labelString += atom.imol + ",";
+					labelString += atom.chainId + ",";
+					labelString += atom.residueNumber + ",";
+					labelString += atom.insertionCode + ",";
+					labelString += atom.name + ",";
+					labelString += atom.altloc + ",";
+
 					atom.label = makeTextSign(labelString);
 					atom.label.position.copy(atom.position);
 					atom.label.update = updateLabel;
@@ -250,8 +254,20 @@ function initModelCreationSystem( socket)
 		return model;
 	}
 
-	makeMoleculeMesh = function(bufferGeometry, atoms, bondDataFromCoot )
+	makeMoleculeMesh = function( atoms, clip, bondDataFromCoot )
 	{
+		var molecule = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
+			vertexColors: THREE.VertexColors
+		} ) );
+		molecule.atoms = atoms;
+
+		if(clip)
+		{
+			molecule.material.clippingPlanes = visiBoxPlanes;
+		}
+
+		var bufferGeometry = molecule.geometry;
+
 		var ATOM_COLORS = Array(10);
 		for(var i = 0; i < ATOM_COLORS.length; i++)
 			ATOM_COLORS[i] = new THREE.Color( 0.2,0.2,0.2 );
@@ -444,6 +460,8 @@ function initModelCreationSystem( socket)
 				firstFaceIndex += cylinderSides * 2;
 			}
 		}
+
+		return molecule;
 	}
 
 	//------------Socket
@@ -451,7 +469,7 @@ function initModelCreationSystem( socket)
 		// requestAtomMovement = function(atomIndex,newPosition)
 		// {
 		// 	var msg = {command:"moveAtom"};
-		// 	Object.assign(msg,model.atoms[atomIndex].spec);
+		// 	Object.assign(msg,model.atoms[atomIndex]);
 		// 	Object.assign(msg,newPosition);
 		// 	socket.send(JSON.stringify(msg));
 		// 	socket.setTimerOnExpectedCommand("moveAtom");
@@ -474,19 +492,14 @@ function initModelCreationSystem( socket)
 		{
 			var model = getModelWithImol(objectContainingSpec.imol);
 
-			var itIsThisOne = true;
 			for( var i = 0, il = model.atoms.length; i < il; i++ )
 			{
-				itIsThisOne = true;
-				for( var identifier in model.atoms[i].spec )
-				{
-					if( model.atoms[i].spec[identifier] !== objectContainingSpec[identifier] )
-					{
-						itIsThisOne = false;
-						break;
-					}
-				}
-				if(itIsThisOne)
+				if( model.atoms[i].imol === objectContainingSpec.imol &&
+					model.atoms[i].chainId === objectContainingSpec.chainId &&
+					model.atoms[i].residueNumber === objectContainingSpec.residueNumber &&
+					model.atoms[i].insertionCode === objectContainingSpec.insertionCode &&
+					model.atoms[i].name === objectContainingSpec.name &&
+					model.atoms[i].altloc === objectContainingSpec.altloc )
 				{
 					return model.atoms[i];
 				}
@@ -497,7 +510,7 @@ function initModelCreationSystem( socket)
 		socket.messageReactions.deleteAtom = function(msg)
 		{
 			var atom = getAtomWithSpecContainedInHere(msg);
-			var model = getModelWithImol(atom.spec.imol);
+			var model = getModelWithImol(atom.imol);
 			
 			for(var k = 0; k < nSphereVertices; k++)
 			{
@@ -515,13 +528,6 @@ function initModelCreationSystem( socket)
 			// 	}
 			// }
 			// model.atoms[i].residue.updatePosition();
-
-			// for(var propt in atom.spec)
-			// {
-			// 	atom.spec[propt] = null;
-			// }
-			// atom.position.set(Infinity,Infinity,Infinity);
-			// atom.element = -1;
 
 			//SPEEDUP OPPORTUNITY ARGH or could leave a space for an atom to be injected
 			removeSingleElementFromArray(model.atoms, atom)
