@@ -35,6 +35,8 @@ function Atom(element,position,imol,chainId,residueNumber,insertionCode,name,alt
 
 	this.position = position;
 
+	this.highlighted = false;
+
 	this.imol = imol;
 	this.chainId = chainId;
 	this.residueNumber = residueNumber;
@@ -357,6 +359,8 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 					newColor.g, 
 					newColor.b );
 			}
+
+			this.attributes.color.needsUpdate = true;
 		}
 
 		bufferGeometry.refreshAtomPositionInMesh = function( atomIndex )
@@ -529,7 +533,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			// }
 			// model.atoms[i].residue.updatePosition();
 
-			//SPEEDUP OPPORTUNITY ARGH or could leave a space for an atom to be injected
+			//SPEEDUP OPPORTUNITY ARGH
 			removeSingleElementFromArray(model.atoms, atom)
 
 			return true;

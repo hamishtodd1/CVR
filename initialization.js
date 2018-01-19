@@ -1,4 +1,15 @@
 /*
+ensure attatchment
+recontour on visibox movement
+residues
+bonds
+info on wall
+labeller tool
+if two things are overlapping you pick up closer
+
+
+
+
 1) choose a tool to move the atoms - and move them
 3) display intermediate atoms???
 4) display inter-atomic contacts
@@ -23,7 +34,7 @@ Thumbstick could also be used for light intensity?
 
 A big concern at some point will be navigating folders
 
-https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes it's a bit old.
+
 */
 
 
@@ -95,7 +106,7 @@ https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes i
 	initScaleStick(thingsToBeUpdated);
 	
 	var debuggingWithoutVR = false;
-	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.01 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;

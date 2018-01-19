@@ -56,17 +56,6 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 	label.scale.setScalar(radius/1.5)
 	atomDeleter.add(label);
 	
-	var atomHighlightStatuses = null;
-	atomHighlightStatuses = Array(models.length);
-	for(var i = 0, il = models.length; i<il;i++)
-	{
-		atomHighlightStatuses[i] = Array(models[i].atoms.length);
-		for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
-		{
-			atomHighlightStatuses[i][j] = false;
-		}
-	}
-	
 	atomDeleter.update = function()
 	{
 		if( models.length === 0 )
@@ -81,37 +70,14 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 
 		if(this.parent !== scene)
 		{
-			for(var i = 0; i < models.length; i++)
-			{
-				var ourPosition = this.getWorldPosition();
-				models[i].updateMatrixWorld();
-				models[i].worldToLocal(ourPosition);
-				
-				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
-				{
-					if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
-					{
-						atomHighlightStatuses[i][j] = true;
-						models[i].geometry.colorAtom(j, highlightColor);
-						models[i].geometry.attributes.color.needsUpdate = true;
-					}
-					else if( atomHighlightStatuses[i][j] === true )
-					{
-						atomHighlightStatuses[i][j] = false;
-						models[i].geometry.colorAtom( j );
-						models[i].geometry.attributes.color.needsUpdate = true;
-					}
-				}
-			}
-
-			//you can send out many at once, but not for multiple atoms
-			if( this.parent.button1 && !socket.expectationExists("deleteAtom") )
+			//request is now fixed
+			if( this.parent.button1 && !this.parent.button1Old )
 			{
 				for(var i = 0; i < models.length; i++)
 				{
 					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 					{
-						if(atomHighlightStatuses[i][j])
+						if( models[i].atoms[j].highlighted )
 						{
 							var msg = {command:"deleteAtom"};
 							models[i].atoms[j].assignToMessage( msg );
@@ -120,18 +86,42 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 					}
 				}
 			}
+			else
+			{
+				for(var i = 0; i < models.length; i++)
+				{
+					var ourPosition = this.getWorldPosition();
+					models[i].updateMatrixWorld();
+					models[i].worldToLocal(ourPosition);
+					
+					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					{
+						if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
+						{
+							models[i].atoms[j].highlighted = true;
+							models[i].geometry.colorAtom(j, highlightColor);
+						}
+						else if( models[i].atoms[j].highlighted )
+						{
+							models[i].atoms[j].highlighted = false;
+							models[i].geometry.colorAtom( j );
+						}
+					}
+				}
+			}
 		}
 		else
 		{
+			//probably various things can highlight something, be sure to always do cleanup
+			//heh but what if you want a tool in each hand?
 			for(var i = 0; i < models.length; i++)
 			{
-				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+				for(var j = 0, jl = models[i].atoms[j].length; j < jl; j++)
 				{
-					if(atomHighlightStatuses[i][j])
+					if( models[i].atoms[j].highlighted )
 					{
-						atomHighlightStatuses[i][j] = false;
+						models[i].atoms[j].highlighted = false;
 						models[i].geometry.colorAtom( j );
-						models[i].geometry.attributes.color.needsUpdate = true;
 					}
 				}
 			}
@@ -292,8 +282,8 @@ function initMutator(thingsToBeUpdated, holdables)
 		for(var i = 0, il = this.AAs.length; i < il; i++)
 		{
 			this.AAs[i].parent.visible = !(this.parent === scene);
-			this.AAs[i].parent.children[0].visible = !(this.parent === scene);
-			this.AAs[i].parent.children[1].visible = !(this.parent === scene);
+			this.AAs[i].parent.children[0].visible = this.AAs[i].parent.visible;
+			this.AAs[i].parent.children[1].visible = this.AAs[i].parent.visible;
 
 			this.AAs[i].scale.setScalar(mutatorAaAngstrom);
 		}

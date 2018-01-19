@@ -83,6 +83,7 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 		for( var propt in riftControllerKeys )
 		{
 			controllers[ i ][propt] = false;
+			controllers[ i ][propt+"Old"] = false;
 		}
 		controllers[ i ].thumbStickAxes = [0,0];
 
@@ -137,11 +138,12 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 			controllers[affectedControllerIndex].position.fromArray( gamepads[k].pose.position );
 			controllers[affectedControllerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
 			controllers[affectedControllerIndex].updateMatrixWorld();
-			
-			controllers[affectedControllerIndex].grippingSide = gamepads[k].buttons[riftControllerKeys.grippingSide].pressed;
-			controllers[affectedControllerIndex].grippingTop = gamepads[k].buttons[riftControllerKeys.grippingTop].pressed;
-			
-			controllers[affectedControllerIndex].button1 = gamepads[k].buttons[riftControllerKeys.button1].pressed;
+
+			for( var propt in riftControllerKeys )
+			{
+				controllers[ affectedControllerIndex ][propt+"Old"] = controllers[ affectedControllerIndex ][propt];
+				controllers[ affectedControllerIndex ][propt] = gamepads[k].buttons[riftControllerKeys[propt]].pressed;
+			}
 
 			if( gamepads[k].buttons[riftControllerKeys.thumbstickButton].pressed )
 			{

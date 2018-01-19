@@ -1,35 +1,19 @@
 //wrappers assuming natural parent is scene
-function ensureAttachment(child, parent)
+function ensureAttachment(child, intendedParent)
 {
-	if(child.parent !== parent)
+	if(child.parent !== intendedParent)
 	{
-		THREE.SceneUtils.attach( child, scene, parent );
+		if(child.parent !== scene)
+		{
+			THREE.SceneUtils.detach( child, child.parent, scene );
+		}
+
+		THREE.SceneUtils.attach( child, scene, intendedParent );
 	}
 }
 
-function ensureDetachment(child, parent)
-{
-	if(child.parent === parent)
-	{
-		THREE.SceneUtils.detach( child, parent, scene );
-	}
-}
-
-controller.ensureAttachment = function(child)
-{
-	if(child.parent === this)
-	{
-		return;
-	}
-	if(child.parent !== scene )
-	{
-		THREE.SceneUtils.detach( child, parent, scene );
-	} 
-	ensureAttachment(child,this);
-}
-
-//detachment only ever happens from either the controller or the holdable's ordinary parent
-//
+//either you're attached to a controller or to your ordinary parent, it's binary
+//so no ensureDetachment, just ensureAttachment(child, child.ordinaryParent)
 
 function loop( socket, maps, models, controllers, vrInputSystem, visiBox, thingsToBeUpdated, holdables )
 {
@@ -63,8 +47,7 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 				}
 				if(selectedHoldable)
 				{
-					ensureDetachment( selectedHoldable, selectedHoldable.parent );
-					ensureAttachment( selectedHoldable, controllers[i] );
+					ensureAttachment(selectedHoldable, controllers[i]);
 				}
 			}
 		}
@@ -74,7 +57,6 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 			{
 				if( holdables[j].parent === controllers[i])
 				{
-					ensureDetachment( holdables[j], controllers[i] );
 					ensureAttachment( holdables[j], holdables[j].ordinaryParent );
 				}
 			}
@@ -85,8 +67,6 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 
 	if( controllers[0].grippingSide && controllers[1].grippingSide )
 	{
-		ensureDetachment(visiBox, controllers[1-bothAttachedController]);
-		
 		ensureAttachment(visiBox, controllers[bothAttachedController]);
 		ensureAttachment(assemblage, controllers[bothAttachedController]);
 		
@@ -101,27 +81,20 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 		assemblage.scale.multiplyScalar( handSeparationDifferential );
 		assemblage.position.multiplyScalar(assemblage.scale.x);
 	}
+	else if( controllers[bothAttachedController].grippingSide && !controllers[1-bothAttachedController].grippingSide )
+	{
+		ensureAttachment(visiBox, controllers[bothAttachedController]);
+		ensureAttachment(assemblage, controllers[bothAttachedController]);
+	}
+	else if( controllers[1-bothAttachedController].grippingSide && !controllers[bothAttachedController].grippingSide )
+	{
+		ensureAttachment(visiBox, controllers[1-bothAttachedController]);
+		ensureAttachment(assemblage, scene);
+	}
 	else
 	{
-		if( controllers[bothAttachedController].grippingSide )
-		{
-			ensureAttachment(visiBox, controllers[bothAttachedController]);
-			ensureAttachment(assemblage, controllers[bothAttachedController]);
-		}
-		else
-		{
-			ensureDetachment(visiBox, controllers[bothAttachedController]);
-			ensureDetachment(assemblage, controllers[bothAttachedController]);
-		}
-		
-		if( controllers[1-bothAttachedController].grippingSide )
-		{
-			ensureAttachment(visiBox, controllers[1-bothAttachedController]);
-		}
-		else
-		{
-			ensureDetachment(visiBox, controllers[1-bothAttachedController]);
-		}
+		ensureAttachment(visiBox, scene);
+		ensureAttachment(assemblage, scene);
 	}
 	
 	for( var i = 0; i < thingsToBeUpdated.length; i++)
