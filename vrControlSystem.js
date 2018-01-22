@@ -70,7 +70,7 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 					-0.03) );
 				controllers[  i ].controllerModel.geometry.computeBoundingSphere();
 				
-				launcher.dataLoaded["controllerModel"+i.toString()] = true;
+				launcher["controllerModel"+i.toString()+"Loaded"] = true;
 				launcher.attemptLaunch();
 			},
 			function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );

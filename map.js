@@ -25,12 +25,12 @@ function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 			unitCellMesh.visible = false;
 			map.add(unitCellMesh);
 
-			extractAndRepresentBlock();
+			map.extractAndRepresentBlock();
 		}
 	};
 	req.send(null);
 
-	function extractAndRepresentBlock()
+	map.extractAndRepresentBlock = function()
 	{
 		blockCenterVector = visiBox.position.clone()
 
@@ -40,7 +40,7 @@ function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 		var blockRadius = 2 + Math.ceil(Math.min( visiBox.corners[0].position.x * visiBox.scale.x, visiBox.corners[0].position.y * visiBox.scale.y, visiBox.corners[0].position.z * visiBox.scale.z) / getAngstrom());
 
 		data.extract_block( blockRadius, [ blockCenterVector.x, blockCenterVector.y, blockCenterVector.z ] );
-		map.refreshMeshesFromBlock();
+		refreshMeshesFromBlock();
 	}
 
 	var lineWidth = 1.25;
@@ -50,7 +50,7 @@ function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 		map_neg: 0x8B2E2E,
 	}
 
-	map.refreshMeshesFromBlock = function()
+	function refreshMeshesFromBlock()
 	{
 		for (var i = 0; i < map.children.length; i++)
 		{
@@ -91,7 +91,7 @@ function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 		{
 			style = "marching cubes"
 		}
-		map.refreshMeshesFromBlock();
+		refreshMeshesFromBlock();
 	}
 
 	//could be good to make it so that this is movable

@@ -10,7 +10,7 @@
 //hmm maybe your hands should be the planes, when you're not holding anything?
 //it's a very simple shader to make it spherical
 
-function initVisiBox(thingsToBeUpdated, holdables, initialScale)
+function initVisiBox(thingsToBeUpdated, holdables, initialScale, maps)
 {
 	//should its edges only appear sometimes?
 	visiBox = new THREE.Object3D();
@@ -48,12 +48,12 @@ function initVisiBox(thingsToBeUpdated, holdables, initialScale)
 		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF, side:THREE.DoubleSide});
 		visiBox.updateMatrix();
 
+		//this is being called for the corners but not for the visibox!
 		visiBox.onLetGo = function()
 		{
 			for(var i = 0; i < maps.length; i++)
 			{
-				console.log("happenning")
-				maps[i].refreshMeshesFromBlock();
+				maps[i].extractAndRepresentBlock();
 			}
 		}
 		

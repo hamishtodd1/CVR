@@ -198,10 +198,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
 		
 		//-----Labels
-		{
-			var labels = [];
-			thingsToBeUpdated.push(labels);
-			
+		{	
 			function updateLabel()
 			{
 				this.scale.setScalar( 1 * Math.sqrt(this.position.distanceTo(camera.position)));
@@ -237,7 +234,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 					atom.label.update = updateLabel;
 
 					model.add( atom.label );
-					labels.push( atom.label );
+					thingsToBeUpdated.push(atom.label);
 				}
 				else
 				{

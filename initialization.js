@@ -1,11 +1,11 @@
 /*
-ensure attatchment
 recontour on visibox movement
 residues
 bonds
 info on wall
-labeller tool
+labeller tool, pointer?
 if two things are overlapping you pick up closer
+All the tools!
 
 
 
@@ -50,28 +50,21 @@ A big concern at some point will be navigating folders
 
 	var launcher = {
 		socketOpened: false,
-		dataLoaded:{
-			controllerModel0: false,
-			controllerModel1: false
-		},
+		initComplete:false,
+		controllerModel0Loaded: false,
+		controllerModel1Loaded: false,
 		attemptLaunch: function()
 		{
-			for(var data in this.dataLoaded)
+			for(var condition in this)
 			{
-				if( !this.dataLoaded[data] )
+				if( !this[condition] )
 				{
 					return;
 				}
 			}
-			if(!this.socketOpened )
-			{
-				return;
-			}
-			else
-			{
-				document.body.appendChild( renderer.domElement );
-				render();
-			}
+			
+			document.body.appendChild( renderer.domElement );
+			render();
 		}
 	}
 	//TODO: async await for the various things. There was also different stuff here previously
@@ -102,7 +95,6 @@ A big concern at some point will be navigating folders
 	controllers = Array(2);
 	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer, ourVrEffect);
 
-	//scaleStick. Need a clipping plane
 	initScaleStick(thingsToBeUpdated);
 	
 	var debuggingWithoutVR = false;
@@ -114,7 +106,7 @@ A big concern at some point will be navigating folders
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
 	scene.add(assemblage);
 
-	var visiBox = initVisiBox(thingsToBeUpdated,holdables, getAngstrom() * debuggingWithoutVR?0.06:0.5);
+	var visiBox = initVisiBox(thingsToBeUpdated,holdables, getAngstrom() * debuggingWithoutVR?0.06:0.5, maps);
 
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
@@ -180,7 +172,6 @@ A big concern at some point will be navigating folders
 	}
 
 	socket = initSocket();
-
 	models = initModelCreationSystem(socket, visiBox.planes);
 
 	socket.onopen = function()
@@ -238,7 +229,6 @@ A big concern at some point will be navigating folders
 			function ( xhr ) { console.error( "couldn't load basic model" ); }
 		);
 
-		// var newMap = Map("data/1mru_diff.map", true, visiBox);
 		var newMap = Map("data/1mru.map", false, visiBox)
 		maps.push( newMap );
 		assemblage.add( newMap )
@@ -246,4 +236,6 @@ A big concern at some point will be navigating folders
 		maps.push( diffMap );
 		assemblage.add( diffMap )
 	}
+	launcher.initComplete = true;
+	launcher.attemptLaunch();
 })();

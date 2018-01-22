@@ -9,11 +9,13 @@ function ensureAttachment(child, intendedParent)
 		}
 
 		THREE.SceneUtils.attach( child, scene, intendedParent );
+
+		if(intendedParent === child.ordinaryParent && child.onLetGo)
+		{
+			child.onLetGo();
+		}
 	}
 }
-
-//either you're attached to a controller or to your ordinary parent, it's binary
-//so no ensureDetachment, just ensureAttachment(child, child.ordinaryParent)
 
 function loop( socket, maps, models, controllers, vrInputSystem, visiBox, thingsToBeUpdated, holdables )
 {
@@ -67,9 +69,6 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 
 	if( controllers[0].grippingSide && controllers[1].grippingSide )
 	{
-		ensureAttachment(visiBox, controllers[bothAttachedController]);
-		ensureAttachment(assemblage, controllers[bothAttachedController]);
-		
 		var handSeparationDifferential = controllers[0].position.distanceTo( controllers[1].position ) / 
 			controllers[0].oldPosition.distanceTo( controllers[1].oldPosition );
 		
@@ -80,6 +79,9 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 		assemblage.position.multiplyScalar( 1 / assemblage.scale.x ); 
 		assemblage.scale.multiplyScalar( handSeparationDifferential );
 		assemblage.position.multiplyScalar(assemblage.scale.x);
+
+		ensureAttachment(visiBox, controllers[bothAttachedController]);
+		ensureAttachment(assemblage, controllers[bothAttachedController]);
 	}
 	else if( controllers[bothAttachedController].grippingSide && !controllers[1-bothAttachedController].grippingSide )
 	{
@@ -96,25 +98,10 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 		ensureAttachment(visiBox, scene);
 		ensureAttachment(assemblage, scene);
 	}
-	
+
 	for( var i = 0; i < thingsToBeUpdated.length; i++)
 	{
-		if( thingsToBeUpdated[i].length !== undefined )
-		{
-			for(var j = 0, jl = thingsToBeUpdated[i].length; j < jl; j++)
-			{
-				thingsToBeUpdated[i][j].update();
-			}
-		}
-		else
-		{
-			thingsToBeUpdated[i].update();
-		}
-	}
-	for( var thing in thingsToBeUpdated)
-	{
-		if(typeof thing == "number")
-		console.log("get rid of thingsToBeUpdated.", thing)
+		thingsToBeUpdated[i].update();
 	}
 	
 	for(var i = 0; i < maps.length; i++)
