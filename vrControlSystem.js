@@ -63,7 +63,7 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 			function ( object ) 
 			{
 				controllers[  i ].controllerModel.geometry = object.children[0].geometry;
-				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xAxis,TAU/8) );
+				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xVector,TAU/8) );
 				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeTranslation(
 					0.008 * ( i == LEFT_CONTROLLER_INDEX?-1:1),
 					0.041,
@@ -149,12 +149,13 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 			{
 				cameraAddendum.add(camera.position.clone().negate())
 			}
-			
-//			if( affectedControllerIndex === RIGHT_CONTROLLER_INDEX )
-//			{
-//				eyeSeparation = gamepads[k].buttons[riftControllerKeys.grippingTop].value;
-//			}
+
+			//gamepads[k].buttons[riftControllerKeys.grippingTop].value;
+
+			controllers[ affectedControllerIndex ].material.color.r = controllers[ affectedControllerIndex ].button1?1:0;
+			controllers[ affectedControllerIndex ].material.color.g = controllers[ affectedControllerIndex ].button2?1:0;
 		}
+
 
 		// controllers[0].position.add(cameraAddendum);
 		// controllers[1].position.add(cameraAddendum);

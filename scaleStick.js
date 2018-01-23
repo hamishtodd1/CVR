@@ -17,8 +17,8 @@ function initScaleStick(thingsToBeUpdated)
 		for( var j = 0; j < ssRadiusSegments; j++)
 		{
 			var bottomRightVertex = i*ssRadiusSegments*2+j;
-			scaleStick.geometry.vertices[bottomRightVertex]   				 = new THREE.Vector3(ssRadius,2*i,   0).applyAxisAngle(yAxis,TAU*j/ssRadiusSegments);
-			scaleStick.geometry.vertices[bottomRightVertex+ssRadiusSegments] = new THREE.Vector3(ssRadius,2*i+1, 0).applyAxisAngle(yAxis,TAU*j/ssRadiusSegments);
+			scaleStick.geometry.vertices[bottomRightVertex]   				 = new THREE.Vector3(ssRadius,2*i,   0).applyAxisAngle(yVector,TAU*j/ssRadiusSegments);
+			scaleStick.geometry.vertices[bottomRightVertex+ssRadiusSegments] = new THREE.Vector3(ssRadius,2*i+1, 0).applyAxisAngle(yVector,TAU*j/ssRadiusSegments);
 
 			scaleStick.geometry.faces[i*ssRadiusSegments*2+j*2]   = new THREE.Face3(
 				bottomRightVertex,

@@ -6,6 +6,8 @@ bonds
 info on wall
 labeller tool
 if two things are overlapping you pick up closer
+Could make the beginnings of a bar chart.
+Lots of shit in server to test
 
 
 
@@ -86,8 +88,8 @@ A big concern at some point will be navigating folders
 
 	var thingsToBeUpdated = [];
 	var holdables = [];
-	
-	var ourVrEffect = new THREE.VREffect( 1, renderer ); //0 is initial eye separation
+
+	var ourVrEffect = new THREE.VREffect( 1, renderer );
 	var loopCallString = getStandardFunctionCallString(loop);
 	function render()
 	{
@@ -104,6 +106,8 @@ A big concern at some point will be navigating folders
 
 	//scaleStick. Need a clipping plane
 	initScaleStick(thingsToBeUpdated);
+
+	initStats();
 	
 	var debuggingWithoutVR = false;
 	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
@@ -206,44 +210,44 @@ A big concern at some point will be navigating folders
 		 * oneAtomOneBond.txt
 		 * 3C0.lst
 		 */
-		new THREE.FileLoader().load( "data/newData.txt",
-			function( modelStringCoot )
-			{
-				var newModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
-				newModel.imol = newModel.atoms[0].imol;
-				assemblage.add(newModel);
-				models.push(newModel);
+		// new THREE.FileLoader().load( "data/newData.txt",
+		// 	function( modelStringCoot )
+		// 	{
+		// 		var newModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+		// 		newModel.imol = newModel.atoms[0].imol;
+		// 		assemblage.add(newModel);
+		// 		models.push(newModel);
 
-				var averagePosition = new THREE.Vector3();
-				for(var i = 0, il = newModel.atoms.length; i < il; i++)
-				{
-					averagePosition.add(newModel.atoms[i].position);
-				}
-				averagePosition.multiplyScalar( 1 / newModel.atoms.length);
-				assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
+		// 		var averagePosition = new THREE.Vector3();
+		// 		for(var i = 0, il = newModel.atoms.length; i < il; i++)
+		// 		{
+		// 			averagePosition.add(newModel.atoms[i].position);
+		// 		}
+		// 		averagePosition.multiplyScalar( 1 / newModel.atoms.length);
+		// 		assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
 
-				var duplicateModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
-				assemblage.add(duplicateModel);
-				for(var i = 0, il = duplicateModel.atoms.length; i < il; i++)
-				{
-					duplicateModel.atoms[i].imol++;
-				}
-				duplicateModel.imol = duplicateModel.atoms[0].imol;
-				duplicateModel.position.set(0,2,0);
-				models.push(duplicateModel);
+		// 		var duplicateModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+		// 		assemblage.add(duplicateModel);
+		// 		for(var i = 0, il = duplicateModel.atoms.length; i < il; i++)
+		// 		{
+		// 			duplicateModel.atoms[i].imol++;
+		// 		}
+		// 		duplicateModel.imol = duplicateModel.atoms[0].imol;
+		// 		duplicateModel.position.set(0,2,0);
+		// 		models.push(duplicateModel);
 
-				initTools();
-			},
-			function ( xhr ) {},
-			function ( xhr ) { console.error( "couldn't load basic model" ); }
-		);
+		// 		initTools();
+		// 	},
+		// 	function ( xhr ) {},
+		// 	function ( xhr ) { console.error( "couldn't load basic model" ); }
+		// );
 
-		// var newMap = Map("data/1mru_diff.map", true, visiBox);
-		var newMap = Map("data/1mru.map", false, visiBox)
-		maps.push( newMap );
-		assemblage.add( newMap )
-		var diffMap = Map("data/1mru_diff.map", true, visiBox)
-		maps.push( diffMap );
-		assemblage.add( diffMap )
+		// // var newMap = Map("data/1mru_diff.map", true, visiBox);
+		// var newMap = Map("data/1mru.map", false, visiBox)
+		// maps.push( newMap );
+		// assemblage.add( newMap )
+		// var diffMap = Map("data/1mru_diff.map", true, visiBox)
+		// maps.push( diffMap );
+		// assemblage.add( diffMap )
 	}
 })();

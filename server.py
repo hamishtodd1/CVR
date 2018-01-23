@@ -115,7 +115,6 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
 			self.write_message( modelMsg ) #speedup opportunity
 
-			# but paul, the difference map is changing all the time surely? ;_;
 			# if is_valid_map_molecule(mapImol):
 			#     fn = molecule_name(mapImol) + "_tmp_for_export.map"
 			#     export_map(mapImol, fn)
@@ -147,28 +146,48 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 				print("movement of atom permitted")
 			self.write_message(msgContainer);
 
-		# elif messageHeader == "autoFitBestRotamer":
-		# 	if runningInCoot:
-		# 		fullResidueDescription = messageContents.split(",")
+		elif msg["command"] == "deleteResidue":
 
-		# 		residueNumber = int(fullResidueDescription[0])
-		# 		altloc = fullResidueDescription[1]
-		# 		insertionCode = fullResidueDescription[2]
-		# 		chainId = fullResidueDescription[3]
-		# 		imol = int(fullResidueDescription[4])
+			if runningInCoot:
+				#check order
+				delete_residue(msg["imol"],msg["chainId"],msg["resNo"],msg["insertionCode"]);
+			else:
+				print("deletion of residue permitted")
+			self.write_message(msgContainer);
 
-		# 		imolMap = imol_refinement_map();
-		# 		clashFlag = 1;
-		# 		lowestProbability = 0.01;
+		#needs an atom's worth of stuff evidently
+		#it wants imol_coords, which we expect is imol
+		elif messageHeader == "autoFitBestRotamer":
 
-		# 		auto_fit_best_rotamer(
-		# 			residueNumber,altloc,insertionCode,chainId,imol,
-		# 			imolMap, clashFlag, lowestProbability);
+			if runningInCoot:
+				imolMap = imol_refinement_map();
+				clashFlag = 1;
+				lowestProbability = 0.01;
 
-		# 		atomList = residue_info(imol,chainId, residueNumber, insertionCode);
-		# 		self.write_message("autoFitBestRotamerResult:"+str(atomList))
-		# 	else:
-		# 		print("requires coot")
+				auto_fit_best_rotamer(
+					msg["resNo"], msg["altloc"], msg["insertionCode"],msg["chainId"],msg["imol"],
+					imolMap, clashFlag, lowestProbability);
+
+				returnMsg = {"command":"autoFitBestRotamerResult"}
+				returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+				print(returnMsg["atomList"])
+
+				# self.write_message(str(returnMsg))
+			else:
+				print("requires coot")
+
+		elif messageHeader == "mutateAndAutoFit":
+			if runningInCoot:
+				imolMap = imol_refinement_map();
+				mutate_and_auto_fit( msg["resNo"], msg["chainId"],msg["imol"],imolMap,
+				 msg["residue"])
+				# refine_active_reside()
+
+				returnMsg = {"command":"residueCorrection"}
+				returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+
+				# self.write_message(atomDeltas)
+				
 
 		else:
 			print('received unrecognized message:', message,messageHeader)
@@ -188,13 +207,6 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 				#post_manipulation_hook?
 				newModelData = get_bonds_representation(imol)
 				self.write_message(newModelData)
-			
-		elif messageHeader == "mutateAndAutoFit":
-			if runningInCoot:
-				mutate_and_auto_fit( splitMessage[1],splitMessage[2],splitMessage[3],splitMessage[4] )
-				self.write_message(atomDeltas)
-				
-				refine_active_reside()
 		
 		
 		Also useful

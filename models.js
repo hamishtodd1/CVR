@@ -207,7 +207,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 				this.scale.setScalar( 1 * Math.sqrt(this.position.distanceTo(camera.position)));
 
 				camera.updateMatrix();
-				var cameraUp = yAxis.clone().applyQuaternion(camera.quaternion);
+				var cameraUp = yVector.clone().applyQuaternion(camera.quaternion);
 				cameraUp.add(this.parent.getWorldPosition())
 				this.parent.worldToLocal(cameraUp)
 				this.up.copy(cameraUp);
@@ -513,8 +513,8 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 
 		socket.messageReactions.deleteAtom = function(msg)
 		{
+			var model = getModelWithImol(msg.imol);
 			var atom = getAtomWithSpecContainedInHere(msg);
-			var model = getModelWithImol(atom.imol);
 			
 			for(var k = 0; k < nSphereVertices; k++)
 			{
@@ -535,6 +535,27 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 
 			//SPEEDUP OPPORTUNITY ARGH
 			removeSingleElementFromArray(model.atoms, atom)
+
+			return true;
+		}
+
+		socket.messageReactions.deleteResidue = function(msg)
+		{
+			var model = getModelWithImol(msg.imol);
+			var setOfAtomsToDelete = model.atomGroupInResidueOrWhatever(msg.resNo);
+			
+			for(var i = 0; i < setOfAtomsToDelete.length; i++)
+			{
+				for(var k = 0; k < nSphereVertices; k++)
+				{
+					model.geometry.attributes.position.setXYZ( setOfAtomsToDelete[i].firstVertexIndex + k, 0, 0, 0 );
+				}
+
+				//SPEEDUP OPPORTUNITY ARGH
+				removeSingleElementFromArray(model.atoms, setOfAtomsToDelete[i])
+			}
+			
+			model.geometry.attributes.position.needsUpdate = true;
 
 			return true;
 		}
