@@ -1,5 +1,5 @@
 //wrappers assuming natural parent is scene
-function ensureAttachment(child, intendedParent)
+function establishAttachment(child, intendedParent)
 {
 	if(child.parent !== intendedParent)
 	{
@@ -20,16 +20,17 @@ function ensureAttachment(child, intendedParent)
 function loop( socket, maps, models, controllers, vrInputSystem, visiBox, thingsToBeUpdated, holdables )
 {
 	frameDelta = ourClock.getDelta();
+	frameCount++;
 	
 	vrInputSystem.update( socket );
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.001 )
+		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 && frameCount % 3 === 0 )
 		{
 			for(var j = 0; j < maps.length; j++)
 			{
-				maps[j].addToIsolevel( 0.1 * controllers[i].thumbStickAxes[1] )
+				maps[j].addToIsolevel( 0.06 * controllers[i].thumbStickAxes[1] )
 			}
 		}
 		
@@ -49,7 +50,7 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 				}
 				if(selectedHoldable)
 				{
-					ensureAttachment(selectedHoldable, controllers[i]);
+					establishAttachment(selectedHoldable, controllers[i]);
 				}
 			}
 		}
@@ -59,7 +60,7 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 			{
 				if( holdables[j].parent === controllers[i])
 				{
-					ensureAttachment( holdables[j], holdables[j].ordinaryParent );
+					establishAttachment( holdables[j], holdables[j].ordinaryParent );
 				}
 			}
 		}
@@ -80,23 +81,23 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 		assemblage.scale.multiplyScalar( handSeparationDifferential );
 		assemblage.position.multiplyScalar(assemblage.scale.x);
 
-		ensureAttachment(visiBox, controllers[bothAttachedController]);
-		ensureAttachment(assemblage, controllers[bothAttachedController]);
+		establishAttachment(visiBox, controllers[bothAttachedController]);
+		establishAttachment(assemblage, controllers[bothAttachedController]);
 	}
 	else if( controllers[bothAttachedController].grippingSide && !controllers[1-bothAttachedController].grippingSide )
 	{
-		ensureAttachment(visiBox, controllers[bothAttachedController]);
-		ensureAttachment(assemblage, controllers[bothAttachedController]);
+		establishAttachment(visiBox, controllers[bothAttachedController]);
+		establishAttachment(assemblage, controllers[bothAttachedController]);
 	}
 	else if( controllers[1-bothAttachedController].grippingSide && !controllers[bothAttachedController].grippingSide )
 	{
-		ensureAttachment(visiBox, controllers[1-bothAttachedController]);
-		ensureAttachment(assemblage, scene);
+		establishAttachment(visiBox, controllers[1-bothAttachedController]);
+		establishAttachment(assemblage, scene);
 	}
 	else
 	{
-		ensureAttachment(visiBox, scene);
-		ensureAttachment(assemblage, scene);
+		establishAttachment(visiBox, scene);
+		establishAttachment(assemblage, scene);
 	}
 
 	for( var i = 0; i < thingsToBeUpdated.length; i++)

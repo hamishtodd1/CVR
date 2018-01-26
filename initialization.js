@@ -1,12 +1,15 @@
 /*
-recontour on visibox movement
-residues
+A bug is caused by atom indices changing
+
+
 bonds
+residues
 info on wall
 labeller tool, pointer?
 if two things are overlapping you pick up closer
 All the tools!
 
+The various things that are being compiled more than once
 
 
 
@@ -166,9 +169,13 @@ A big concern at some point will be navigating folders
 	//---------------"init part 2"
 	function initTools()
 	{
-		initPointer(thingsToBeUpdated, holdables).position.set(-0.15,-0.4,-0.2);
-		initMutator(thingsToBeUpdated, holdables).position.set(0,-0.4,-0.2);
-		initAtomDeleter(thingsToBeUpdated, holdables, socket, models).position.set(0.15,-0.4,-0.2);
+		var toolSpacing = 0.15;
+		var numTools = 4;
+
+		initPointer(thingsToBeUpdated, holdables).position.set( toolSpacing * (-numTools/2+1),-0.4,-0.2);
+		initMutator(thingsToBeUpdated, holdables).position.set( toolSpacing * (-numTools/2+2),-0.4,-0.2);
+		initAtomDeleter(thingsToBeUpdated, holdables, socket, models).position.set( toolSpacing * (-numTools/2+3),-0.4,-0.2);
+		initResidueDeleter(thingsToBeUpdated, holdables, socket, models).position.set( toolSpacing * (-numTools/2+4),-0.4,-0.2);
 	}
 
 	socket = initSocket();
@@ -213,15 +220,15 @@ A big concern at some point will be navigating folders
 				averagePosition.multiplyScalar( 1 / newModel.atoms.length);
 				assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
 
-				var duplicateModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
-				assemblage.add(duplicateModel);
-				for(var i = 0, il = duplicateModel.atoms.length; i < il; i++)
-				{
-					duplicateModel.atoms[i].imol++;
-				}
-				duplicateModel.imol = duplicateModel.atoms[0].imol;
-				duplicateModel.position.set(0,2,0);
-				models.push(duplicateModel);
+				// var duplicateModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+				// assemblage.add(duplicateModel);
+				// for(var i = 0, il = duplicateModel.atoms.length; i < il; i++)
+				// {
+				// 	duplicateModel.atoms[i].imol++;
+				// }
+				// duplicateModel.imol = duplicateModel.atoms[0].imol;
+				// duplicateModel.position.set(0,2,0);
+				// models.push(duplicateModel);
 
 				initTools();
 			},

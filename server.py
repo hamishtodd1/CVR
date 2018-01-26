@@ -132,7 +132,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 		if msg["command"] == "deleteAtom":
 			if runningInCoot:
-				delete_atom(msg["imol"],msg["chainId"],msg["residueNumber"],msg["insertionCode"],msg["name"],msg["altloc"]);
+				delete_atom(msg["imol"],msg["chainId"],msg["resNo"],msg["insertionCode"],msg["name"],msg["altloc"]);
 			else:
 				print("deletion of atom permitted")
 			self.write_message(msgContainer);
@@ -140,9 +140,9 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		elif msg["command"] == "moveAtom":
 
 			if runningInCoot:
-				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
-				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
-				set_atom_attribute(msg["imol"], msg["chainId"], msg["residueNumber"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
+				set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
 			else:
 				print("movement of atom permitted")
 			self.write_message(msgContainer);
@@ -151,7 +151,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		# 	if runningInCoot:
 		# 		fullResidueDescription = messageContents.split(",")
 
-		# 		residueNumber = int(fullResidueDescription[0])
+		# 		resNo = int(fullResidueDescription[0])
 		# 		altloc = fullResidueDescription[1]
 		# 		insertionCode = fullResidueDescription[2]
 		# 		chainId = fullResidueDescription[3]
@@ -162,10 +162,10 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		# 		lowestProbability = 0.01;
 
 		# 		auto_fit_best_rotamer(
-		# 			residueNumber,altloc,insertionCode,chainId,imol,
+		# 			resNo,altloc,insertionCode,chainId,imol,
 		# 			imolMap, clashFlag, lowestProbability);
 
-		# 		atomList = residue_info(imol,chainId, residueNumber, insertionCode);
+		# 		atomList = residue_info(imol,chainId, resNo, insertionCode);
 		# 		self.write_message("autoFitBestRotamerResult:"+str(atomList))
 		# 	else:
 		# 		print("requires coot")

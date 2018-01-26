@@ -107,7 +107,7 @@ function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 		{
 			return;
 		}
-		map.refreshMeshesFromBlock();
+		refreshMeshesFromBlock();
 	}
 
 	function removeAndDispose(obj)

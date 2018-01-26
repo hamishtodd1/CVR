@@ -26,7 +26,7 @@ var elementToNumber = {
 		H: 9
 }
 
-function Atom(element,position,imol,chainId,residueNumber,insertionCode,name,altloc)
+function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc)
 {
 	if( imol === -1)
 	{ //MAJOR HACK PAUL IS FIXING
@@ -35,11 +35,11 @@ function Atom(element,position,imol,chainId,residueNumber,insertionCode,name,alt
 
 	this.position = position;
 
-	this.highlighted = false;
+	this.selected = false;
 
 	this.imol = imol;
 	this.chainId = chainId;
-	this.residueNumber = residueNumber;
+	this.resNo = resNo;
 	this.insertionCode = insertionCode;
 	this.name = name;
 	this.altloc = altloc;
@@ -58,14 +58,21 @@ function Atom(element,position,imol,chainId,residueNumber,insertionCode,name,alt
 		console.error("unrecognized element: ", element)
 	}
 }
-Atom.prototype.assignToMessage = function(msg)
+Atom.prototype.assignAtomSpecToMessage = function(msg)
 {
 	msg.imol = this.imol;
 	msg.chainId = this.chainId;
-	msg.residueNumber = this.residueNumber;
+	msg.resNo = this.resNo;
 	msg.insertionCode = this.insertionCode;
 	msg.name = this.name;
 	msg.altloc = this.altloc;
+}
+Atom.prototype.assignResidueSpecToMessage = function(msg)
+{
+	msg.imol = this.imol;
+	msg.chainId = this.chainId;
+	msg.resNo = this.resNo;
+	msg.insertionCode = this.insertionCode;
 }
 
 function initModelCreationSystem( socket, visiBoxPlanes)
@@ -88,17 +95,17 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 
 	function Residue()
 	{
-		this.atoms = [];
+		this.atomIndices = [];
 		this.position = new THREE.Vector3();
 	}
 	Residue.prototype.updatePosition = function()
 	{
 		this.position.set(0,0,0);
-		for(var i = 0, il = this.atoms.length; i < il; i++)
+		for(var i = 0, il = this.atomIndices.length; i < il; i++)
 		{
-			this.position.add( this.atoms[i].position );
+			this.position.add( model.atoms[ this.atomIndices[i] ].position );
 		}
-		this.position.multiplyScalar( 1 / this.atoms.length );
+		this.position.multiplyScalar( 1 / this.atomIndices.length );
 	}
 
 	var hydrogenGeometry = new THREE.EfficientSphereGeometry(DEFAULT_BOND_RADIUS * 2);
@@ -149,11 +156,8 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			numberOfAtoms += atomDataFromCoot[i].length;
 		}
 		var modelAtoms = Array(numberOfAtoms);
-		
+
 		var lowestUnusedAtom = 0;
-		var modelResidues = [];
-		// if(!logged)console.log( atomDataFromCoot[0][0] )
-		logged = 1;
 		for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
 		{
 			for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
@@ -167,30 +171,25 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 					atomDataFromCoot[i][j][2][3],
 					atomDataFromCoot[i][j][2][4],
 					atomDataFromCoot[i][j][2][5] );
-				
-				// var residueIndex = atomDataFromCoot[i][j][3]; //is this number reliable though?
-				// if( -1 !== residueIndex )
-				// {
-				// 	if( !modelResidues[ residueIndex ] )
-				// 	{
-				// 		modelResidues[ residueIndex ] = new Residue();
-				// 	}
-					
-				// 	//YO the atoms should be inserted according to some other aspect of them, some string that WITHIN THE RESIDUE identifies them, possibly their name
-				// 	modelResidues[ residueIndex ].atoms.push( model.atoms[lowestUnusedAtom] );
-				// 	modelAtoms[ lowestUnusedAtom ].residue = modelResidues[ residueIndex ];
-				// }
-						
+
 				lowestUnusedAtom++;
 			}
 		}
-		// for(var i = 0, il = modelResidues.length; i < il; i++)
-		// {
-		// 	modelResidues[i].updatePosition();
-		// }
 
+		//just for highlighting! Needn't be optimized
 		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
-		model.residues = modelResidues;
+		var indicesOfAtomsInIndividualResidues = [];
+		model.indicesOfAtomsInIndividualResidues = indicesOfAtomsInIndividualResidues;
+		//easy speedup: pre allocated array lengths. They're all in a row
+		for(var i = 0, il = modelAtoms.length; i < il; i++ )
+		{
+			var resNo = modelAtoms[i].resNo;
+			if( !indicesOfAtomsInIndividualResidues[resNo] )
+			{
+				indicesOfAtomsInIndividualResidues[resNo] = [];
+			}
+			indicesOfAtomsInIndividualResidues[resNo].push( i );
+		}
 
 		// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
 		// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
@@ -224,7 +223,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 					var labelString = "";
 					labelString += atom.imol + ",";
 					labelString += atom.chainId + ",";
-					labelString += atom.residueNumber + ",";
+					labelString += atom.resNo + ",";
 					labelString += atom.insertionCode + ",";
 					labelString += atom.name + ",";
 					labelString += atom.altloc + ",";
@@ -286,7 +285,9 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		{
 			bondData = Array(4); //seems to be 24
 			for(var i = 0; i < bondData.length; i++)
+			{
 				bondData[i] = [];
+			}
 			if( atoms.length > 100 )
 			{
 				console.error("Sure you want to compute bonds for ", atoms.length, " atoms?")
@@ -304,13 +305,15 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 							
 							bondData[ atoms[i].element ].push( [ 
 	                             [ atoms[i].position.x, atoms[i].position.y, atoms[i].position.z ],
-	                             [ midPoint.x, midPoint.y, midPoint.z ]
+	                             [ midPoint.x, midPoint.y, midPoint.z ],
+	                             1
 	                           ]
 							);
 							
 							bondData[ atoms[j].element ].push( [ 
 		                         [ midPoint.x, midPoint.y, midPoint.z ],
-		                         [ atoms[j].position.x, atoms[j].position.y, atoms[j].position.z ]
+		                         [ atoms[j].position.x, atoms[j].position.y, atoms[j].position.z ],
+	                             1
 		                       ]
 							);
 						}
@@ -321,8 +324,14 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		var numberOfCylinders = 0;
 		for(var i = 0, il = bondData.length; i < il; i++ )
 		{
-			numberOfCylinders += bondData[i].length;
+			for(var j = 0, jl = bondData[i].length; j < jl; j++)
+			{
+				numberOfCylinders += bondData[i][j][2];
+				if( bondData[i][j][2] !== 1)
+					console.log( bondData[i][j] )
+			}
 		}
+		// console.log(numberOfCylinders)
 		
 		var nSphereFaces = atomGeometry.faces.length;
 		var cylinderSides = 15;
@@ -482,11 +491,6 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		// 	model.geometry.refreshAtomPositionInMesh(atomIndex);
 		// 	model.geometry.attributes.position.needsUpdate = true;
 		//also something about label?
-
-		// 	// if(this.atoms[atomIndex].residue)
-		// 	// {
-		// 	// 	this.atoms[atomIndex].residue.updatePosition();
-		// 	// }
 		// }
 
 		function getAtomWithSpecContainedInHere(objectContainingSpec)
@@ -497,7 +501,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			{
 				if( model.atoms[i].imol === objectContainingSpec.imol &&
 					model.atoms[i].chainId === objectContainingSpec.chainId &&
-					model.atoms[i].residueNumber === objectContainingSpec.residueNumber &&
+					model.atoms[i].resNo === objectContainingSpec.resNo &&
 					model.atoms[i].insertionCode === objectContainingSpec.insertionCode &&
 					model.atoms[i].name === objectContainingSpec.name &&
 					model.atoms[i].altloc === objectContainingSpec.altloc )
@@ -519,18 +523,8 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			}
 			model.geometry.attributes.position.needsUpdate = true;
 
-			//this could be avoided if the atom used its name in the residue identifier
-			// for(var j = 0, jl = model.atoms[i].residue.atoms.length; j < jl; j++ )
-			// {
-			// 	if( model.atoms[i].residue.atoms[j] == model.atoms[i] )
-			// 	{
-			// 		model.atoms[i].residue.atoms.splice(j,1);
-			// 		break;
-			// 	}
-			// }
-			// model.atoms[i].residue.updatePosition();
-
 			//SPEEDUP OPPORTUNITY ARGH
+			removeSingleElementFromArray(model.indicesOfAtomsInIndividualResidues[atom.resNo], atom)
 			removeSingleElementFromArray(model.atoms, atom)
 
 			return true;

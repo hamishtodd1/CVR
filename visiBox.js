@@ -1,3 +1,18 @@
+/*
+	Not an ideal situation. 
+
+	Paul makes the argument that it should be a sphere because you rotate lots
+	But you do not rotate around the center
+	Having the corners might just be a really good way 
+
+	You grab the box and it moves with your hand.
+	But when you rotate, it rotates the molecule along with it
+	What happens when you do both at once?
+	If you think about Paul's argument, this is objectively better because you don't get to do anything with rotation when you move a sphere
+
+	The edges also shouldn't do the silly scaling thing
+*/
+
 //Old notes:
 
 //it's a truncated cone (perspective), and the front face is as close to you as is comfortable. You grab the back rim and resize
@@ -12,14 +27,14 @@
 
 function initVisiBox(thingsToBeUpdated, holdables, initialScale, maps)
 {
-	//should its edges only appear sometimes?
-	visiBox = new THREE.Object3D();
+	var visiBox = new THREE.Object3D();
 	
 	thingsToBeUpdated.push(visiBox)
 	
 	visiBox.scale.setScalar(initialScale);
-	visiBox.position.z = -FOCALPOINT_DISTANCE
-	scene.add(visiBox);
+	visiBox.position.z = -FOCALPOINT_DISTANCE;
+	visiBox.ordinaryParent = scene;
+	visiBox.ordinaryParent.add(visiBox);
 	
 	var ourSquareGeometry = new THREE.RingGeometry( 0.9 * Math.sqrt( 2 ) / 2, Math.sqrt( 2 ) / 2,4,1);
 	ourSquareGeometry.applyMatrix( new THREE.Matrix4().makeRotationZ( TAU / 8 ) );
@@ -48,7 +63,6 @@ function initVisiBox(thingsToBeUpdated, holdables, initialScale, maps)
 		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF, side:THREE.DoubleSide});
 		visiBox.updateMatrix();
 
-		//this is being called for the corners but not for the visibox!
 		visiBox.onLetGo = function()
 		{
 			for(var i = 0; i < maps.length; i++)
@@ -61,11 +75,17 @@ function initVisiBox(thingsToBeUpdated, holdables, initialScale, maps)
 		{
 			position.setScalar(0.5);
 			if( i%2 )
+			{
 				position.x *= -1;
+			}
 			if( i%4 >= 2 )
+			{
 				position.y *= -1;
+			}
 			if( i>=4 )
+			{
 				position.z *= -1;
+			}
 		}
 		for(var i = 0; i < visiBox.corners.length; i++)
 		{

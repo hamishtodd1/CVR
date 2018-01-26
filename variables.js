@@ -24,5 +24,7 @@ var TEST_SPHERE = new THREE.Mesh(new THREE.EfficientSphereGeometry(0.1), new THR
 
 var assemblage = new THREE.Group();
 
+var frameCount = 0;
+
 //------varying
 //mousePosition = new THREE.Vector2(); //[0,1],[0,1]

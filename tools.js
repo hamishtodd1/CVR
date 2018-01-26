@@ -51,10 +51,12 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 	ball.geometry.computeBoundingSphere();
 	atomDeleter.boundingSphere = ball.geometry.boundingSphere;
 
-	var label = makeTextSign( "Deleter" );
+	var label = makeTextSign( "Atom deleter" );
 	label.position.z = radius;
-	label.scale.setScalar(radius/1.5)
+	label.scale.setScalar(radius/3)
 	atomDeleter.add(label);
+
+	var highlightColor = new THREE.Color(1,1,1);
 	
 	atomDeleter.update = function()
 	{
@@ -66,7 +68,6 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 		label.visible = this.parent === scene;
 
 		var ourRadiusSq = sq( radius / getAngstrom() );
-		var highlightColor = new THREE.Color(1,1,1);
 
 		if(this.parent !== scene)
 		{
@@ -77,10 +78,10 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 				{
 					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 					{
-						if( models[i].atoms[j].highlighted )
+						if( models[i].atoms[j].selected )
 						{
 							var msg = {command:"deleteAtom"};
-							models[i].atoms[j].assignToMessage( msg );
+							models[i].atoms[j].assignAtomSpecToMessage( msg );
 							socket.send(JSON.stringify(msg));
 						}
 					}
@@ -98,13 +99,19 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 					{
 						if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
 						{
-							models[i].atoms[j].highlighted = true;
-							models[i].geometry.colorAtom(j, highlightColor);
+							if(!models[i].atoms[j].selected)
+							{
+								models[i].atoms[j].selected = true;
+								models[i].geometry.colorAtom(j, highlightColor);
+							}
 						}
-						else if( models[i].atoms[j].highlighted )
+						else
 						{
-							models[i].atoms[j].highlighted = false;
-							models[i].geometry.colorAtom( j );
+							if( models[i].atoms[j].selected )
+							{
+								models[i].atoms[j].selected = false;
+								models[i].geometry.colorAtom( j );
+							}
 						}
 					}
 				}
@@ -118,9 +125,9 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 			{
 				for(var j = 0, jl = models[i].atoms[j].length; j < jl; j++)
 				{
-					if( models[i].atoms[j].highlighted )
+					if( models[i].atoms[j].selected )
 					{
-						models[i].atoms[j].highlighted = false;
+						models[i].atoms[j].selected = false;
 						models[i].geometry.colorAtom( j );
 					}
 				}
@@ -134,6 +141,120 @@ function initAtomDeleter(thingsToBeUpdated, holdables, socket, models)
 	atomDeleter.ordinaryParent = atomDeleter.parent;
 
 	return atomDeleter;
+}
+
+function initResidueDeleter(thingsToBeUpdated, holdables, socket, models)
+{
+	var residueDeleter = new THREE.Object3D();
+	
+	var radius = 0.05;
+	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.7}));
+	residueDeleter.add( ball );
+	ball.geometry.computeBoundingSphere();
+	residueDeleter.boundingSphere = ball.geometry.boundingSphere;
+
+	var label = makeTextSign( "Residue deleter" );
+	label.position.z = radius;
+	label.scale.setScalar(radius/3)
+	residueDeleter.add(label);
+
+	var highlightColor = new THREE.Color(1,1,1);
+	
+	residueDeleter.update = function()
+	{
+		if( models.length === 0 )
+		{
+			return;
+		}
+
+		label.visible = this.parent === scene;
+
+		var ourRadiusSq = sq( radius / getAngstrom() );
+
+		if(this.parent !== scene)
+		{
+			if( this.parent.button1 && !this.parent.button1Old )
+			{
+				for(var i = 0; i < models.length; i++)
+				{
+					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					{
+						if( models[i].atoms[j].selected )
+						{
+							var msg = {command:"deleteResidue"};
+							models[i].atoms[j].assignResidueSpecToMessage( msg );
+							socket.send(JSON.stringify(msg));
+						}
+					}
+				}
+			}
+			else
+			{
+				for(var i = 0; i < models.length; i++)
+				{
+					var ourPosition = this.getWorldPosition();
+					models[i].updateMatrixWorld();
+					models[i].worldToLocal(ourPosition);
+					
+					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					{
+						if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
+						{
+							if(!models[i].atoms[j].selected)
+							{
+								models[i].atoms[j].selected = true;
+
+								var indicesOfAtomsInIndividualResidue = models[i].indicesOfAtomsInIndividualResidues[models[i].atoms[j].resNo];
+								for(var k = 0, kl = indicesOfAtomsInIndividualResidue.length; k < kl; k++)
+								{
+									models[i].geometry.colorAtom(indicesOfAtomsInIndividualResidue[k], highlightColor);
+								}
+							}
+						}
+						else
+						{
+							if( models[i].atoms[j].selected )
+							{
+								models[i].atoms[j].selected = false;
+
+								var indicesOfAtomsInIndividualResidue = models[i].indicesOfAtomsInIndividualResidues[models[i].atoms[j].resNo];
+								for(var k = 0, kl = indicesOfAtomsInIndividualResidue.length; k < kl; k++)
+								{
+									models[i].geometry.colorAtom(indicesOfAtomsInIndividualResidue[k]);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for(var i = 0; i < models.length; i++)
+			{
+				for(var j = 0, jl = models[i].atoms[j].length; j < jl; j++)
+				{
+					if( models[i].atoms[j].selected )
+					{
+						models[i].atoms[j].selected = false;
+						
+						var indicesOfAtomsInIndividualResidue = models[i].indicesOfAtomsInIndividualResidues[models[i].atoms[j].resNo];
+						for(var k = 0, kl = indicesOfAtomsInIndividualResidue.length; k < kl; k++)
+						{
+							models[i].geometry.colorAtom(indicesOfAtomsInIndividualResidue[k]);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	thingsToBeUpdated.push(residueDeleter);
+	holdables.push(residueDeleter)
+	scene.add(residueDeleter);
+	residueDeleter.ordinaryParent = residueDeleter.parent;
+
+	return residueDeleter;
 }
 
 
