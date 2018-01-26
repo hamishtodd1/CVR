@@ -368,12 +368,12 @@ function initMutator(thingsToBeUpdated, holdables)
 		if(i < numInLayer1)
 		{
 			position.y = innerCircleRadius;
-			position.applyAxisAngle( zAxis, i / numInLayer1 * TAU );
+			position.applyAxisAngle( zVector, i / numInLayer1 * TAU );
 		}
 		else
 		{
 			position.y = innerCircleRadius * 1.87;
-			position.applyAxisAngle( zAxis, (i-numInLayer1) / (il-numInLayer1) * TAU );
+			position.applyAxisAngle( zVector, (i-numInLayer1) / (il-numInLayer1) * TAU );
 		}
 		
 		singleLoop(i,position);

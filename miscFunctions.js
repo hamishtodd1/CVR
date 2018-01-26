@@ -46,6 +46,23 @@ THREE.Object3D.prototype.getUnitVectorInObjectSpace = function(axis)
 	return axis.clone().applyMatrix4(this.matrixWorld).sub(this.getWorldPosition()).normalize();
 }
 
+THREE.OriginCorneredPlaneGeometry = function(width,height)
+{
+	var g = new THREE.PlaneBufferGeometry(1,1);
+	g.applyMatrix(new THREE.Matrix4().makeTranslation(0.5,0.5,0))
+
+	if(width)
+	{
+		g.applyMatrix(new THREE.Matrix4().makeScale(width,1,1))
+	}
+	if(height)
+	{
+		g.applyMatrix(new THREE.Matrix4().makeScale(1,height,1))
+	}
+
+	return g;
+}
+
 function ArrayOfThisValueAndThisLength(value,length)
 {
 	var array = Array(length);
@@ -154,13 +171,13 @@ function getStandardFunctionCallString(myFunc)
 function randomPerpVector(ourVector){
 	var perpVector = new THREE.Vector3();
 	
-	if( ourVector.equals(zAxis))
+	if( ourVector.equals(zVector))
 	{
-		perpVector.crossVectors(ourVector, yAxis);
+		perpVector.crossVectors(ourVector, yVector);
 	}
 	else
 	{
-		perpVector.crossVectors(ourVector, zAxis);
+		perpVector.crossVectors(ourVector, zVector);
 	}
 	
 	return perpVector;

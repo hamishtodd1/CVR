@@ -1,8 +1,8 @@
 //-----Mathematical
 var TAU = Math.PI * 2;
-var zAxis = new THREE.Vector3(0,0,1); //also used as a placeholder normal
-var yAxis = new THREE.Vector3(0,1,0);
-var xAxis = new THREE.Vector3(1,0,0);
+var zVector = new THREE.Vector3(0,0,1); //also used as a placeholder normal
+var yVector = new THREE.Vector3(0,1,0);
+var xVector = new THREE.Vector3(1,0,0);
 var zeroVector = new THREE.Vector3();
 
 //-----Fundamental

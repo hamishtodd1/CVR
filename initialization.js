@@ -8,7 +8,8 @@ info on wall
 labeller tool, pointer?
 if two things are overlapping you pick up closer
 All the tools!
-
+Could make the beginnings of a bar chart.
+Lots of shit in server to test
 The various things that are being compiled more than once
 
 
@@ -82,8 +83,8 @@ A big concern at some point will be navigating folders
 
 	var thingsToBeUpdated = [];
 	var holdables = [];
-	
-	var ourVrEffect = new THREE.VREffect( 1, renderer ); //0 is initial eye separation
+
+	var ourVrEffect = new THREE.VREffect( 1, renderer );
 	var loopCallString = getStandardFunctionCallString(loop);
 	function render()
 	{
@@ -99,6 +100,8 @@ A big concern at some point will be navigating folders
 	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer, ourVrEffect);
 
 	initScaleStick(thingsToBeUpdated);
+
+	initStats();
 	
 	var debuggingWithoutVR = false;
 	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
@@ -204,6 +207,7 @@ A big concern at some point will be navigating folders
 		 * oneAtomOneBond.txt
 		 * 3C0.lst
 		 */
+<<<<<<< HEAD
 		new THREE.FileLoader().load( "data/newData.txt",
 			function( modelStringCoot )
 			{
@@ -242,6 +246,47 @@ A big concern at some point will be navigating folders
 		var diffMap = Map("data/1mru_diff.map", true, visiBox)
 		maps.push( diffMap );
 		assemblage.add( diffMap )
+=======
+		// new THREE.FileLoader().load( "data/newData.txt",
+		// 	function( modelStringCoot )
+		// 	{
+		// 		var newModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+		// 		newModel.imol = newModel.atoms[0].imol;
+		// 		assemblage.add(newModel);
+		// 		models.push(newModel);
+
+		// 		var averagePosition = new THREE.Vector3();
+		// 		for(var i = 0, il = newModel.atoms.length; i < il; i++)
+		// 		{
+		// 			averagePosition.add(newModel.atoms[i].position);
+		// 		}
+		// 		averagePosition.multiplyScalar( 1 / newModel.atoms.length);
+		// 		assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
+
+		// 		var duplicateModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+		// 		assemblage.add(duplicateModel);
+		// 		for(var i = 0, il = duplicateModel.atoms.length; i < il; i++)
+		// 		{
+		// 			duplicateModel.atoms[i].imol++;
+		// 		}
+		// 		duplicateModel.imol = duplicateModel.atoms[0].imol;
+		// 		duplicateModel.position.set(0,2,0);
+		// 		models.push(duplicateModel);
+
+		// 		initTools();
+		// 	},
+		// 	function ( xhr ) {},
+		// 	function ( xhr ) { console.error( "couldn't load basic model" ); }
+		// );
+
+		// // var newMap = Map("data/1mru_diff.map", true, visiBox);
+		// var newMap = Map("data/1mru.map", false, visiBox)
+		// maps.push( newMap );
+		// assemblage.add( newMap )
+		// var diffMap = Map("data/1mru_diff.map", true, visiBox)
+		// maps.push( diffMap );
+		// assemblage.add( diffMap )
+>>>>>>> 61d7453c384cc9703a3b3282142af188da9fa64c
 	}
 	launcher.initComplete = true;
 	launcher.attemptLaunch();
