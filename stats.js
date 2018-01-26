@@ -28,12 +28,16 @@
 
 function initStats()
 {
-	var randomData = Array(Math.ceil(Math.random()*9));
+	var randomData = Array(37);
 	for(var i = 0; i < randomData.length; i++)
 	{
 		randomData[i] = Math.random();
 	}
 	var randomGraph = Graph(randomData);
+	randomGraph.rotation.y = TAU/4
+	randomGraph.position.x = -2 + 0.0001;
+	randomGraph.position.y = -randomGraph.scale.y / 2;
+	randomGraph.position.z = 2;
 	scene.add(randomGraph)
 
 	updateStats = function()
@@ -49,7 +53,7 @@ function Graph(data)
 {
 	var graph = new THREE.Group;
 	graph.position.z = -FOCALPOINT_DISTANCE
-	graph.scale.setScalar(0.1)
+	// graph.scale.setScalar(0.1)
 	var background = new THREE.Mesh(THREE.OriginCorneredPlaneGeometry(), new THREE.MeshBasicMaterial());
 	graph.add(background);
 

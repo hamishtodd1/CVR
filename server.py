@@ -99,7 +99,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		return True
 		
 	def open(self):
-		self.set_nodelay(True) #doesn't hurt to have this hopefully...
+		self.set_nodelay(True)
 
 		if runningInCoot == False:
 			self.write_message({"command":"loadStandardStuff"})
@@ -168,8 +168,8 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 				returnMsg = {"command":"autoFitBestRotamerResult"}
 				returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
-				print(returnMsg["atomList"])
 
+				print(returnMsg)
 				# self.write_message(str(returnMsg))
 			else:
 				print("requires coot")
@@ -178,12 +178,14 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			if runningInCoot:
 				imolMap = imol_refinement_map(); #not necessarily
 
-				mutate_and_auto_fit( msg["resNo"], msg["chainId"],msg["imol"],imolMap,
-				 msg["residue"])
+				mutate_and_auto_fit( 
+					msg["resNo"], msg["chainId"],msg["imol"],imolMap, msg["residue"])
 
 				returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
 				returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
-				self.write_message(returnMsg)
+				
+				print(returnMsg)
+				# self.write_message(str(returnMsg))
 			else:
 				print("requires coot")
 
@@ -191,22 +193,6 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			print('received unrecognized message:', message,messageHeader)
 
 		'''
-		
-		
-		if messageHeader == "refine": #no addition or deletion
-			if runningInCoot:
-				imol = splitMessage[1]
-				chain_id = splitMessage[2]
-				res_no = splitMessage[3]
-				ins_code = splitMessage[4]
-				refine_residues( imol, [[chain_id,res_no,ins_code]] )
-				atomDeltas = get_most_recent_atom_changes()
-				
-				#post_manipulation_hook?
-				newModelData = get_bonds_representation(imol)
-				self.write_message(newModelData)
-		
-		
 		Also useful
 		pepflip-active-residue
 		%coot-listener-socket
@@ -214,10 +200,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		add-molecule
 		view-matrix
 		set-view-matrix
-		
-		
 		'''
-
 
 	def on_close(self):
 		print('connection closed...')

@@ -152,8 +152,8 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 
 			//gamepads[k].buttons[riftControllerKeys.grippingTop].value;
 
-			controllers[ affectedControllerIndex ].material.color.r = controllers[ affectedControllerIndex ].button1?1:0;
-			controllers[ affectedControllerIndex ].material.color.g = controllers[ affectedControllerIndex ].button2?1:0;
+			// controllers[ affectedControllerIndex ].controllerModel.material.color.r = controllers[ affectedControllerIndex ].button1?1:0;
+			// controllers[ affectedControllerIndex ].controllerModel.material.color.g = controllers[ affectedControllerIndex ].button2?1:0;
 		}
 
 
