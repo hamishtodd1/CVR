@@ -160,6 +160,7 @@ function initResidueDeleter(thingsToBeUpdated, holdables, socket, models)
 
 	var highlightColor = new THREE.Color(1,1,1);
 	
+	//THIS DOES NOT WORK ONCE YOU'VE DELETED ATOMS
 	residueDeleter.update = function()
 	{
 		if( models.length === 0 )

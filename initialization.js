@@ -117,7 +117,6 @@ A big concern at some point will be navigating folders
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
 	window.addEventListener( 'resize', function(){
-		console.log("resizing")
 	    renderer.setSize( window.innerWidth, window.innerHeight ); //nothing about vr effect?
 	    camera.aspect = window.innerWidth / window.innerHeight;
 	    camera.updateProjectionMatrix();
@@ -178,7 +177,7 @@ A big concern at some point will be navigating folders
 		initPointer(thingsToBeUpdated, holdables).position.set( toolSpacing * (-numTools/2+1),-0.4,-0.2);
 		initMutator(thingsToBeUpdated, holdables).position.set( toolSpacing * (-numTools/2+2),-0.4,-0.2);
 		initAtomDeleter(thingsToBeUpdated, holdables, socket, models).position.set( toolSpacing * (-numTools/2+3),-0.4,-0.2);
-		initResidueDeleter(thingsToBeUpdated, holdables, socket, models).position.set( toolSpacing * (-numTools/2+4),-0.4,-0.2);
+		//it's broken initResidueDeleter(thingsToBeUpdated, holdables, socket, models).position.set( toolSpacing * (-numTools/2+4),-0.4,-0.2);
 	}
 
 	socket = initSocket();
@@ -189,17 +188,39 @@ A big concern at some point will be navigating folders
 		launcher.socketOpened = true;
 		launcher.attemptLaunch();
 	}
-	socket.messageReactions["model"] = function(msg)
+	socket.commandReactions["model"] = function(msg)
 	{
-		makeModelFromCootString( msg.modelDataString, thingsToBeUpdated, visiBox.planes );
+		// makeModelFromCootString( msg.modelDataString, thingsToBeUpdated, visiBox.planes );
 
-		var newMap = Map("data/1mru.map", false, visiBox);
-		maps.push(newMap);
-		assemblage.add(newMap)
+		new THREE.FileLoader().load( "data/newData.txt",
+			function( modelStringCoot )
+			{
+				var newModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+				newModel.imol = newModel.atoms[0].imol;
+				assemblage.add(newModel);
+				models.push(newModel);
+
+				var averagePosition = new THREE.Vector3();
+				for(var i = 0, il = newModel.atoms.length; i < il; i++)
+				{
+					averagePosition.add(newModel.atoms[i].position);
+				}
+				averagePosition.multiplyScalar( 1 / newModel.atoms.length);
+				assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
+			},
+			function ( xhr ) {},
+			function ( xhr ) { console.error( "couldn't load basic model" ); }
+		);
 
 		initTools();
 	}
-	socket.messageReactions["loadStandardStuff"] = function(msg)
+	socket.commandReactions["map"] = function(msg)
+	{
+		var newMap = Map(msg["mapFilename"], false, visiBox);
+		maps.push(newMap);
+		assemblage.add(newMap)
+	}
+	socket.commandReactions["loadStandardStuff"] = function(msg)
 	{
 		/*
 		 * tutModelWithLigand

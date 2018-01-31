@@ -1,6 +1,5 @@
 function makeTextSign(text)
 {
-
 	//"Context" is a persistent thing
 	var canvas = document.createElement("canvas");
 	var context = canvas.getContext("2d");
@@ -25,5 +24,14 @@ function makeTextSign(text)
 	context.fillStyle = textColor;
 	context.fillText(text, canvas.width / 2, canvas.height / 2);
 
-	return new THREE.Mesh(new THREE.PlaneBufferGeometry(canvas.width/canvas.height,1), new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)}));
+	var firstSign = new THREE.Mesh(
+		new THREE.PlaneBufferGeometry( canvas.width / canvas.height, 1 ), 
+		new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)})
+		);
+	var secondSign = firstSign.clone();
+	secondSign.rotation.y = TAU / 2;
+	var sign = new THREE.Group();
+	sign.add(firstSign, secondSign);
+
+	return sign;
 }

@@ -30,7 +30,7 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 		{
 			for(var j = 0; j < maps.length; j++)
 			{
-				maps[j].addToIsolevel( 0.06 * controllers[i].thumbStickAxes[1] )
+				maps[j].addToIsolevel( 0.09 * controllers[i].thumbStickAxes[1] )
 			}
 		}
 		

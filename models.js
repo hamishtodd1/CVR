@@ -157,22 +157,20 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		}
 		var modelAtoms = Array(numberOfAtoms);
 
-		var lowestUnusedAtom = 0;
 		for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
 		{
 			for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
 			{ 
-				modelAtoms[lowestUnusedAtom] = new Atom(
+				modelAtoms[atomDataFromCoot[i][j][3]] = new Atom(
 					i, 
-					new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]),
+					new THREE.Vector3().fromArray(atomDataFromCoot[i][j][3]),
 					atomDataFromCoot[i][j][2][0],
 					atomDataFromCoot[i][j][2][1],
 					atomDataFromCoot[i][j][2][2],
 					atomDataFromCoot[i][j][2][3],
 					atomDataFromCoot[i][j][2][4],
 					atomDataFromCoot[i][j][2][5] );
-
-				lowestUnusedAtom++;
+				console.log(atomDataFromCoot[i][j][3],modelAtoms[atomDataFromCoot[i][j][3]] )
 			}
 		}
 
@@ -284,6 +282,8 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		else
 		{
 			bondData = Array(4); //seems to be 24
+			//position position, bondNumber, index index
+			//btw the positions never seem to be correct to more than three and a half decimal places
 			for(var i = 0; i < bondData.length; i++)
 			{
 				bondData[i] = [];
@@ -292,7 +292,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			{
 				console.error("Sure you want to compute bonds for ", atoms.length, " atoms?")
 			}
-			else //TODO
+			else
 			{
 				for( var i = 0, il = atoms.length; i < il; i++ )
 				{
@@ -484,7 +484,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		// 	socket.send(JSON.stringify(msg));
 		// 	socket.setTimerOnExpectedCommand("moveAtom");
 		// }
-		// socket.messageReactions.moveAtom = function(msg)
+		// socket.commandReactions.moveAtom = function(msg)
 		// {
 		// 	var atomIndex = getAtomWithSpecContainedInHere(msg)
 		// 	model.atoms[atomIndex].position.copy(msg);
@@ -512,7 +512,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			console.error("couldn't find atom with requested spec")
 		}
 
-		socket.messageReactions.deleteAtom = function(msg)
+		socket.commandReactions.deleteAtom = function(msg)
 		{
 			var model = getModelWithImol(msg.imol);
 			var atom = getAtomWithSpecContainedInHere(msg);
@@ -530,7 +530,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			return true;
 		}
 
-		socket.messageReactions.deleteResidue = function(msg)
+		socket.commandReactions.deleteResidue = function(msg)
 		{
 			var model = getModelWithImol(msg.imol);
 			var setOfAtomsToDelete = model.atomGroupInResidueOrWhatever(msg.resNo);

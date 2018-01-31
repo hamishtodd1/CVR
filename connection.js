@@ -11,7 +11,7 @@ function initSocket()
 		console.log("The connection has been closed. Maybe you had no data loaded?");
 	}
 
-	socket.messageReactions = {};
+	socket.commandReactions = {};
 	socket.onmessage = function(msgContainer)
 	{
 		//parse and stringify are both linear in number of characters
@@ -19,13 +19,13 @@ function initSocket()
 		//You could use ASCII?
 		var msg = JSON.parse(msgContainer.data);
 
-		if(!socket.messageReactions[msg.command])
+		if(!socket.commandReactions[msg.command])
 		{
 			console.error("Mistyped header: ", msg.command)
 			return;
 		}
 
-		var commandExecutedSuccessfully = socket.messageReactions[msg.command](msg);
+		var commandExecutedSuccessfully = socket.commandReactions[msg.command](msg);
 
 		if( commandExecutedSuccessfully !== false )
 		{

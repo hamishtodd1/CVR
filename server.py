@@ -24,12 +24,12 @@ TODO CHECK FOR FIREWALLS! So you can warn if they're there
 import signal
 is_closing = False
 def signal_handler(signum, frame):
-    global is_closing
-    is_closing = True
+	global is_closing
+	is_closing = True
 def try_exit(): 
-    global is_closing
-    if is_closing:
-        tornado.ioloop.IOLoop.instance().stop()
+	global is_closing
+	if is_closing:
+		tornado.ioloop.IOLoop.instance().stop()
 
 
 
@@ -105,24 +105,29 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			self.write_message({"command":"loadStandardStuff"})
 
 		else:
-			# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
+			pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
 			# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
-			pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
+			# pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
 			handle_read_draw_molecule_with_recentre(pdbFileString, 1)
 
 			modelImol = 0
 			modelMsg = {'command':"model"}
 			modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
-			self.write_message( modelMsg ) #speedup opportunity
+			self.write_message( modelMsg )
 
-			# if is_valid_map_molecule(mapImol):
-			#     fn = molecule_name(mapImol) + "_tmp_for_export.map"
-			#     export_map(mapImol, fn)
-			#     f = open(fn)
-			#     mapMsg = {'command':"map"}
-			#     mapMsg['mapDataString'] = f.read()
-			#     f.close()
-			#     self.write_message( mapMsg ) #speedup opportunity
+			make_and_draw_map ("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "", 0, 0)
+
+			mapMsg = {'command':"map"}
+			imolMap = imol_refinement_map();
+
+			#Paul could speed this up
+			#alternatively, give me the file name you got it from...
+			temporaryFileName = "export.map"
+			export_map(imolMap, temporaryFileName)
+			print("exported?")
+			mapMsg['mapFilename'] = temporaryFileName
+
+			self.write_message( mapMsg )
 
 	def on_message(self, msgContainer):
 		msg = eval(msgContainer)
