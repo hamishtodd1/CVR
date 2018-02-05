@@ -1,5 +1,9 @@
-//there is a "cubicles" thing in uglymol's molecules that was good for searching
-//TODO turn into proper object so you don't have to repeat the functions
+/*
+	Could use a single web worker for contouring and loading file in, interactivity remains.
+	there is a "cubicles" thing in uglymol's molecules that was good for searching
+	TODO turn into proper object so you don't have to repeat the functions
+*/
+
 function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 {
 	var map = new THREE.Object3D();

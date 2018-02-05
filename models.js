@@ -28,14 +28,12 @@ var elementToNumber = {
 
 function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc)
 {
-	if( imol === -1)
-	{ //MAJOR HACK PAUL IS FIXING
-		imol = 0;
-	}
-
 	this.position = position;
 
 	this.selected = false;
+
+	this.bondPartners = [];
+	this.bondFirstVertexIndices = [];
 
 	this.imol = imol;
 	this.chainId = chainId;
@@ -74,12 +72,58 @@ Atom.prototype.assignResidueSpecToMessage = function(msg)
 	msg.resNo = this.resNo;
 	msg.insertionCode = this.insertionCode;
 }
+Atom.prototype.setLabelVisibility = function(labelVisibility)
+{
+	if( this.label === undefined && labelVisibility)
+	{
+		var labelString = "";
+		labelString += this.imol + ",";
+		labelString += this.chainId + ",";
+		labelString += this.resNo + ",";
+		labelString += this.insertionCode + ",";
+		labelString += this.name + ",";
+		labelString += this.altloc + ",";
+
+		this.label = makeTextSign(labelString);
+		this.label.position.copy(this.position);
+		this.label.update = updateLabel;
+
+		var model = getModelWithImol(this.imol);
+		model.add( this.label );
+		thingsToBeUpdated.push(this.label);
+	}
+	
+	if(this.label !== undefined)
+	{
+		this.label.visible = labelVisibility;
+	}
+}
+function updateLabel()
+{
+	if(this.parent === scene)
+	{
+		this.scale.setScalar( 0.2 * Math.sqrt(this.position.distanceTo(camera.position)));
+		
+		camera.updateMatrix();
+		var cameraUp = yVector.clone().applyQuaternion(camera.quaternion);
+		cameraUp.add(this.parent.getWorldPosition())
+		this.parent.worldToLocal(cameraUp)
+		this.up.copy(cameraUp);
+
+		this.parent.updateMatrixWorld()
+		var localCameraPosition = camera.position.clone()
+		this.parent.worldToLocal(localCameraPosition);
+		this.lookAt(localCameraPosition);
+	}
+}
 
 function initModelCreationSystem( socket, visiBoxPlanes)
 {
 	var models = [];
 
-	function getModelWithImol(imol)
+	var cylinderSides = 15;
+
+	getModelWithImol = function(imol)
 	{
 		for(var i = 0; i < models.length; i++)
 		{
@@ -91,25 +135,10 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		console.error("no model with imol ", imol)
 	}
 
-	DEFAULT_BOND_RADIUS = 0.055;
+	var defaultBondRadius = 0.055;
 
-	function Residue()
-	{
-		this.atomIndices = [];
-		this.position = new THREE.Vector3();
-	}
-	Residue.prototype.updatePosition = function()
-	{
-		this.position.set(0,0,0);
-		for(var i = 0, il = this.atomIndices.length; i < il; i++)
-		{
-			this.position.add( model.atoms[ this.atomIndices[i] ].position );
-		}
-		this.position.multiplyScalar( 1 / this.atomIndices.length );
-	}
-
-	var hydrogenGeometry = new THREE.EfficientSphereGeometry(DEFAULT_BOND_RADIUS * 2);
-	var atomGeometry = new THREE.EfficientSphereGeometry(DEFAULT_BOND_RADIUS * 5);
+	var hydrogenGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 2);
+	var atomGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 5);
 	atomGeometry.vertexNormals = Array(atomGeometry.vertices.length);
 	for(var i = 0, il = atomGeometry.vertices.length; i < il; i++)
 	{
@@ -117,6 +146,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 	}
 	
 	var nSphereVertices = atomGeometry.vertices.length;
+	var nSphereFaces = atomGeometry.faces.length;
 
 	makeModelFromCootString = function( modelStringCoot, thingsToBeUpdated, visiBoxPlanes, callback )
 	{
@@ -163,89 +193,25 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			{ 
 				modelAtoms[atomDataFromCoot[i][j][3]] = new Atom(
 					i, 
-					new THREE.Vector3().fromArray(atomDataFromCoot[i][j][3]),
+					new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]),
 					atomDataFromCoot[i][j][2][0],
 					atomDataFromCoot[i][j][2][1],
 					atomDataFromCoot[i][j][2][2],
 					atomDataFromCoot[i][j][2][3],
 					atomDataFromCoot[i][j][2][4],
 					atomDataFromCoot[i][j][2][5] );
-				console.log(atomDataFromCoot[i][j][3],modelAtoms[atomDataFromCoot[i][j][3]] )
 			}
 		}
 
 		//just for highlighting! Needn't be optimized
 		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
-		var indicesOfAtomsInIndividualResidues = [];
-		model.indicesOfAtomsInIndividualResidues = indicesOfAtomsInIndividualResidues;
-		//easy speedup: pre allocated array lengths. They're all in a row
-		for(var i = 0, il = modelAtoms.length; i < il; i++ )
-		{
-			var resNo = modelAtoms[i].resNo;
-			if( !indicesOfAtomsInIndividualResidues[resNo] )
-			{
-				indicesOfAtomsInIndividualResidues[resNo] = [];
-			}
-			indicesOfAtomsInIndividualResidues[resNo].push( i );
-		}
 
 		// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
 		// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
 		// 		carbonAlphas.length*8, 0.1, 16 );
 		// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
 		
-		//-----Labels
-		{	
-			function updateLabel()
-			{
-				this.scale.setScalar( 1 * Math.sqrt(this.position.distanceTo(camera.position)));
-
-				camera.updateMatrix();
-				var cameraUp = yVector.clone().applyQuaternion(camera.quaternion);
-				cameraUp.add(this.parent.getWorldPosition())
-				this.parent.worldToLocal(cameraUp)
-				this.up.copy(cameraUp);
-
-				this.parent.updateMatrixWorld()
-				var localCameraPosition = camera.position.clone()
-				this.parent.worldToLocal(localCameraPosition);
-				this.lookAt(localCameraPosition);
-			}
-			
-			model.toggleLabel = function(atomIndex)
-			{
-				var atom = this.atoms[atomIndex];
-
-				if( atom.label === undefined)
-				{
-					var labelString = "";
-					labelString += atom.imol + ",";
-					labelString += atom.chainId + ",";
-					labelString += atom.resNo + ",";
-					labelString += atom.insertionCode + ",";
-					labelString += atom.name + ",";
-					labelString += atom.altloc + ",";
-
-					atom.label = makeTextSign(labelString);
-					atom.label.position.copy(atom.position);
-					atom.label.update = updateLabel;
-
-					model.add( atom.label );
-					thingsToBeUpdated.push(atom.label);
-				}
-				else
-				{
-					if( atom.label.visible )
-					{
-						atom.label.visible = false;
-					}
-					else
-					{
-						atom.label.visible = true;
-					}
-				}
-			}
-		}
+		
 		
 		return model;
 	}
@@ -300,22 +266,8 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 					{
 						if( atoms[i].position.distanceTo( atoms[j].position ) < 1.81 ) //quantum chemistry
 						{
-							var midPoint = atoms[i].position.clone();
-							midPoint.lerp( atoms[j].position, 0.5 );
-							
-							bondData[ atoms[i].element ].push( [ 
-	                             [ atoms[i].position.x, atoms[i].position.y, atoms[i].position.z ],
-	                             [ midPoint.x, midPoint.y, midPoint.z ],
-	                             1
-	                           ]
-							);
-							
-							bondData[ atoms[j].element ].push( [ 
-		                         [ midPoint.x, midPoint.y, midPoint.z ],
-		                         [ atoms[j].position.x, atoms[j].position.y, atoms[j].position.z ],
-	                             1
-		                       ]
-							);
+							bondData[ atoms[i].element ].push( [[],[],1,i,j]);
+							bondData[ atoms[i].element ].push( [[],[],1,j,i]);
 						}
 					}
 				}
@@ -326,18 +278,38 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		{
 			for(var j = 0, jl = bondData[i].length; j < jl; j++)
 			{
-				numberOfCylinders += bondData[i][j][2];
-				if( bondData[i][j][2] !== 1)
-					console.log( bondData[i][j] )
+				//TODO
+				if( bondData[i][j][3] === -1 || bondData[i][j][4] === -1 )
+				{
+					continue;
+				}
+				var atom = atoms[bondData[i][j][3]];
+				var possiblyRepeatedBondPartner = atoms[ bondData[i][j][4] ];
+
+				for(var k = 0, kl = atom.bondPartners.length; k < kl; k++)
+				{
+					if(atom.bondPartners[k] === possiblyRepeatedBondPartner )
+					{
+						break;
+					}
+				}
+				if(k === kl)
+				{
+					atom.bondPartners.push( possiblyRepeatedBondPartner );
+					possiblyRepeatedBondPartner.bondPartners.push( atom );
+					numberOfCylinders += 2;
+					
+					if( bondData[i][j][2] !== 1)
+					{
+						console.log( "more than one bond! You have work to do" )
+					}
+				}
 			}
 		}
-		// console.log(numberOfCylinders)
-		
-		var nSphereFaces = atomGeometry.faces.length;
-		var cylinderSides = 15;
 		
 		var numberOfAtoms = atoms.length;
 		//Speedup opportunity: you only need as many colors as there are atoms and bonds, not as many as there are triangles.
+		//we are assuming fixed length for all these arrays and that is it
 		bufferGeometry.addAttribute( 'position',new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
 		bufferGeometry.addAttribute( 'color', 	new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
 		bufferGeometry.addAttribute( 'normal',	new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
@@ -351,16 +323,16 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			this.array[ index*3+2 ] = c;
 		}
 		
-		bufferGeometry.colorAtom = function( atomIndex, newColor )
+		bufferGeometry.colorAtom = function( atom, newColor )
 		{
 			if(!newColor)
 			{
-				newColor = ATOM_COLORS[ atoms[atomIndex].element ];
+				newColor = ATOM_COLORS[ atom.element ];
 			}
 			
 			for(var k = 0; k < nSphereVertices; k++)
 			{
-				this.attributes.color.setXYZ( atoms[atomIndex].firstVertexIndex + k, 
+				this.attributes.color.setXYZ( atom.firstVertexIndex + k, 
 					newColor.r, 
 					newColor.g, 
 					newColor.b );
@@ -398,7 +370,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			atoms[i].firstVertexIndex = i*nSphereVertices;
 			atoms[i].firstFaceIndex = i*nSphereFaces;
 			
-			bufferGeometry.colorAtom(i);
+			bufferGeometry.colorAtom(atoms[i]);
 			bufferGeometry.refreshAtomPositionInMesh(i)
 			
 			for(var k = 0; k < nSphereVertices; k++)
@@ -417,14 +389,20 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			}
 		}
 		
-		var cylinderBeginning = new THREE.Vector3();
-		var cylinderEnd = new THREE.Vector3();
 		var firstFaceIndex = atoms.length * atoms[1].firstFaceIndex;
 		var firstVertexIndex = atoms.length * atoms[1].firstVertexIndex;
-		for(var i = 0, il = bondData.length; i < il; i++ )
+		for(var i = 0, il = atoms.length; i < il; i++ )
 		{
-			for(var j = 0, jl = bondData[i].length; j < jl; j++)
+			for(var j = 0, jl = atoms[ i ].bondPartners.length; j < jl; j++)
 			{
+				atoms[i].bondFirstVertexIndices.push(firstVertexIndex);
+				
+				//bondPartners could have a fixed length of 4
+				refreshCylinderCoordsAndNormals(
+					atoms[i].position,
+					atoms[i].position.clone().lerp(atoms[i].bondPartners[j].position,0.5),
+					bufferGeometry, cylinderSides, firstVertexIndex, atoms[i].element === 9?defaultBondRadius/3:defaultBondRadius );
+
 				for(var k = 0; k < cylinderSides; k++)
 				{
 					bufferGeometry.index.setABC(firstFaceIndex+k*2,
@@ -437,33 +415,12 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 						(k*2+2) % (cylinderSides*2) + firstVertexIndex,
 						(k*2+3) % (cylinderSides*2) + firstVertexIndex );
 				}
-				
-				cylinderBeginning.fromArray( bondData[i][j][0] );
-				cylinderEnd.fromArray( bondData[i][j][1] );
-				
-				var bondRadius = DEFAULT_BOND_RADIUS;
-	 			if( i === 9) //hydrogen
-	 			{
-					bondRadius /= 3;
-	 			}
-				else if(bondData[i][j][2] )
-				{
-					bondRadius /= bondData[i][j][2];
-				}
-	 			
-	 			// if(bondData[i][j][2] === 2)
-	 			// {
-	 			// 	console.log("double? TODO draw properly")
-	 			// }
-				
-				insertCylinderCoordsAndNormals( cylinderBeginning, cylinderEnd, bufferGeometry.attributes.position, bufferGeometry.attributes.normal, cylinderSides, firstVertexIndex, bondRadius );
-				
 				for(var k = 0, kl = cylinderSides * 2; k < kl; k++)
 				{
 					bufferGeometry.attributes.color.setXYZ( firstVertexIndex + k, 
-						ATOM_COLORS[i].r,
-						ATOM_COLORS[i].g,
-						ATOM_COLORS[i].b );
+						ATOM_COLORS[atoms[i].element].r,
+						ATOM_COLORS[atoms[i].element].g,
+						ATOM_COLORS[atoms[i].element].b );
 				}
 				
 				firstVertexIndex += cylinderSides * 2;
@@ -476,23 +433,6 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 
 	//------------Socket
 	{
-		// requestAtomMovement = function(atomIndex,newPosition)
-		// {
-		// 	var msg = {command:"moveAtom"};
-		// 	Object.assign(msg,model.atoms[atomIndex]);
-		// 	Object.assign(msg,newPosition);
-		// 	socket.send(JSON.stringify(msg));
-		// 	socket.setTimerOnExpectedCommand("moveAtom");
-		// }
-		// socket.commandReactions.moveAtom = function(msg)
-		// {
-		// 	var atomIndex = getAtomWithSpecContainedInHere(msg)
-		// 	model.atoms[atomIndex].position.copy(msg);
-		// 	model.geometry.refreshAtomPositionInMesh(atomIndex);
-		// 	model.geometry.attributes.position.needsUpdate = true;
-		//also something about label?
-		// }
-
 		function getAtomWithSpecContainedInHere(objectContainingSpec)
 		{
 			var model = getModelWithImol(objectContainingSpec.imol);
@@ -514,39 +454,31 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 
 		socket.commandReactions.deleteAtom = function(msg)
 		{
-			var model = getModelWithImol(msg.imol);
 			var atom = getAtomWithSpecContainedInHere(msg);
-			
+			var model = getModelWithImol(atom.imol);
+
+			for(var i = 0; i < atom.bondPartners.length; i++)
+			{
+				refreshCylinderCoordsAndNormals( zeroVector, zeroVector,
+					model.geometry, cylinderSides, atom.bondFirstVertexIndices[i], 0 );
+
+				var thisBondIndex = atom.bondPartners[i].bondPartners.indexOf(atom);
+
+				refreshCylinderCoordsAndNormals( zeroVector, zeroVector,
+					model.geometry, cylinderSides, atom.bondPartners[i].bondFirstVertexIndices[thisBondIndex], 0 );
+
+				atom.bondPartners[i].bondPartners.splice(thisBondIndex, 1);
+				atom.bondPartners[i].bondFirstVertexIndices.splice(thisBondIndex, 1);
+			}
 			for(var k = 0; k < nSphereVertices; k++)
 			{
 				model.geometry.attributes.position.setXYZ( atom.firstVertexIndex + k, 0, 0, 0 );
 			}
+
 			model.geometry.attributes.position.needsUpdate = true;
 
-			//SPEEDUP OPPORTUNITY ARGH
-			removeSingleElementFromArray(model.indicesOfAtomsInIndividualResidues[atom.resNo], atom)
 			removeSingleElementFromArray(model.atoms, atom)
-
-			return true;
-		}
-
-		socket.commandReactions.deleteResidue = function(msg)
-		{
-			var model = getModelWithImol(msg.imol);
-			var setOfAtomsToDelete = model.atomGroupInResidueOrWhatever(msg.resNo);
-			
-			for(var i = 0; i < setOfAtomsToDelete.length; i++)
-			{
-				for(var k = 0; k < nSphereVertices; k++)
-				{
-					model.geometry.attributes.position.setXYZ( setOfAtomsToDelete[i].firstVertexIndex + k, 0, 0, 0 );
-				}
-
-				//SPEEDUP OPPORTUNITY ARGH
-				removeSingleElementFromArray(model.atoms, setOfAtomsToDelete[i])
-			}
-			
-			model.geometry.attributes.position.needsUpdate = true;
+			delete atom;
 
 			return true;
 		}

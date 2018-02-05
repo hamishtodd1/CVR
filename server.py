@@ -59,6 +59,7 @@ import tornado.websocket
 import tornado.template
 
 # import unicodedata
+import serverCommands
 
 #------variables
 runningInCoot = True
@@ -94,6 +95,8 @@ class mainHandler(tornado.web.RequestHandler):
 		loader = tornado.template.Loader(".")
 		self.write(loader.load("index.html").generate())
 
+
+
 class wsHandler(tornado.websocket.WebSocketHandler):
 	def check_origin(self, origin):
 		return True
@@ -102,7 +105,10 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		self.set_nodelay(True)
 
 		if runningInCoot == False:
-			self.write_message({"command":"loadStandardStuff"})
+			self.write_message({"command":"loadTutorialModel"})
+
+			mapMsg = {'command':"map",'mapFilename':'data/tutorialMap.map'}
+			self.write_message( mapMsg )
 
 		else:
 			pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
@@ -130,82 +136,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			self.write_message( mapMsg )
 
 	def on_message(self, msgContainer):
-		msg = eval(msgContainer)
-
-		#you have to use ["thing"] rather than .thing. Changeable, but not trivially
-
-		if msg["command"] == "deleteAtom":
-			if runningInCoot:
-				delete_atom(msg["imol"],msg["chainId"],msg["resNo"],msg["insertionCode"],msg["name"],msg["altloc"]);
-			else:
-				print("deletion of atom permitted")
-			self.write_message(msgContainer);
-
-		elif msg["command"] == "moveAtom":
-
-			if runningInCoot:
-				set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
-				set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
-				set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
-			else:
-				print("movement of atom permitted")
-			self.write_message(msgContainer);
-
-		elif msg["command"] == "deleteResidue":
-			if runningInCoot:
-				delete_residue(msg["imol"],msg["chainId"],msg["resNo"],msg["insertionCode"]);
-			else:
-				print("deletion of residue permitted")
-			self.write_message(msgContainer);
-
-		#needs an atom's worth of stuff evidently
-		#it wants imol_coords, which we expect is imol
-		elif messageHeader == "autoFitBestRotamer":
-
-			if runningInCoot:
-				imolMap = imol_refinement_map();
-				clashFlag = 1;
-				lowestProbability = 0.01;
-
-				auto_fit_best_rotamer(
-					msg["resNo"], msg["altloc"], msg["insertionCode"],msg["chainId"],msg["imol"],
-					imolMap, clashFlag, lowestProbability);
-
-				returnMsg = {"command":"autoFitBestRotamerResult"}
-				returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
-
-				print(returnMsg)
-				# self.write_message(str(returnMsg))
-			else:
-				print("requires coot")
-
-		elif messageHeader == "mutateAndAutoFit":
-			if runningInCoot:
-				imolMap = imol_refinement_map(); #not necessarily
-
-				mutate_and_auto_fit( 
-					msg["resNo"], msg["chainId"],msg["imol"],imolMap, msg["residue"])
-
-				returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
-				returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
-				
-				print(returnMsg)
-				# self.write_message(str(returnMsg))
-			else:
-				print("requires coot")
-
-		else:
-			print('received unrecognized message:', message,messageHeader)
-
-		'''
-		Also useful
-		pepflip-active-residue
-		%coot-listener-socket
-		active_residue()
-		add-molecule
-		view-matrix
-		set-view-matrix
-		'''
+		serverCommands.command(self, msgContainer, runningInCoot)
 
 	def on_close(self):
 		print('connection closed...')

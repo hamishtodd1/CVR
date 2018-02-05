@@ -28,3 +28,5 @@ var frameCount = 0;
 
 //------varying
 //mousePosition = new THREE.Vector2(); //[0,1],[0,1]
+
+var thingsToBeUpdated = [];

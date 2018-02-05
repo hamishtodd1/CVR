@@ -1,3 +1,5 @@
+//Left and right on stick = contour, up and down is for currently selected menu?
+
 function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 {
 	var vrInputSystem = {};

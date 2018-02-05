@@ -1,38 +1,25 @@
 /*
-A bug is caused by atom indices changing
+expenses
 
+TODO for EM demo
+	interatomic contacts
+	ramachandran
+	solid mesh
 
-bonds
-residues
-info on wall
-labeller tool, pointer?
-if two things are overlapping you pick up closer
-All the tools!
-Could make the beginnings of a bar chart.
-Lots of shit in server to test
-The various things that are being compiled more than once
-
-
-
-1) choose a tool to move the atoms - and move them
-3) display intermediate atoms???
-4) display inter-atomic contacts
-
-Left and right on stick = contour, up and down is for currently selected menu?
-
+Lots of shit in server to test/implement
+mutator
+Try just having "rigid" atom movement. THEN think about other tools. Refine is most important
+if two things are overlapping you pick up closer. Or glow for hover
 "undo"
-	could make it so that the atom array can only be changed by messages from coot
-	for every change, you have a log of the reverse change
-	a button on the controller is reserved for "undo"
+	Just coot undo, then get the result?
+	Button on controller reserved
 
-	At any time you'd like to be able to point at the ramachandran
+
 
 All tools that move atoms: Could make it so 
 	you can grab an atom or two anywhere, 
 	move it, 
 	it decides what tool would suit the current movement and shows you the "ghost"
-
-Could use a single web worker for contouring and loading file in, interactivity remains.
 
 Thumbstick could also be used for light intensity?
 
@@ -81,7 +68,6 @@ A big concern at some point will be navigating folders
 	var maps = [];
 	var atoms = null; //because fixed length
 
-	var thingsToBeUpdated = [];
 	var holdables = [];
 
 	var ourVrEffect = new THREE.VREffect( 1, renderer );
@@ -99,7 +85,7 @@ A big concern at some point will be navigating folders
 	controllers = Array(2);
 	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer, ourVrEffect);
 
-	initScaleStick(thingsToBeUpdated);
+	initScaleStick();
 
 	initStats();
 	
@@ -112,7 +98,7 @@ A big concern at some point will be navigating folders
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
 	scene.add(assemblage);
 
-	var visiBox = initVisiBox(thingsToBeUpdated,holdables, getAngstrom() * debuggingWithoutVR?0.06:0.5, maps);
+	var visiBox = initVisiBox(holdables, getAngstrom() * debuggingWithoutVR?0.06:0.5, maps);
 
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
@@ -171,13 +157,21 @@ A big concern at some point will be navigating folders
 	//---------------"init part 2"
 	function initTools()
 	{
-		var toolSpacing = 0.15;
-		var numTools = 4;
+		var thingsToSpaceOut = [];
 
-		initPointer(thingsToBeUpdated, holdables).position.set( toolSpacing * (-numTools/2+1),-0.4,-0.2);
-		initMutator(thingsToBeUpdated, holdables).position.set( toolSpacing * (-numTools/2+2),-0.4,-0.2);
-		initAtomDeleter(thingsToBeUpdated, holdables, socket, models).position.set( toolSpacing * (-numTools/2+3),-0.4,-0.2);
-		//it's broken initResidueDeleter(thingsToBeUpdated, holdables, socket, models).position.set( toolSpacing * (-numTools/2+4),-0.4,-0.2);
+		thingsToSpaceOut.push( 
+			initPointer(holdables),
+			initMutator(holdables),
+			initAtomDeleter(holdables, socket, models),
+			initResidueDeleter(holdables, socket, models),
+			initAtomLabeller(holdables, models)
+		);
+
+		var toolSpacing = 0.15;
+		for(var i = 0; i < thingsToSpaceOut.length; i++)
+		{
+			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.2);
+		}
 	}
 
 	socket = initSocket();
@@ -190,27 +184,7 @@ A big concern at some point will be navigating folders
 	}
 	socket.commandReactions["model"] = function(msg)
 	{
-		// makeModelFromCootString( msg.modelDataString, thingsToBeUpdated, visiBox.planes );
-
-		new THREE.FileLoader().load( "data/newData.txt",
-			function( modelStringCoot )
-			{
-				var newModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
-				newModel.imol = newModel.atoms[0].imol;
-				assemblage.add(newModel);
-				models.push(newModel);
-
-				var averagePosition = new THREE.Vector3();
-				for(var i = 0, il = newModel.atoms.length; i < il; i++)
-				{
-					averagePosition.add(newModel.atoms[i].position);
-				}
-				averagePosition.multiplyScalar( 1 / newModel.atoms.length);
-				assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
-			},
-			function ( xhr ) {},
-			function ( xhr ) { console.error( "couldn't load basic model" ); }
-		);
+		// makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
 		initTools();
 	}
@@ -220,18 +194,12 @@ A big concern at some point will be navigating folders
 		maps.push(newMap);
 		assemblage.add(newMap)
 	}
-	socket.commandReactions["loadStandardStuff"] = function(msg)
+	socket.commandReactions["loadTutorialModel"] = function(msg)
 	{
-		/*
-		 * tutModelWithLigand
-		 * ribosome.txt
-		 * oneAtomOneBond.txt
-		 * 3C0.lst
-		 */
-		new THREE.FileLoader().load( "data/newData.txt",
+		new THREE.FileLoader().load( "data/tutorialGbr.txt",
 			function( modelStringCoot )
 			{
-				var newModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
+				var newModel = makeModelFromCootString( modelStringCoot, visiBox.planes );
 				newModel.imol = newModel.atoms[0].imol;
 				assemblage.add(newModel);
 				models.push(newModel);
@@ -244,29 +212,9 @@ A big concern at some point will be navigating folders
 				averagePosition.multiplyScalar( 1 / newModel.atoms.length);
 				assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
 
-				var duplicateModel = makeModelFromCootString( modelStringCoot, thingsToBeUpdated, visiBox.planes );
-				assemblage.add(duplicateModel);
-				for(var i = 0, il = duplicateModel.atoms.length; i < il; i++)
-				{
-					duplicateModel.atoms[i].imol++;
-				}
-				duplicateModel.imol = duplicateModel.atoms[0].imol;
-				duplicateModel.position.set(0,2,0);
-				models.push(duplicateModel);
-
 				initTools();
-			},
-			function ( xhr ) {},
-			function ( xhr ) { console.error( "couldn't load basic model" ); }
+			}
 		);
-
-		// var newMap = Map("data/1mru_diff.map", true, visiBox);
-		var newMap = Map("data/1mru.map", false, visiBox)
-		maps.push( newMap );
-		assemblage.add( newMap )
-		var diffMap = Map("data/1mru_diff.map", true, visiBox)
-		maps.push( diffMap );
-		assemblage.add( diffMap )
 	}
 	launcher.initComplete = true;
 	launcher.attemptLaunch();

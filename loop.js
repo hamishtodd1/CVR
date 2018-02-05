@@ -17,7 +17,7 @@ function establishAttachment(child, intendedParent)
 	}
 }
 
-function loop( socket, maps, models, controllers, vrInputSystem, visiBox, thingsToBeUpdated, holdables )
+function loop( socket, maps, models, controllers, vrInputSystem, visiBox, holdables )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;
@@ -70,7 +70,8 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 
 	if( controllers[0].grippingSide && controllers[1].grippingSide )
 	{
-		var handSeparationDifferential = controllers[0].position.distanceTo( controllers[1].position ) / 
+		var handSeparationDifferential = controllers[0].position.distanceTo( 
+			controllers[1].position ) / 
 			controllers[0].oldPosition.distanceTo( controllers[1].oldPosition );
 		
 		visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 
@@ -83,6 +84,8 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox, things
 
 		establishAttachment(visiBox, controllers[bothAttachedController]);
 		establishAttachment(assemblage, controllers[bothAttachedController]);
+		// establishAttachment(visiBox, scene);
+		// establishAttachment(assemblage, scene);
 	}
 	else if( controllers[bothAttachedController].grippingSide && !controllers[1-bothAttachedController].grippingSide )
 	{

@@ -1,4 +1,4 @@
-function initScaleStick(thingsToBeUpdated)
+function initScaleStick()
 {
 	var clippingPlane = new THREE.Plane();
 	var scaleStick = new THREE.Mesh(new THREE.Geometry(),new THREE.MeshLambertMaterial(

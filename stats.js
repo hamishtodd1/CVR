@@ -8,7 +8,11 @@
 		peptide omega distortion
 		NCS differences
 		Rotamer analysis
-		"Geometry graphs"?
+		Geometry graphs
+			Bonds
+			Angles
+			Planes
+			Chirals
 		B factor graph, we talked about this. Two bars per residue
 		B factor variance
 

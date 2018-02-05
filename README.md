@@ -8,9 +8,7 @@ Because it will make Coot faster to use. *It is not for outreach.*
 
 ## How do I use this?
 
-It's extremely hard right now. You'll need Windows(not my fault, there is no desktop VR outside windows). You'll need an Oculus Rift and webVR. Run the server.py script inside coot then go to localhost:9090 in your browser. When you see some stuff on the screen press ., then put on headset and you should be there.
-
-There may be firewall difficulty, sorry!
+It's extremely hard right now. You'll need Windows(not my fault, there is no desktop VR outside windows). You'll need an Oculus Rift and webVR (I recommend this build https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c - make sure to go to chrome://flags and enable webVR AND gamepad extensions). Run the server.py script inside coot then go to localhost:9090 in your browser. When you see some stuff on the screen press ".", then put on headset and you should be there.
 
 (firefox and chromium webvr should be ok, but test that they are working first eg with this page https://webvr.info/samples/XX-vr-controllers.html )
 

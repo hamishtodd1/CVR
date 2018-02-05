@@ -25,7 +25,7 @@
 //hmm maybe your hands should be the planes, when you're not holding anything?
 //it's a very simple shader to make it spherical
 
-function initVisiBox(thingsToBeUpdated, holdables, initialScale, maps)
+function initVisiBox(holdables, initialScale, maps)
 {
 	var visiBox = new THREE.Object3D();
 	

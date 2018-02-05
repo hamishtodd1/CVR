@@ -98,7 +98,7 @@ THREE.CylinderBufferGeometryUncentered = function(radius, length, radiusSegments
 	return geometry;
 }
 
-function insertCylinderCoordsAndNormals(A,B, vertexAttribute, normalAttribute, cylinderSides, firstVertexIndex, radius )
+function refreshCylinderCoordsAndNormals(A,B, bufferGeometry, cylinderSides, firstVertexIndex, radius )
 {
 	var aToB = new THREE.Vector3().subVectors(B,A);
 	aToB.normalize();
@@ -106,11 +106,11 @@ function insertCylinderCoordsAndNormals(A,B, vertexAttribute, normalAttribute, c
 	tickVector.normalize(); 
 	for( var i = 0; i < cylinderSides; i++)
 	{
-		vertexAttribute.setXYZ(  firstVertexIndex + i*2, tickVector.x*radius + A.x,tickVector.y*radius + A.y,tickVector.z*radius + A.z );
-		vertexAttribute.setXYZ(firstVertexIndex + i*2+1, tickVector.x*radius + B.x,tickVector.y*radius + B.y,tickVector.z*radius + B.z );
+		bufferGeometry.attributes.position.setXYZ(  firstVertexIndex + i*2, tickVector.x*radius + A.x,tickVector.y*radius + A.y,tickVector.z*radius + A.z );
+		bufferGeometry.attributes.position.setXYZ(firstVertexIndex + i*2+1, tickVector.x*radius + B.x,tickVector.y*radius + B.y,tickVector.z*radius + B.z );
 		
-		normalAttribute.setXYZ(  firstVertexIndex + i*2, tickVector.x,tickVector.y,tickVector.z );
-		normalAttribute.setXYZ(firstVertexIndex + i*2+1, tickVector.x,tickVector.y,tickVector.z );
+		bufferGeometry.attributes.normal.setXYZ(  firstVertexIndex + i*2, tickVector.x,tickVector.y,tickVector.z );
+		bufferGeometry.attributes.normal.setXYZ(firstVertexIndex + i*2+1, tickVector.x,tickVector.y,tickVector.z );
 		
 		tickVector.applyAxisAngle(aToB, TAU / cylinderSides);
 	}
