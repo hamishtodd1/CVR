@@ -1,18 +1,12 @@
-/*
- * It's on the right wall, you grab it, but it's connected with elastic
- 	Or could have two copies of it
- */
+/* 
+	Mover
+		Both hands come together to make a sphere appear
+		Bit of kinematics?
+		Refine by default
 
-/* Other thingsToBeUpdated
- * In real life: say you're picking things off a bush. If you want to get a few things you pinch, if you want a lot then you scoop. It's a natural action of your hand
- * Ok here: Sphere is both hands
+In real life: say you're picking things off a bush. If you want to get a few things you pinch, if you want a lot then you scoop. It's a natural action of your hand
+ * Ok here: 
  * Regularizer is pinch
- * 
- * Maybe the general way to do it is "let people just manipulate the atoms and then when they look away, correct them"
- * 
- * Undo is a button on the controller that makes a sign flash up
- * 
- * Staple gun style?
  */
 
 /*
@@ -39,10 +33,64 @@ Where:
  */
 
 //autofit best rotamer
+/*Rotamer changer
+ * Put it over an atom. Sends to coot, gets different conformations, shows them. They are selectable
+ * 
+ * This is a specific tool because Coot has specific suggestions. But why shouldn't it have suggestions for an arbitrary atom?
+ * 
+ */
+function initAutoRotamer(socket, models)
+{
+	var autoRotamer = new THREE.Object3D();
+	
+	var radius = 0.05;
+	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0x00FF00, opacity: 0.7}));
+	autoRotamer.add( ball );
+	ball.geometry.computeBoundingSphere();
+	autoRotamer.boundingSphere = ball.geometry.boundingSphere;
+
+	var label = makeTextSign( "Auto rotamer" );
+	label.position.z = radius;
+	label.scale.setScalar(radius/3)
+	autoRotamer.add(label);
+	
+	autoRotamer.update = function()
+	{
+		label.visible = this.parent === scene;
+
+		var ourRadiusSq = sq( radius / getAngstrom() );
+
+		if(this.parent !== scene && this.parent.button1 && !this.parent.button1Old )
+		{
+			for(var i = 0; i < models.length; i++)
+			{
+				var ourPosition = this.getWorldPosition();
+				models[i].updateMatrixWorld();
+				models[i].worldToLocal(ourPosition);
+				
+				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+				{
+					if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
+					{
+						var msg = {command:"autoFitBestRotamer"};
+						models[i].atoms[j].assignAtomSpecToMessage( msg );
+						socket.send(JSON.stringify(msg));
+					}
+				}
+			}
+		}
+	}
+	
+	thingsToBeUpdated.push(autoRotamer);
+	holdables.push(autoRotamer)
+	scene.add(autoRotamer);
+	autoRotamer.ordinaryParent = autoRotamer.parent;
+
+	return autoRotamer;
+}
 
 
-
-function initAtomLabeller(holdables, models)
+function initAtomLabeller(models)
 {
 	var atomLabeller = new THREE.Object3D();
 	
@@ -56,8 +104,6 @@ function initAtomLabeller(holdables, models)
 	label.position.z = radius;
 	label.scale.setScalar(radius/3)
 	atomLabeller.add(label);
-
-	var highlightColor = new THREE.Color(1,1,1);
 	
 	atomLabeller.update = function()
 	{
@@ -75,14 +121,8 @@ function initAtomLabeller(holdables, models)
 				
 				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 				{
-					if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
-					{
-						models[i].atoms[j].setLabelVisibility(true);
-					}
-					else
-					{
-						models[i].atoms[j].setLabelVisibility(false);
-					}
+					var labelVisibility = models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq;
+					models[i].atoms[j].setLabelVisibility(labelVisibility);
 				}
 			}
 		}
@@ -94,29 +134,6 @@ function initAtomLabeller(holdables, models)
 	atomLabeller.ordinaryParent = atomLabeller.parent;
 
 	return atomLabeller;
-}
-
-
-
-
-
-/*Rotamer changer
- * Put it over an atom. Sends to coot, gets different conformations, shows them. They are selectable
- * 
- * This is a specific tool because Coot has specific suggestions. But why shouldn't it have suggestions for an arbitrary atom?
- * 
- */
-function initRotamerChanger()
-{
-	rotamerChanger.update = function()
-	{
-		// var selectedResidue = -1;
-		// for(var i = 0; i < residues.length; i++)
-		// {
-		// 	if(residues[i].position.distanceTo(this.position) < this.selectionRadius)
-		// }
-		// socket.send("Rotamers needed for residue " )
-	}
 }
 
 /*
@@ -133,7 +150,7 @@ function initRotamerChanger()
 	
 	It should also be possible to select between them using the thumbstick, so you can look at different results without moving your eyes
  */
-function initMutator(holdables)
+function initMutator()
 {
 	var mutator = new THREE.Object3D();
 	
@@ -259,7 +276,7 @@ function initMutator(holdables)
 	return mutator;
 }
 
-function initPointer(holdables)
+function initPointer()
 {
 	var pointerRadius = 0.03;
 	var pointer = new THREE.Mesh(

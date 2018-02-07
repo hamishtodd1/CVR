@@ -13,6 +13,7 @@ if two things are overlapping you pick up closer. Or glow for hover
 "undo"
 	Just coot undo, then get the result?
 	Button on controller reserved
+	Flash or something
 
 
 
@@ -68,8 +69,6 @@ A big concern at some point will be navigating folders
 	var maps = [];
 	var atoms = null; //because fixed length
 
-	var holdables = [];
-
 	var ourVrEffect = new THREE.VREffect( 1, renderer );
 	var loopCallString = getStandardFunctionCallString(loop);
 	function render()
@@ -98,7 +97,7 @@ A big concern at some point will be navigating folders
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
 	scene.add(assemblage);
 
-	var visiBox = initVisiBox(holdables, getAngstrom() * debuggingWithoutVR?0.06:0.5, maps);
+	var visiBox = initVisiBox(getAngstrom() * debuggingWithoutVR?0.06:0.5, maps);
 
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
@@ -160,11 +159,12 @@ A big concern at some point will be navigating folders
 		var thingsToSpaceOut = [];
 
 		thingsToSpaceOut.push( 
-			initPointer(holdables),
-			initMutator(holdables),
-			initAtomDeleter(holdables, socket, models),
-			initResidueDeleter(holdables, socket, models),
-			initAtomLabeller(holdables, models)
+			initPointer(),
+			initMutator(),
+			initAtomDeleter(socket, models),
+			initResidueDeleter(socket, models),
+			initAtomLabeller(models),
+			initAutoRotamer(socket, models)
 		);
 
 		var toolSpacing = 0.15;

@@ -30,3 +30,4 @@ var frameCount = 0;
 //mousePosition = new THREE.Vector2(); //[0,1],[0,1]
 
 var thingsToBeUpdated = [];
+var holdables = [];

@@ -9,8 +9,10 @@ Install procedure
 		Edited Modules/setup to uncomment the SSL section
 		   	Changed library to lib64 from lib
 		   	--with-ensurepip=install
+	python.exe get-pip.py
 	pip install singledispatch
 	pip install backports_abc
+	pip install tornado
 	Never try to avoid pip
 
 Update procedure, in autobuild:
@@ -32,7 +34,7 @@ Running procedure:
 	To get out of coot:
 		ctrl C
 		ctrl D
-
+	
 at some point:
 	do a 
 	git status

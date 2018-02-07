@@ -17,7 +17,7 @@ function establishAttachment(child, intendedParent)
 	}
 }
 
-function loop( socket, maps, models, controllers, vrInputSystem, visiBox, holdables )
+function loop( socket, maps, models, controllers, vrInputSystem, visiBox )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;
