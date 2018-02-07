@@ -105,6 +105,7 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox )
 
 	for( var i = 0; i < thingsToBeUpdated.length; i++)
 	{
+		// console.log(thingsToBeUpdated[i])
 		thingsToBeUpdated[i].update();
 	}
 	

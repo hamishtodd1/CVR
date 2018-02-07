@@ -2,7 +2,17 @@ import tornado.ioloop
 import tornado.web
 import tornado.websocket
 
-import serverReactions
+import imp
+
+port = 9090
+import os
+if os.name == 'posix':
+	serverReactions = imp.load_source('serverReactionsName', '/home/htodd/CVR/serverReactions.py')
+	print("websocket (NOT address bar) link: 192.168.56.101:" + str(port))
+else:
+	serverReactions = imp.load_source('serverReactionsName', 'C:/CVR/serverReactions.py')
+	print("localhost:" + str(port))
+
 class wsHandler(tornado.websocket.WebSocketHandler):
 	def check_origin(self, origin):
 		return True
@@ -15,13 +25,6 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 	def on_close(self):
 		print('Closed connection')
-
-port = 9090
-import os
-if os.name == 'posix':
-	print("localhost:" + str(port))
-else:
-	print("192.168.56.1:" + str(port))
 
 application = tornado.web.Application([(r'/ws', wsHandler)])
 application.listen(port)

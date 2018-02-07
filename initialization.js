@@ -184,7 +184,8 @@ A big concern at some point will be navigating folders
 	}
 	socket.commandReactions["model"] = function(msg)
 	{
-		// makeModelFromCootString( msg.modelDataString, visiBox.planes );
+		console.log("hm")
+		makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
 		initTools();
 	}
@@ -199,18 +200,7 @@ A big concern at some point will be navigating folders
 		new THREE.FileLoader().load( "data/tutorialGbr.txt",
 			function( modelStringCoot )
 			{
-				var newModel = makeModelFromCootString( modelStringCoot, visiBox.planes );
-				newModel.imol = newModel.atoms[0].imol;
-				assemblage.add(newModel);
-				models.push(newModel);
-
-				var averagePosition = new THREE.Vector3();
-				for(var i = 0, il = newModel.atoms.length; i < il; i++)
-				{
-					averagePosition.add(newModel.atoms[i].position);
-				}
-				averagePosition.multiplyScalar( 1 / newModel.atoms.length);
-				assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
+				makeModelFromCootString( modelStringCoot, visiBox.planes );
 
 				initTools();
 			}
