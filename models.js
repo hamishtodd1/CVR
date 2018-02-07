@@ -203,7 +203,6 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			}
 		}
 
-		//just for highlighting! Needn't be optimized
 		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
 
 		// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
@@ -211,9 +210,20 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		// 		carbonAlphas.length*8, 0.1, 16 );
 		// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
 		
-		
-		
-		return model;
+		model.imol = model.atoms[0].imol;
+		assemblage.add(model);
+		models.push(model);
+
+		if(models.length === 1)
+		{
+			var averagePosition = new THREE.Vector3();
+			for(var i = 0, il = model.atoms.length; i < il; i++)
+			{
+				averagePosition.add(model.atoms[i].position);
+			}
+			averagePosition.multiplyScalar( 1 / model.atoms.length);
+			assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
+		}
 	}
 
 	makeMoleculeMesh = function( atoms, clip, bondDataFromCoot )

@@ -59,7 +59,8 @@ import tornado.websocket
 import tornado.template
 
 # import unicodedata
-import serverCommands
+import imp
+serverCommands = imp.load_source('serverCommandsName', '/home/htodd/CVR/serverCommands.py')
 
 #------variables
 runningInCoot = True
