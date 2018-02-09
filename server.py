@@ -8,10 +8,11 @@ port = 9090
 import os
 if os.name == 'posix':
 	serverReactions = imp.load_source('serverReactionsName', '/home/htodd/CVR/serverReactions.py')
-	print("websocket (NOT address bar) link: 192.168.56.101:" + str(port))
+	ip = "192.168.56.101:"
 else:
 	serverReactions = imp.load_source('serverReactionsName', 'C:/CVR/serverReactions.py')
-	print("localhost:" + str(port))
+	ip = "localhost:"
+print("websocket (NOT address bar) link:" + ip + str(port))
 
 class wsHandler(tornado.websocket.WebSocketHandler):
 	def check_origin(self, origin):

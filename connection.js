@@ -1,17 +1,21 @@
 function initSocket()
 {
-	var ip = "localhost";
-	// ip = "192.168.56.101"
-	var socket = new WebSocket("ws://"+ip+":9090/ws");
-	if(!socket)
+	var ip = "192.168.56.101";
+	if(0)
 	{
-		console.log("invalid socket");
+		ip = "localhost"
+	}
+	var socket = new WebSocket("ws://"+ip+":9090/ws");
+	socket.onerror = function()
+	{
+		console.error("Look here");
 		return;
 	}
 	socket.onclose = function()
 	{
-		console.log("The connection has been closed. Maybe you had no data loaded?");
+		console.log("Lost connection");
 	}
+	console.error("here")
 
 	socket.commandReactions = {};
 	socket.onmessage = function(msgContainer)
