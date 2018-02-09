@@ -1,5 +1,7 @@
 /*
 expenses
+train tickets
+ketopine
 
 TODO for EM demo
 	interatomic contacts
@@ -15,8 +17,6 @@ if two things are overlapping you pick up closer. Or glow for hover
 	Button on controller reserved
 	Flash or something
 
-
-
 All tools that move atoms: Could make it so 
 	you can grab an atom or two anywhere, 
 	move it, 
@@ -31,10 +31,9 @@ A big concern at some point will be navigating folders
 
 
 
-
 (function init()
 {
-	if(!WEBVR || !WEBVR.isAvailable())
+	if(!WEBVR.checkAvailability())
 	{
 		console.error("No webvr!")
 		return;
@@ -43,8 +42,6 @@ A big concern at some point will be navigating folders
 	var launcher = {
 		socketOpened: false,
 		initComplete:false,
-		controllerModel0Loaded: false,
-		controllerModel1Loaded: false,
 		attemptLaunch: function()
 		{
 			for(var condition in this)
@@ -61,28 +58,36 @@ A big concern at some point will be navigating folders
 	}
 	//TODO: async await for the various things. There was also different stuff here previously
 
-	var renderer = new THREE.WebGLRenderer({ antialias: true });
-	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
+	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.vr.enabled = true;
+	document.body.appendChild( renderer.domElement );
+
+	var vrButton = WEBVR.createButton( renderer );
+	document.addEventListener( 'keydown', function(event)
+	{
+		if(event.keyCode === 69 )
+		{
+			vrButton.onclick();
+		}
+	}, false );
+	document.body.appendChild( vrButton );
+
+	var loopCallString = getStandardFunctionCallString(loop);
+	function render() {
+
+		eval(loopCallString);
+		renderer.render( scene, camera );
+
+	}
+	renderer.animate( render );
 
 	var maps = [];
 	var atoms = null; //because fixed length
-
-	var ourVrEffect = new THREE.VREffect( 1, renderer );
-	var loopCallString = getStandardFunctionCallString(loop);
-	function render()
-	{
-		eval(loopCallString);
-
-		ourVrEffect.requestAnimationFrame( function(){
-			ourVrEffect.render( scene, camera );
-			render();
-		} );
-	}
 	
 	controllers = Array(2);
-	var vrInputSystem = initVrInputSystem(controllers, launcher, renderer, ourVrEffect);
+	var vrInputSystem = initControllers(controllers);
 
 	initScaleStick();
 
@@ -105,16 +110,6 @@ A big concern at some point will be navigating folders
 	    renderer.setSize( window.innerWidth, window.innerHeight ); //nothing about vr effect?
 	    camera.aspect = window.innerWidth / window.innerHeight;
 	    camera.updateProjectionMatrix();
-	}, false );
-	
-	document.addEventListener( 'keydown', function(event)
-	{
-		if(event.keyCode === 190 && ( navigator.getVRDisplays !== undefined || navigator.getVRDevices !== undefined ) )
-		{
-			event.preventDefault();
-			vrInputSystem.startGettingInput();
-			ourVrEffect.setFullScreen( true );
-		}
 	}, false );
 	
 	makeScene(true);

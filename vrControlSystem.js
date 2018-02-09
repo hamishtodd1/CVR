@@ -1,41 +1,22 @@
 //Left and right on stick = contour, up and down is for currently selected menu?
 
-function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
+function initControllers(controllers, renderer,ourVrEffect)
 {
 	var vrInputSystem = {};
 
-	var cameraRepositioner = new THREE.VRControls( camera );
-	var cameraAddendum = new THREE.Vector3(); //doesn't work, very weird
-	
-	vrInputSystem.startGettingInput = function()
-	{
-		if(cameraRepositioner.vrInputs.length < 1)
-		{
-			console.error("no vr input? Check steamVR or Oculus to make sure it's working correctly")
-		}
-			
-		cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }]);
-		
-		scene.add( controllers[ 0 ] );
-		scene.add( controllers[ 1 ] );
-	}
-
-	document.addEventListener( 'keydown', function(event)
-	{
-		if(event.keyCode === 190 && ( navigator.getVRDisplays !== undefined || navigator.getVRDevices !== undefined ) )
-		{
-			event.preventDefault();
-			vrInputSystem.startGettingInput();
-			ourVrEffect.setFullScreen( true );
-		}
-	}, false );
-	
 	var riftControllerKeys = {
-			thumbstickButton:0,
-			grippingTop: 1,
-			grippingSide:2,
-			button1: 3,
-			button2: 4
+		thumbstickButton:0,
+		grippingTop: 1,
+		grippingSide:2,
+		button1: 3,
+		button2: 4
+	}
+	var viveControllerKeys = {
+		thumbstickButton:0,
+		grippingTop: 1,
+		grippingSide:2,
+		button1: 3,
+		button2: 4
 	}
 	
 	function overlappingHoldable(holdable)
@@ -71,9 +52,6 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 					0.041,
 					-0.03) );
 				controllers[  i ].controllerModel.geometry.computeBoundingSphere();
-				
-				launcher["controllerModel"+i.toString()+"Loaded"] = true;
-				launcher.attemptLaunch();
 			},
 			function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );
 	}
@@ -82,6 +60,8 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 	for(var i = 0; i < 2; i++)
 	{
 		controllers[ i ] = new THREE.Object3D();
+		scene.add( controllers[ i ] );
+
 		for( var propt in riftControllerKeys )
 		{
 			controllers[ i ][propt] = false;
@@ -102,34 +82,41 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 
 	vrInputSystem.update = function(socket)
 	{
-		cameraRepositioner.update(); //positions the head
-		// camera.position.add(cameraAddendum);
-		
 		var gamepads = navigator.getGamepads();
-		for(var k = 0; k < 2 && k < gamepads.length; ++k)
+		for(var k = 0; k < gamepads.length; ++k)
 		{
+			if(!gamepads[k])
+			{
+				continue;
+			}
 			var affectedControllerIndex = -1;
-			if (gamepads[k] && gamepads[k].id === "Oculus Touch (Right)")
+			var keys = null;
+			if (gamepads[k].id === "OpenVR Gamepad" )
+			{
+				if(gamepads[k].index )
+				{
+					affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
+				}
+				else
+				{
+					affectedControllerIndex = LEFT_CONTROLLER_INDEX;
+				}
+				keys = viveControllerKeys;
+			}
+			else if (gamepads[k].id === "Oculus Touch (Right)")
 			{
 				affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
+				keys = riftControllerKeys;
 			}
-			if (gamepads[k] && gamepads[k].id === "Oculus Touch (Left)")
+			else if (gamepads[k].id === "Oculus Touch (Left)")
 			{
 				affectedControllerIndex = LEFT_CONTROLLER_INDEX;
+				keys = riftControllerKeys;
 			}
-			// if (gamepads[k] && gamepads[k].id === "OpenVR Gamepad" )
-			// {
-			// 	if(gamepads[k].index )
-			// 	{
-			// 		affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
-			// 	}
-			// 	else
-			// 	{
-			// 		affectedControllerIndex = LEFT_CONTROLLER_INDEX;
-			// 	}
-			// }
-			if( affectedControllerIndex === -1 )
+			else
+			{
 				continue;
+			}
 			
 			controllers[affectedControllerIndex].thumbStickAxes[0] = gamepads[k].axes[0];
 			controllers[affectedControllerIndex].thumbStickAxes[1] = gamepads[k].axes[1];
@@ -147,20 +134,11 @@ function initVrInputSystem(controllers, launcher,renderer,ourVrEffect)
 				controllers[ affectedControllerIndex ][propt] = gamepads[k].buttons[riftControllerKeys[propt]].pressed;
 			}
 
-			if( gamepads[k].buttons[riftControllerKeys.thumbstickButton].pressed )
-			{
-				cameraAddendum.add(camera.position.clone().negate())
-			}
-
 			//gamepads[k].buttons[riftControllerKeys.grippingTop].value;
 
 			// controllers[ affectedControllerIndex ].controllerModel.material.color.r = controllers[ affectedControllerIndex ].button1?1:0;
 			// controllers[ affectedControllerIndex ].controllerModel.material.color.g = controllers[ affectedControllerIndex ].button2?1:0;
 		}
-
-
-		// controllers[0].position.add(cameraAddendum);
-		// controllers[1].position.add(cameraAddendum);
 	}
 	
 	return vrInputSystem;

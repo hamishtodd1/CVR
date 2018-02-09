@@ -1,21 +1,17 @@
 function initSocket()
 {
 	var ip = "192.168.56.101";
-	if(0)
-	{
-		ip = "localhost"
-	}
+	// ip = "localhost"
 	var socket = new WebSocket("ws://"+ip+":9090/ws");
 	socket.onerror = function()
 	{
-		console.error("Look here");
-		return;
+		console.error("May need to change the above");
 	}
+	
 	socket.onclose = function()
 	{
 		console.log("Lost connection");
 	}
-	console.error("here")
 
 	socket.commandReactions = {};
 	socket.onmessage = function(msgContainer)
