@@ -75,6 +75,7 @@ function initAutoRotamer(socket, models)
 						var msg = {command:"autoFitBestRotamer"};
 						models[i].atoms[j].assignAtomSpecToMessage( msg );
 						socket.send(JSON.stringify(msg));
+						//TODO this gets sent more than you would like
 					}
 				}
 			}

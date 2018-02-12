@@ -1,4 +1,6 @@
 /*
+Deal with the solid mesh problem and that kinda deals with the clipping planes bug
+
 expenses
 train tickets
 ketopine
@@ -61,7 +63,7 @@ A big concern at some point will be navigating folders
 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
+	// renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
 	renderer.vr.enabled = true;
 	document.body.appendChild( renderer.domElement );
 
@@ -91,7 +93,7 @@ A big concern at some point will be navigating folders
 	var vrInputSystem = initControllers(controllers);
 	
 	var debuggingWithoutVR = false;
-	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.09 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;

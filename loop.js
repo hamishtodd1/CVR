@@ -118,5 +118,5 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox )
 		}
 	}
 
-	socket.checkOnExpectedCommands();
+	socket.update();
 }

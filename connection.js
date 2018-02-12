@@ -3,9 +3,10 @@ function initSocket()
 	var ip = "192.168.56.101";
 	ip = "localhost"
 	var socket = new WebSocket("ws://"+ip+":9090/ws");
+	oldReadyState = socket.readyState;
 	socket.onerror = function()
 	{
-		console.error("May need to change the above");
+		console.error("Connection address may need to be changed");
 	}
 	
 	socket.onclose = function()
@@ -18,7 +19,7 @@ function initSocket()
 	{
 		//parse and stringify are both linear in number of characters
 		//does it have to be with strings? Take it to a connections expert at some point
-		//You could use ASCII?
+		//perfectly possible with ASCII
 		var msg = JSON.parse(msgContainer.data);
 
 		if(!socket.commandReactions[msg.command])
@@ -85,18 +86,24 @@ function initSocket()
 			}
 			return false;
 		}
+	}
 
-		socket.checkOnExpectedCommands = function()
+	socket.update = function()
+	{
+		if(this.readyState === socket.OPEN && oldReadyState !== socket.OPEN)
 		{
-			for(var i = 0, il = commandExpectations.length; i < il; i++)
+			// console.log("opened")
+		}
+		oldReadyState = this.readyState;
+		
+		for(var i = 0, il = commandExpectations.length; i < il; i++)
+		{
+			commandExpectations[i].timer -= frameDelta;
+			if( commandExpectations[i].timer < 0 )
 			{
-				commandExpectations[i].timer -= frameDelta;
-				if( commandExpectations[i].timer < 0 )
-				{
-					console.error( "request not granted: ", commandExpectations[i].command );
-					delete commandExpectations[i];
-					commandExpectations.splice(i, 1);
-				}
+				console.error( "request not granted: ", commandExpectations[i].command );
+				delete commandExpectations[i];
+				commandExpectations.splice(i, 1);
 			}
 		}
 	}

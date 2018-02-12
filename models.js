@@ -351,67 +351,14 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			this.attributes.color.needsUpdate = true;
 		}
 
-		bufferGeometry.refreshAtomPositionInMesh = function( atomIndex )
-		{
-			if(atoms[atomIndex].element === 9)
-			{
-				for(var k = 0; k < nSphereVertices; k++)
-				{
-					this.attributes.position.setXYZ( atoms[atomIndex].firstVertexIndex + k,
-							hydrogenGeometry.vertices[k].x + atoms[atomIndex].position.x,
-							hydrogenGeometry.vertices[k].y + atoms[atomIndex].position.y,
-							hydrogenGeometry.vertices[k].z + atoms[atomIndex].position.z );
-				}
-			}
-			else
-			{
-				for(var k = 0; k < nSphereVertices; k++)
-				{
-					this.attributes.position.setXYZ( atoms[atomIndex].firstVertexIndex + k, 
-							atomGeometry.vertices[k].x + atoms[atomIndex].position.x, 
-							atomGeometry.vertices[k].y + atoms[atomIndex].position.y, 
-							atomGeometry.vertices[k].z + atoms[atomIndex].position.z );
-				}
-			}
-		}
-		
-		for(var i = 0, il = atoms.length; i < il; i++ )
-		{
-			atoms[i].firstVertexIndex = i*nSphereVertices;
-			atoms[i].firstFaceIndex = i*nSphereFaces;
-			
-			bufferGeometry.colorAtom(atoms[i]);
-			bufferGeometry.refreshAtomPositionInMesh(i)
-			
-			for(var k = 0; k < nSphereVertices; k++)
-			{
-				bufferGeometry.attributes.normal.setXYZ( atoms[i].firstVertexIndex + k, 
-						atomGeometry.vertexNormals[k].x, 
-						atomGeometry.vertexNormals[k].y, 
-						atomGeometry.vertexNormals[k].z );
-			}
-			for(var k = 0; k < nSphereFaces; k++)
-			{
-				bufferGeometry.index.setABC( atoms[i].firstFaceIndex + k, 
-						atomGeometry.faces[k].a + atoms[i].firstVertexIndex, 
-						atomGeometry.faces[k].b + atoms[i].firstVertexIndex, 
-						atomGeometry.faces[k].c + atoms[i].firstVertexIndex );
-			}
-		}
-		
-		var firstFaceIndex = atoms.length * atoms[1].firstFaceIndex;
-		var firstVertexIndex = atoms.length * atoms[1].firstVertexIndex;
+		var firstFaceIndex = atoms.length * nSphereFaces;
+		var firstVertexIndex = atoms.length * nSphereVertices;
 		for(var i = 0, il = atoms.length; i < il; i++ )
 		{
 			for(var j = 0, jl = atoms[ i ].bondPartners.length; j < jl; j++)
 			{
-				atoms[i].bondFirstVertexIndices.push(firstVertexIndex);
-				
 				//bondPartners could have a fixed length of 4
-				refreshCylinderCoordsAndNormals(
-					atoms[i].position,
-					atoms[i].position.clone().lerp(atoms[i].bondPartners[j].position,0.5),
-					bufferGeometry, cylinderSides, firstVertexIndex, atoms[i].element === 9?defaultBondRadius/3:defaultBondRadius );
+				atoms[i].bondFirstVertexIndices.push(firstVertexIndex);
 
 				for(var k = 0; k < cylinderSides; k++)
 				{
@@ -435,6 +382,69 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 				
 				firstVertexIndex += cylinderSides * 2;
 				firstFaceIndex += cylinderSides * 2;
+			}
+		}
+
+		bufferGeometry.refreshAtomPositionInMesh = function( atom )
+		{
+			var sourceGeometry = atomGeometry;
+			var bondRadius = defaultBondRadius;
+			if(atom.element === 9)
+			{
+				sourceGeometry = hydrogenGeometry;
+				bondRadius = defaultBondRadius / 3
+			}
+
+			for(var k = 0; k < nSphereVertices; k++)
+			{
+				this.attributes.position.setXYZ( atom.firstVertexIndex + k, 
+						sourceGeometry.vertices[k].x + atom.position.x, 
+						sourceGeometry.vertices[k].y + atom.position.y, 
+						sourceGeometry.vertices[k].z + atom.position.z );
+			}
+
+			for(var i = 0, il = atom.bondPartners.length; i < il; i++)
+			{
+				refreshCylinderCoordsAndNormals(
+					atom.position,
+					atom.position.clone().lerp(atom.bondPartners[i].position,0.5),
+					this, cylinderSides, 
+					atom.bondFirstVertexIndices[i],
+					bondRadius );
+
+				var thisBondIndexToPartner = atom.bondPartners[i].bondPartners.indexOf(atom);
+				var partnersBondFirstVertexIndex = atom.bondPartners[i].bondFirstVertexIndices[ thisBondIndexToPartner ];
+				refreshCylinderCoordsAndNormals(
+					atom.bondPartners[i].position,
+					atom.bondPartners[i].position.clone().lerp(atom.position,0.5),
+					this, cylinderSides, 
+					partnersBondFirstVertexIndex,
+					bondRadius );
+			}
+			this.attributes.position.needsUpdate = true;
+		}
+		
+		for(var i = 0, il = atoms.length; i < il; i++ )
+		{
+			atoms[i].firstVertexIndex = i*nSphereVertices;
+			atoms[i].firstFaceIndex = i*nSphereFaces;
+			
+			bufferGeometry.colorAtom(atoms[i]);
+			bufferGeometry.refreshAtomPositionInMesh(atoms[i])
+			
+			for(var k = 0; k < nSphereVertices; k++)
+			{
+				bufferGeometry.attributes.normal.setXYZ( atoms[i].firstVertexIndex + k, 
+						atomGeometry.vertexNormals[k].x, 
+						atomGeometry.vertexNormals[k].y, 
+						atomGeometry.vertexNormals[k].z );
+			}
+			for(var k = 0; k < nSphereFaces; k++)
+			{
+				bufferGeometry.index.setABC( atoms[i].firstFaceIndex + k, 
+						atomGeometry.faces[k].a + atoms[i].firstVertexIndex, 
+						atomGeometry.faces[k].b + atoms[i].firstVertexIndex, 
+						atomGeometry.faces[k].c + atoms[i].firstVertexIndex );
 			}
 		}
 
@@ -491,6 +501,29 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			delete atom;
 
 			return true;
+		}
+
+		socket.commandReactions.residueInfo = function(msg)
+		{
+			/*
+			0: [atom-name, alt-conf]
+			1: [occ b-factor ele seg-id]
+			2: new position
+			3: index
+			*/
+			var model = getModelWithImol(msg.imol);
+			for(var i = 0, il = msg.atoms.length; i < il; i++)
+			{
+				var atom = model.atoms[msg.atoms[i][3]];
+				atom.position.fromArray( msg.atoms[i][2] );
+				model.geometry.refreshAtomPositionInMesh(atom);
+
+				if(atom.label)
+				{
+					atom.label.position.copy(atom.position)
+				}
+			}
+			model.geometry.attributes.position.needsUpdate = true;
 		}
 	}
 
