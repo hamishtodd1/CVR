@@ -26,11 +26,13 @@
 
 		<script>
 
+			var camera, renderer;
+
 			function init() {
 
 				var scene = new THREE.Scene();
 
-				var camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 10 );
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 10 );
 				scene.add( camera );
 				var room = new THREE.Mesh(
 					new THREE.BoxGeometry( 1, 1, 1, 8, 8, 8 ),
@@ -38,7 +40,7 @@
 				);
 				scene.add( room );
 
-				var renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.vr.enabled = true;
@@ -47,7 +49,7 @@
 				var vrButton = WEBVR.createButton( renderer );
 				document.addEventListener( 'keydown', function(event)
 				{
-					if(event.keyCode === 69 )
+					if(event.keyCode === 69 ) //e, because that's what it usually is
 					{
 						vrButton.onclick();
 					}
@@ -66,13 +68,14 @@
 
 			function onWindowResize() {
 
+				console.log("yo")
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
 			}
-			window.addEventListener( 'resize', onWindowResize, false );
+			document.addEventListener( 'resize', onWindowResize, false );
 
 		</script>
 	</body>

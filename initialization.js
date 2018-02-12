@@ -33,11 +33,11 @@ A big concern at some point will be navigating folders
 
 (function init()
 {
-	if(!WEBVR.checkAvailability())
-	{
-		console.error("No webvr!")
-		return;
-	}
+	// if(!WEBVR.checkAvailability())
+	// {
+	// 	console.error("No webvr!")
+	// 	return;
+	// }
 
 	var launcher = {
 		socketOpened: false,
@@ -61,13 +61,14 @@ A big concern at some point will be navigating folders
 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
 	renderer.vr.enabled = true;
 	document.body.appendChild( renderer.domElement );
 
 	var vrButton = WEBVR.createButton( renderer );
 	document.addEventListener( 'keydown', function(event)
 	{
-		if(event.keyCode === 69 )
+		if(event.keyCode === 69 ) //e, because that's what it usually is
 		{
 			vrButton.onclick();
 		}
@@ -88,13 +89,9 @@ A big concern at some point will be navigating folders
 	
 	controllers = Array(2);
 	var vrInputSystem = initControllers(controllers);
-
-	initScaleStick();
-
-	initStats();
 	
 	var debuggingWithoutVR = false;
-	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.09 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;
@@ -106,47 +103,16 @@ A big concern at some point will be navigating folders
 
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
-	window.addEventListener( 'resize', function(){
-	    renderer.setSize( window.innerWidth, window.innerHeight ); //nothing about vr effect?
+	window.addEventListener( 'resize', function(){ //doesn't work if in VR
+	    renderer.setSize( window.innerWidth, window.innerHeight );
 	    camera.aspect = window.innerWidth / window.innerHeight;
 	    camera.updateProjectionMatrix();
 	}, false );
 	
 	makeScene(true);
-	
-	{
-		var blinker = new THREE.Mesh(new THREE.PlaneBufferGeometry(10,10),new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0}))
-		blinker.blinkProgress = 1;
-		camera.add(blinker);
-		
-		document.addEventListener( 'keydown', function(event)
-		{
-			if(event.keyCode === 13 )
-			{
-				blinker.blinkProgress = -1;
-			}
-		}, false );
-		
-		blinker.update = function()
-		{
-			var oldBlinkProgress = blinker.blinkProgress;
-			
-			blinker.blinkProgress += frameDelta * 7;
-			blinker.material.opacity = 1-Math.abs(this.blinkProgress);
-			blinker.position.z = -camera.near - 0.00001;
-			
-			if( oldBlinkProgress < 0 && this.blinkProgress > 0)
-			{
-				ourVrEffect.toggleEyeSeparation();
-				if( visiBox.position.distanceTo(camera.position) < camera.near )
-				{
-					visiBox.position.setLength(camera.near * 1.1);
-				}
-			}
-		}
-		
-		thingsToBeUpdated.push( blinker );
-	}
+
+	initScaleStick();
+	initStats();
 	
 	//---------------"init part 2"
 	function initTools()
