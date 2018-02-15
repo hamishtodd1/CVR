@@ -11,11 +11,14 @@ TODO for EM demo
 	solid mesh
 
 Lots of shit in server to test/implement
+bugs with unfound atoms
+bug with some residues highlighting many residues?
 mutator
-Try just having "rigid" atom movement. THEN think about other tools. Refine is most important
+Try just having "rigid" atom movement. THEN think about other tools.
+Refine is most important
 if two things are overlapping you pick up closer. Or glow for hover
 "undo"
-	Just coot undo, then get the result?
+	Just coot undo, then get the result? Full refresh
 	Button on controller reserved
 	Flash or something
 
@@ -41,25 +44,6 @@ A big concern at some point will be navigating folders
 	// 	return;
 	// }
 
-	var launcher = {
-		socketOpened: false,
-		initComplete:false,
-		attemptLaunch: function()
-		{
-			for(var condition in this)
-			{
-				if( !this[condition] )
-				{
-					return;
-				}
-			}
-			
-			document.body.appendChild( renderer.domElement );
-			render();
-		}
-	}
-	//TODO: async await for the various things. There was also different stuff here previously
-
 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
@@ -70,7 +54,7 @@ A big concern at some point will be navigating folders
 	var vrButton = WEBVR.createButton( renderer );
 	document.addEventListener( 'keydown', function(event)
 	{
-		if(event.keyCode === 69 ) //e, because that's what it usually is
+		if(event.keyCode === 69 ) //e
 		{
 			vrButton.onclick();
 		}
@@ -130,24 +114,22 @@ A big concern at some point will be navigating folders
 			initAutoRotamer(socket, models)
 		);
 
+		//maybe these things could be on a desk? Easier to pick up
+
 		var toolSpacing = 0.15;
 		for(var i = 0; i < thingsToSpaceOut.length; i++)
 		{
 			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.2);
 		}
+
+		initRigidBodyMover(controllers, models)
 	}
 
 	socket = initSocket();
 	models = initModelCreationSystem(socket, visiBox.planes);
 
-	socket.onopen = function()
-	{
-		launcher.socketOpened = true;
-		launcher.attemptLaunch();
-	}
 	socket.commandReactions["model"] = function(msg)
 	{
-		console.log("hm")
 		makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
 		initTools();
@@ -169,6 +151,9 @@ A big concern at some point will be navigating folders
 			}
 		);
 	}
-	launcher.initComplete = true;
-	launcher.attemptLaunch();
+	socket.onopen = function()
+	{
+		document.body.appendChild( renderer.domElement );
+		render();
+	}
 })();

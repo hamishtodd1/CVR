@@ -1,4 +1,10 @@
 /*
+	When you come to refactor this:
+		The cylinders and spheres (separate arrays) are a "resource"
+		You can change their color. They don't need an order
+		When an atom is deleted, you make an "orphan" sphere and cylinder with all vertices 0
+		When an atom is added, go through the spheres and cylinders and find orphans
+
  * Change color of carbons as you go down the chain, to give you landmarks. This is interesting. Useful though?
  */
 
@@ -333,7 +339,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			this.array[ index*3+2 ] = c;
 		}
 		
-		bufferGeometry.colorAtom = function( atom, newColor )
+		molecule.colorAtom = function( atom, newColor )
 		{
 			if(!newColor)
 			{
@@ -342,51 +348,34 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			
 			for(var k = 0; k < nSphereVertices; k++)
 			{
-				this.attributes.color.setXYZ( atom.firstVertexIndex + k, 
+				this.geometry.attributes.color.setXYZ( atom.firstVertexIndex + k, 
 					newColor.r, 
 					newColor.g, 
 					newColor.b );
 			}
 
-			this.attributes.color.needsUpdate = true;
-		}
+			this.geometry.attributes.color.needsUpdate = true;
 
-		var firstFaceIndex = atoms.length * nSphereFaces;
-		var firstVertexIndex = atoms.length * nSphereVertices;
-		for(var i = 0, il = atoms.length; i < il; i++ )
-		{
-			for(var j = 0, jl = atoms[ i ].bondPartners.length; j < jl; j++)
+			for(var j = 0, jl = atom.bondPartners.length; j < jl; j++)
 			{
-				//bondPartners could have a fixed length of 4
-				atoms[i].bondFirstVertexIndices.push(firstVertexIndex);
-
-				for(var k = 0; k < cylinderSides; k++)
-				{
-					bufferGeometry.index.setABC(firstFaceIndex+k*2,
-						(k*2+1) + firstVertexIndex,
-						(k*2+0) + firstVertexIndex,
-						(k*2+2) % (cylinderSides*2) + firstVertexIndex );
-					
-					bufferGeometry.index.setABC(firstFaceIndex+k*2 + 1,
-						(k*2+1) + firstVertexIndex,
-						(k*2+2) % (cylinderSides*2) + firstVertexIndex,
-						(k*2+3) % (cylinderSides*2) + firstVertexIndex );
-				}
+				var bondFirstVertexIndex = atom.bondFirstVertexIndices[j];
 				for(var k = 0, kl = cylinderSides * 2; k < kl; k++)
 				{
-					bufferGeometry.attributes.color.setXYZ( firstVertexIndex + k, 
-						ATOM_COLORS[atoms[i].element].r,
-						ATOM_COLORS[atoms[i].element].g,
-						ATOM_COLORS[atoms[i].element].b );
+					this.geometry.attributes.color.setXYZ( bondFirstVertexIndex + k,
+						newColor.r,
+						newColor.g,
+						newColor.b );
 				}
-				
-				firstVertexIndex += cylinderSides * 2;
-				firstFaceIndex += cylinderSides * 2;
 			}
 		}
-
-		bufferGeometry.refreshAtomPositionInMesh = function( atom )
+		
+		molecule.setAtomPosition = function( atom, newPosition )
 		{
+			if(newPosition)
+			{
+				atom.position.copy(newPosition);
+			}
+
 			var sourceGeometry = atomGeometry;
 			var bondRadius = defaultBondRadius;
 			if(atom.element === 9)
@@ -397,7 +386,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 
 			for(var k = 0; k < nSphereVertices; k++)
 			{
-				this.attributes.position.setXYZ( atom.firstVertexIndex + k, 
+				this.geometry.attributes.position.setXYZ( atom.firstVertexIndex + k, 
 						sourceGeometry.vertices[k].x + atom.position.x, 
 						sourceGeometry.vertices[k].y + atom.position.y, 
 						sourceGeometry.vertices[k].z + atom.position.z );
@@ -408,7 +397,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 				refreshCylinderCoordsAndNormals(
 					atom.position,
 					atom.position.clone().lerp(atom.bondPartners[i].position,0.5),
-					this, cylinderSides, 
+					this.geometry, cylinderSides, 
 					atom.bondFirstVertexIndices[i],
 					bondRadius );
 
@@ -417,20 +406,19 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 				refreshCylinderCoordsAndNormals(
 					atom.bondPartners[i].position,
 					atom.bondPartners[i].position.clone().lerp(atom.position,0.5),
-					this, cylinderSides, 
+					this.geometry, cylinderSides, 
 					partnersBondFirstVertexIndex,
 					bondRadius );
 			}
-			this.attributes.position.needsUpdate = true;
+			this.geometry.attributes.position.needsUpdate = true;
 		}
 		
+		var cylinderFirstFaceIndex = atoms.length * nSphereFaces;
+		var cylinderFirstVertexIndex = atoms.length * nSphereVertices;
 		for(var i = 0, il = atoms.length; i < il; i++ )
 		{
 			atoms[i].firstVertexIndex = i*nSphereVertices;
 			atoms[i].firstFaceIndex = i*nSphereFaces;
-			
-			bufferGeometry.colorAtom(atoms[i]);
-			bufferGeometry.refreshAtomPositionInMesh(atoms[i])
 			
 			for(var k = 0; k < nSphereVertices; k++)
 			{
@@ -446,9 +434,101 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 						atomGeometry.faces[k].b + atoms[i].firstVertexIndex, 
 						atomGeometry.faces[k].c + atoms[i].firstVertexIndex );
 			}
+
+			for(var j = 0, jl = atoms[ i ].bondPartners.length; j < jl; j++)
+			{
+				//bondPartners could have a fixed length of 4
+				atoms[i].bondFirstVertexIndices.push(cylinderFirstVertexIndex);
+
+				for(var k = 0; k < cylinderSides; k++)
+				{
+					bufferGeometry.index.setABC(cylinderFirstFaceIndex+k*2,
+						(k*2+1) + cylinderFirstVertexIndex,
+						(k*2+0) + cylinderFirstVertexIndex,
+						(k*2+2) % (cylinderSides*2) + cylinderFirstVertexIndex );
+					
+					bufferGeometry.index.setABC(cylinderFirstFaceIndex+k*2 + 1,
+						(k*2+1) + cylinderFirstVertexIndex,
+						(k*2+2) % (cylinderSides*2) + cylinderFirstVertexIndex,
+						(k*2+3) % (cylinderSides*2) + cylinderFirstVertexIndex );
+				}
+				
+				cylinderFirstVertexIndex += cylinderSides * 2;
+				cylinderFirstFaceIndex += cylinderSides * 2;
+			}
+
+			molecule.colorAtom(atoms[i]);
+			molecule.setAtomPosition(atoms[i])
 		}
 
 		return molecule;
+	}
+
+	var highlightColor = new THREE.Color(1,1,1);
+	highlightResiduesOverlappingSphere = function(sphericalObject, radiusSquared)
+	{
+		for(var i = 0; i < models.length; i++)
+		{
+			var localPosition = sphericalObject.getWorldPosition();
+			models[i].updateMatrixWorld();
+			models[i].worldToLocal(localPosition);
+			
+			for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+			{
+				if( models[i].atoms[j].position.distanceToSquared( localPosition ) < radiusSquared )
+				{
+					if(!models[i].atoms[j].selected)
+					{
+						models[i].atoms[j].selected = true;
+
+						for(var k = 0, kl = models[i].atoms.length; k < kl; k++)
+						{
+							if(models[i].atoms[k].resNo === models[i].atoms[j].resNo)
+							{
+								models[i].colorAtom(models[i].atoms[k], highlightColor);
+							}
+						}
+					}
+				}
+				else
+				{
+					if( models[i].atoms[j].selected )
+					{
+						models[i].atoms[j].selected = false;
+
+						for(var k = 0, kl = models[i].atoms.length; k < kl; k++)
+						{
+							if(models[i].atoms[k].resNo === models[i].atoms[j].resNo)
+							{
+								models[i].colorAtom(models[i].atoms[k]);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	turnOffAllHighlights = function()
+	{
+		for(var i = 0; i < models.length; i++)
+		{
+			for(var j = 0, jl = models[i].atoms[j].length; j < jl; j++)
+			{
+				if( models[i].atoms[j].selected )
+				{
+					models[i].atoms[j].selected = false;
+
+					for(var k = 0, kl = models[i].atoms.length; k < kl; k++)
+					{
+						if(models[i].atoms[k].resNo === models[i].atoms[j].resNo)
+						{
+							models[i].colorAtom(models[i].atoms[k]);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	//------------Socket
@@ -516,7 +596,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 			{
 				var atom = model.atoms[msg.atoms[i][3]];
 				atom.position.fromArray( msg.atoms[i][2] );
-				model.geometry.refreshAtomPositionInMesh(atom);
+				model.setAtomPosition(atom);
 
 				if(atom.label)
 				{

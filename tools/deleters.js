@@ -60,7 +60,7 @@ function initAtomDeleter(socket, models)
 							if(!models[i].atoms[j].selected)
 							{
 								models[i].atoms[j].selected = true;
-								models[i].geometry.colorAtom(models[i].atoms[j], highlightColor);
+								models[i].colorAtom(models[i].atoms[j], highlightColor);
 							}
 						}
 						else
@@ -68,7 +68,7 @@ function initAtomDeleter(socket, models)
 							if( models[i].atoms[j].selected )
 							{
 								models[i].atoms[j].selected = false;
-								models[i].geometry.colorAtom( models[i].atoms[j] );
+								models[i].colorAtom( models[i].atoms[j] );
 							}
 						}
 					}
@@ -86,7 +86,7 @@ function initAtomDeleter(socket, models)
 					if( models[i].atoms[j].selected )
 					{
 						models[i].atoms[j].selected = false;
-						models[i].geometry.colorAtom( models[i].atoms[j] );
+						models[i].colorAtom( models[i].atoms[j] );
 					}
 				}
 			}
@@ -117,8 +117,6 @@ function initResidueDeleter(socket, models)
 	label.scale.setScalar(radius/3)
 	residueDeleter.add(label);
 
-	var highlightColor = new THREE.Color(1,1,1);
-	
 	residueDeleter.update = function()
 	{
 		if( models.length === 0 )
@@ -156,70 +154,12 @@ function initResidueDeleter(socket, models)
 			}
 			else
 			{
-				for(var i = 0; i < models.length; i++)
-				{
-					var ourPosition = this.getWorldPosition();
-					models[i].updateMatrixWorld();
-					models[i].worldToLocal(ourPosition);
-					
-					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
-					{
-						if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
-						{
-							if(!models[i].atoms[j].selected)
-							{
-								models[i].atoms[j].selected = true;
-
-								for(var k = 0, kl = models[i].atoms.length; k < kl; k++)
-								{
-									if(models[i].atoms[k].resNo === models[i].atoms[j].resNo)
-									{
-										models[i].geometry.colorAtom(models[i].atoms[k], highlightColor);
-									}
-								}
-							}
-						}
-						else
-						{
-							if( models[i].atoms[j].selected )
-							{
-								models[i].atoms[j].selected = false;
-
-								for(var k = 0, kl = models[i].atoms.length; k < kl; k++)
-								{
-									if(models[i].atoms[k].resNo === models[i].atoms[j].resNo)
-									{
-										models[i].geometry.colorAtom(models[i].atoms[k]);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			for(var i = 0; i < models.length; i++)
-			{
-				for(var j = 0, jl = models[i].atoms[j].length; j < jl; j++)
-				{
-					if( models[i].atoms[j].selected )
-					{
-						models[i].atoms[j].selected = false;
-
-						for(var k = 0, kl = models[i].atoms.length; k < kl; k++)
-						{
-							if(models[i].atoms[k].resNo === models[i].atoms[j].resNo)
-							{
-								models[i].geometry.colorAtom(models[i].atoms[k]);
-							}
-						}
-					}
-				}
+				highlightResiduesOverlappingSphere(this, ourRadiusSq)
 			}
 		}
 	}
+
+	residueDeleter.onLetGo = turnOffAllHighlights;
 	
 	thingsToBeUpdated.push(residueDeleter);
 	holdables.push(residueDeleter)

@@ -94,8 +94,8 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox )
 	}
 	else if( controllers[1-bothAttachedController].grippingSide && !controllers[bothAttachedController].grippingSide )
 	{
-		establishAttachment(visiBox, controllers[1-bothAttachedController]);
-		establishAttachment(assemblage, scene);
+		establishAttachment(assemblage, controllers[1-bothAttachedController]);
+		establishAttachment(visiBox, scene);
 	}
 	else
 	{

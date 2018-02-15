@@ -1,95 +1,66 @@
-/* 
-	Mover
-		Both hands come together to make a sphere appear
-		Bit of kinematics?
-		Refine by default
+//environment distances is a bunch of spheres you can stick in there (and leave). They stay in model space
 
-In real life: say you're picking things off a bush. If you want to get a few things you pinch, if you want a lot then you scoop. It's a natural action of your hand
- * Ok here: 
- * Regularizer is pinch
- */
 
-/*
- * sidechain flipper. Should be part of atom movement
- * do-180-degree-side-chain-flip imol chain id resno inscode altconf [function]
-Where:
-• imol is an integer number
-• chain id is a string
-• resno is an integer number
-• inscode is a string
-• altconf is a string
- */
-
-/* 
- * 
- * peptide flipper - once again, grabbing it and moving it!
- * 
- * need these things
- *imol is an integer number
-• chain id is a string
-• resno is an integer number
-• inscode is a string
-• altconf
- */
-
-//autofit best rotamer
-/*Rotamer changer
- * Put it over an atom. Sends to coot, gets different conformations, shows them. They are selectable
- * 
- * This is a specific tool because Coot has specific suggestions. But why shouldn't it have suggestions for an arbitrary atom?
- * 
- */
-function initAutoRotamer(socket, models)
-{
-	var autoRotamer = new THREE.Object3D();
+// function initEnvironmentDistancers(models)
+// {
+// 	var seed = new THREE.Object3D();
 	
-	var radius = 0.05;
-	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0x00FF00, opacity: 0.7}));
-	autoRotamer.add( ball );
-	ball.geometry.computeBoundingSphere();
-	autoRotamer.boundingSphere = ball.geometry.boundingSphere;
+// 	var radius = 0.05;
+// 	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0x0000FF, opacity: 0.7}));
+// 	atomLabeller.add( ball );
+// 	ball.geometry.computeBoundingSphere();
+// 	atomLabeller.boundingSphere = ball.geometry.boundingSphere;
 
-	var label = makeTextSign( "Auto rotamer" );
-	label.position.z = radius;
-	label.scale.setScalar(radius/3)
-	autoRotamer.add(label);
+// 	var label = makeTextSign( "Environment Distances" );
+// 	label.position.z = radius;
+// 	label.scale.setScalar(radius/3)
+// 	atomLabeller.add(label);
 	
-	autoRotamer.update = function()
-	{
-		label.visible = this.parent === scene;
+// 	/*
 
-		var ourRadiusSq = sq( radius / getAngstrom() );
+// 	*/
+// 	function updateEnvironmentDistancer = function()
+// 	{
+// 		this.label.visible = this.parent === scene;
 
-		if(this.parent !== scene && this.parent.button1 && !this.parent.button1Old )
-		{
-			for(var i = 0; i < models.length; i++)
-			{
-				var ourPosition = this.getWorldPosition();
-				models[i].updateMatrixWorld();
-				models[i].worldToLocal(ourPosition);
+// 		var ourRadiusSq = sq( radius / getAngstrom() );
+
+// 		//label showing length
+// 		//might be nice to also show/otherwise make aware of some typical lengths?
+// 		if(this.parent !== scene)
+// 		{
+// 			for(var i = 0; i < models.length; i++)
+// 			{
+// 				var ourPosition = this.getWorldPosition();
+// 				models[i].updateMatrixWorld();
+// 				models[i].worldToLocal(ourPosition);
 				
-				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
-				{
-					if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
-					{
-						var msg = {command:"autoFitBestRotamer"};
-						models[i].atoms[j].assignAtomSpecToMessage( msg );
-						socket.send(JSON.stringify(msg));
-						//TODO this gets sent more than you would like
-					}
-				}
-			}
-		}
-	}
+				
+// 			}
+// 		}
+// 	}
+
+// 	seed.onSqueeze = function(controller)
+// 	{
+// 		var newEnvironmentDistancer = new THREE.Mesh(seed.geometry, seed.material);
+// 		newEnvironmentDistancer.label = new THREE.Mesh(label.geometry,label.material);
+// 		scene.add(newEnvironmentDistancer);
+// 		newEnvironmentDistancer.position.copy(seed.position);
+// 		newEnvironmentDistancer.quaternion.copy(seed.quaternion);
+// 		establishAttachment(newEnvironmentDistancer, controller);
+
+// 		newEnvironmentDistancer.update = updateEnvironmentDistancer;
+
+// 		holdables.push(newEnvironmentDistancer)
+// 		thingsToBeUpdated.push(newEnvironmentDistancer);
+// 		newEnvironmentDistancer.ordinaryParent = newEnvironmentDistancer.parent;
+// 	}
 	
-	thingsToBeUpdated.push(autoRotamer);
-	holdables.push(autoRotamer)
-	scene.add(autoRotamer);
-	autoRotamer.ordinaryParent = autoRotamer.parent;
+// 	thingsToBeUpdated.push(atomLabeller);
+// 	scene.add(atomLabeller);
 
-	return autoRotamer;
-}
-
+// 	return atomLabeller;
+// }
 
 function initAtomLabeller(models)
 {
@@ -275,4 +246,52 @@ function initMutator()
 	holdables.push(mutator);
 	scene.add(mutator);
 	return mutator;
+}
+
+function initPointer()
+{
+	var pointerRadius = 0.03;
+	var pointer = new THREE.Mesh(
+		new THREE.CylinderBufferGeometry( pointerRadius,pointerRadius, pointerRadius * 4,32 ),
+		new THREE.MeshPhongMaterial({color:0x00FFFF })
+	);
+	pointer.geometry.computeBoundingSphere();
+	pointer.boundingSphere = pointer.geometry.boundingSphere;
+
+	var laserRadius = 0.001;
+	var laser = new THREE.Mesh(
+		new THREE.CylinderBufferGeometryUncentered( laserRadius, 2), 
+		new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) 
+	);
+	pointer.add(laser);
+	laser.visible = false;
+
+	var label = makeTextSign( "pointer" );
+	label.position.z = pointerRadius;
+	label.rotation.z = -TAU/4;
+	label.scale.setScalar(pointerRadius)
+	pointer.add(label);
+	pointer.rotation.z = TAU/4;
+
+	pointer.update = function()
+	{
+		label.visible = this.parent === scene;
+		
+		if( this.parent !== scene )
+		{
+			laser.visible = this.parent.button1;
+		}
+		else
+		{
+			laser.visible = false;
+		}
+	}
+
+	thingsToBeUpdated.push(pointer);
+	holdables.push(pointer);
+	pointer.ordinaryParent = scene;
+
+	pointer.position.set(0,-0.4,0.1)
+	scene.add(pointer);
+	return pointer;
 }
