@@ -14,15 +14,19 @@ function establishAttachment(child, intendedParent)
 		{
 			child.onLetGo();
 		}
+		if(intendedParent !== child.ordinaryParent && child.onGrab)
+		{
+			child.onGrab();
+		}
 	}
 }
 
-function loop( socket, maps, models, controllers, vrInputSystem, visiBox )
+function loop( maps, models, controllers, vrInputSystem, visiBox )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;
 	
-	vrInputSystem.update( socket );
+	vrInputSystem.update();
 	
 	for(var i = 0; i < controllers.length; i++)
 	{

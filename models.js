@@ -123,7 +123,7 @@ function updateLabel()
 	}
 }
 
-function initModelCreationSystem( socket, visiBoxPlanes)
+function initModelCreationSystem( visiBoxPlanes)
 {
 	var models = [];
 
@@ -246,15 +246,15 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 
 		var bufferGeometry = molecule.geometry;
 
-		var ATOM_COLORS = Array(10);
-		for(var i = 0; i < ATOM_COLORS.length; i++)
-			ATOM_COLORS[i] = new THREE.Color( 0.2,0.2,0.2 );
-		ATOM_COLORS[0].setRGB(72/255,193/255,103/255); //carbon
-		ATOM_COLORS[1].setRGB(0.8,0.8,0.2); //sulphur
-		ATOM_COLORS[2].setRGB(0.8,0.2,0.2); //oxygen
-		ATOM_COLORS[3].setRGB(0.2,0.4,0.8); //nitrogen
-		ATOM_COLORS[6].setRGB(1.0,165/255,0.0); //phosphorus
-		ATOM_COLORS[9].setRGB(1.0,1.0,1.0); //hydrogen
+		var atomColors = Array(10);
+		for(var i = 0; i < atomColors.length; i++)
+			atomColors[i] = new THREE.Color( 0.2,0.2,0.2 );
+		atomColors[0].setRGB(72/255,193/255,103/255); //carbon
+		atomColors[1].setRGB(0.8,0.8,0.2); //sulphur
+		atomColors[2].setRGB(0.8,0.2,0.2); //oxygen
+		atomColors[3].setRGB(0.2,0.4,0.8); //nitrogen
+		atomColors[6].setRGB(1.0,165/255,0.0); //phosphorus
+		atomColors[9].setRGB(1.0,1.0,1.0); //hydrogen
 
 		var bondData;
 		if( bondDataFromCoot )
@@ -263,9 +263,9 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		}
 		else
 		{
-			bondData = Array(4); //seems to be 24
+			bondData = Array(4);
 			//position position, bondNumber, index index
-			//btw the positions never seem to be correct to more than three and a half decimal places
+			//coords never seem to be correct to more than three and a half decimal places
 			for(var i = 0; i < bondData.length; i++)
 			{
 				bondData[i] = [];
@@ -343,7 +343,7 @@ function initModelCreationSystem( socket, visiBoxPlanes)
 		{
 			if(!newColor)
 			{
-				newColor = ATOM_COLORS[ atom.element ];
+				newColor = atomColors[ atom.element ];
 			}
 			
 			for(var k = 0; k < nSphereVertices; k++)

@@ -41,6 +41,37 @@ function checkForNewGlobals()
 }
 //also nice would be "check for unused variables"
 
+function DottedLineGeometry(numDots, radius)
+{
+	var geo = new THREE.Geometry();
+
+	var radiusSegments = 15;
+	geo.vertices = Array(numDots*radiusSegments*2);
+	geo.faces = Array(numDots*radiusSegments*2);
+	for(var i = 0; i < numDots; i++)
+	{
+		for( var j = 0; j < radiusSegments; j++)
+		{
+			var bottomRightVertex = i*radiusSegments*2+j;
+			geo.vertices[bottomRightVertex]   			   = new THREE.Vector3(radius,2*i,   0).applyAxisAngle(yVector,TAU*j/radiusSegments);
+			geo.vertices[bottomRightVertex+radiusSegments] = new THREE.Vector3(radius,2*i+1, 0).applyAxisAngle(yVector,TAU*j/radiusSegments);
+
+			geo.faces[i*radiusSegments*2+j*2]   = new THREE.Face3(
+				bottomRightVertex,
+				bottomRightVertex+radiusSegments,
+				i*radiusSegments*2+(j+1)%radiusSegments)
+			geo.faces[i*radiusSegments*2+j*2+1] = new THREE.Face3(
+				bottomRightVertex+radiusSegments,
+				i*radiusSegments*2+(j+1)%radiusSegments+radiusSegments,
+				i*radiusSegments*2+(j+1)%radiusSegments );
+		}
+	}
+	geo.computeFaceNormals();
+	geo.computeVertexNormals();
+
+	return geo;
+}
+
 THREE.Object3D.prototype.getUnitVectorInObjectSpace = function(axis)
 {
 	return axis.clone().applyMatrix4(this.matrixWorld).sub(this.getWorldPosition()).normalize();
@@ -168,6 +199,15 @@ function getStandardFunctionCallString(myFunc)
 	return myFunc.toString().split("\n",1)[0].substring(9);
 }
 
+function redirectCylinder(cylinder, start, newY)
+{
+	var newX = randomPerpVector( newY ).normalize();
+	var newZ = newY.clone().cross(newX).normalize();
+	
+	cylinder.matrix.makeBasis( newX, newY, newZ );
+	cylinder.matrix.setPosition( start );
+	cylinder.matrixAutoUpdate = false;
+}
 function randomPerpVector(ourVector){
 	var perpVector = new THREE.Vector3();
 	

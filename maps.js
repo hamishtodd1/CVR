@@ -4,39 +4,36 @@
 	TODO turn into proper object so you don't have to repeat the functions
 */
 
-function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
+function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 {
+	var lineWidth = 1.25;
+	var colors = {
+		map_den: 0x4372D2,
+		map_pos: 0x298029,
+		map_neg: 0x8B2E2E,
+	}
+
 	var map = new THREE.Object3D();
 	var unitCellMesh = null;
 	
-	var data = null;
+	var data = new UM.ElMap();
+	data.from_ccp4(arrayBuffer, true); //pdbe and dsn9 exist
+	var unitCellGetter = data.unit_cell.orthogonalize.bind(data.unit_cell);
+	unitCellMesh = UM.makeRgbBox(unitCellGetter, {color: {r:1,g:1,b:1}});
+	unitCellMesh.visible = false;
+	map.add(unitCellMesh);
 	var types = isDiffMap ? ['map_pos', 'map_neg'] : ['map_den'];
 	var style = "squarish";
 	if(!isolevel) isolevel = isDiffMap ? 3.0 : 1.5; //units of rmsd
-
-	var req = new XMLHttpRequest();
-	req.open('GET', url, true);
-	req.responseType = 'arraybuffer';
-	req.onreadystatechange = function ()
+	
+	function toggleUnitCell()
 	{
-		if (req.readyState === 4)
-		{
-			data = new UM.ElMap();
-			data.from_ccp4(req.response, true); //pdbe and dsn9 exist
-
-			var unitCellGetter = data.unit_cell.orthogonalize.bind(data.unit_cell);
-			unitCellMesh = UM.makeRgbBox(unitCellGetter, {color: {r:1,g:1,b:1}});
-			unitCellMesh.visible = false;
-			map.add(unitCellMesh);
-
-			map.extractAndRepresentBlock();
-		}
-	};
-	req.send(null);
+		unitCellMesh.visible = !unitCellMesh.visible;
+	}
 
 	map.extractAndRepresentBlock = function()
 	{
-		blockCenterVector = visiBox.position.clone()
+		var blockCenterVector = visiBox.position.clone()
 
 		assemblage.updateMatrixWorld();
 		assemblage.worldToLocal( blockCenterVector );
@@ -46,13 +43,7 @@ function Map(url, isDiffMap, visiBox, blockRadius, isolevel)
 		data.extract_block( blockRadius, [ blockCenterVector.x, blockCenterVector.y, blockCenterVector.z ] );
 		refreshMeshesFromBlock();
 	}
-
-	var lineWidth = 1.25;
-	var colors = {
-		map_den: 0x3362B2,
-		map_pos: 0x298029,
-		map_neg: 0x8B2E2E,
-	}
+	map.extractAndRepresentBlock();
 
 	function refreshMeshesFromBlock()
 	{

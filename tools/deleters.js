@@ -1,5 +1,5 @@
 //TODO turning white is a bad way to highlight, they're inside a ball
-function initAtomDeleter(socket, models)
+function initAtomDeleter( models)
 {
 	var atomDeleter = new THREE.Object3D();
 	
@@ -102,7 +102,7 @@ function initAtomDeleter(socket, models)
 }
 
 //seems to have a bug if you delete two residues at the same time
-function initResidueDeleter(socket, models)
+function initResidueDeleter( models)
 {
 	var residueDeleter = new THREE.Object3D();
 	

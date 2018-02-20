@@ -80,7 +80,7 @@ function initControllers(controllers, renderer,ourVrEffect)
 		loadControllerModel(i);
 	}
 
-	vrInputSystem.update = function(socket)
+	vrInputSystem.update = function()
 	{
 		var gamepads = navigator.getGamepads();
 		for(var k = 0; k < gamepads.length; ++k)

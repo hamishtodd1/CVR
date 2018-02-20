@@ -1,8 +1,8 @@
 function initSocket()
 {
 	var ip = "192.168.56.101";
-	ip = "localhost"
-	var socket = new WebSocket("ws://"+ip+":9090/ws");
+	// ip = "localhost"
+	socket = new WebSocket("ws://"+ip+":9090/ws");
 	oldReadyState = socket.readyState;
 	socket.onerror = function()
 	{

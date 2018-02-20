@@ -27,9 +27,20 @@
 	Pull the ones you're most interested in to the front
 	Some go into the floor
 	Pull it out like a towel rail
+	
+	Maybe:
+		at all times, you have floating cursors on the walls
+		They are always "at the end of your lasers"
+		Probably the wall should actually be curved, cylindrical
+		But "things to pick up" should probably still be in reach
+		It shouldn't be far away
+		You can rearrange it as you please, bunch of rectangles
+
+	There again, no AAAD. You want stats that concern a thing to be close to that thing
 
 */
 
+//we can do better than bar charts and ramachandran.
 function initStats()
 {
 	var randomData = Array(37);
@@ -39,12 +50,13 @@ function initStats()
 	}
 	var randomGraph = Graph(randomData);
 	randomGraph.rotation.y = TAU/4
-	randomGraph.position.x = -2 + 0.0001;
+	randomGraph.position.x = -ROOM_RADIUS + 0.0001;
 	randomGraph.position.y = -randomGraph.scale.y / 2;
-	randomGraph.position.z = 2;
+	randomGraph.scale.multiplyScalar(0.5)
+	randomGraph.position.z = randomGraph.getWorldSpaceWidth()/2
 	scene.add(randomGraph)
 
-	updateStats = function()
+	var updateStats = function()
 	{
 		//your controllers have a laser
 		//If the laser is in the rectangular area, it is visible
@@ -90,6 +102,11 @@ function Graph(data)
 	yAxis.label.rotation.z = TAU/4;
 	graph.add(xAxis.label)
 	graph.add(yAxis.label)
+
+	graph.getWorldSpaceWidth = function()
+	{
+		return background.scale.x * this.scale.x;
+	}
 
 	graph.displayDataset = function(data)
 	{

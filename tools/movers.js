@@ -37,14 +37,19 @@
 
 	intermediate_atoms_distortions(residues_spec_list)
 
+	continue to hold the thing in place and it continues to send force vectors
+
 
 	"residues_distortions(imol, residues_spec_list)"
+
+	You may want to see environment distances as the things are moving
+	
  */
 
 
 //this is the default thing that your hands do
 //you know so well what your hand is doing, do you HAVE to have refinement turned on for this?
-function initRigidBodyMover(controllers, models)
+function initRigidBodyMover( models )
 {
 	/*
 		Replaces peptide flipper and sidechainflipper.
@@ -52,19 +57,25 @@ function initRigidBodyMover(controllers, models)
 
 		all residues in a spherical region surrounding your hand are refining
 		A switch that says "refinement on/off"
+
+		Next plan: make it a sphere unless your hands are close, in which case it's a pill shape
+		One end in each hand
+
+		Or, two spheres, and all the residues between them, along the chain, get highlighted
+			Paul says this may help select them https://github.com/pemsley/coot/blob/f4630d7da146ecece648600f7208c46809072063/python/fitting.py
+			python_representation(imol) - you get a list of chain, chains have list of residues, residues have list of atoms, atoms have list of atom-properties.  You can find your chain by chain-id, and look for the residue numbers in that chain.
 	*/
 
-	var attachedControllerIndex = 0;
-
 	var rigidBodyMover = new THREE.Object3D();
-	var ball = new THREE.LineSegments( new THREE.WireframeGeometry(new THREE.EfficientSphereBufferGeometry(1) ) );
+	var ball = new THREE.LineSegments( new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(1) ) );
 	rigidBodyMover.add(ball);
+	rigidBodyMover.scale.setScalar(0.1)
 	ball.geometry.computeBoundingSphere();
 	rigidBodyMover.boundingSphere = ball.geometry.boundingSphere;
-	controllers[attachedControllerIndex].add(rigidBodyMover);
 
 	var label = makeTextSign( "Rigid Mover" );
-	label.position.z = radius;
+	label.position.z = 1;
+	label.scale.setScalar(1/3)
 	rigidBodyMover.add(label);
 
 	var capturedAtoms = [];
@@ -72,63 +83,67 @@ function initRigidBodyMover(controllers, models)
 
 	rigidBodyMover.update = function()
 	{
-		if( controllers[attachedControllerIndex].button1 )
-		{
-			controllers[attachedControllerIndex].updateMatrixWorld();
+		label.visible = this.parent === scene;
 
-			if( !controllers[attachedControllerIndex].button1Old )
+		if(this.parent !== this.ordinaryParent)
+		{
+			console.error("need to notify server about movements!")
+
+			if( this.parent.button1 )
 			{
-				var localRadiusSq = sq(this.scale.x / getAngstrom())
-				for(var i = 0; i < models.length; i++)
+				this.parent.updateMatrixWorld();
+
+				if( !this.parent.button1Old )
 				{
-					var ourPosition = this.getWorldPosition();
-					models[i].updateMatrixWorld();
-					models[i].worldToLocal(ourPosition);
-					
-					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					var localRadiusSq = sq(this.scale.x / getAngstrom())
+					for(var i = 0; i < models.length; i++)
 					{
-						if(models[i].atoms[j].position.distanceToSquared( ourPosition ) < localRadiusSq )
+						var ourPosition = this.getWorldPosition();
+						models[i].updateMatrixWorld();
+						models[i].worldToLocal(ourPosition);
+						
+						for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 						{
-							capturedAtoms.push(models[i].atoms[j]);
-							localCapturedAtomPositions.push(models[i].atoms[j].position.clone());
-							models[i].localToWorld(localCapturedAtomPositions[localCapturedAtomPositions.length-1]);
-							controllers[attachedControllerIndex].worldToLocal(localCapturedAtomPositions[localCapturedAtomPositions.length-1]);
+							if(models[i].atoms[j].position.distanceToSquared( ourPosition ) < localRadiusSq )
+							{
+								capturedAtoms.push(models[i].atoms[j]);
+								localCapturedAtomPositions.push(models[i].atoms[j].position.clone());
+								models[i].localToWorld(localCapturedAtomPositions[localCapturedAtomPositions.length-1]);
+								this.parent.worldToLocal(localCapturedAtomPositions[localCapturedAtomPositions.length-1]);
+							}
 						}
 					}
 				}
-			}
 
-			for(var i = 0, il = capturedAtoms.length; i < il; i++)
-			{
-				var model = getModelWithImol(capturedAtoms[i].imol);
-				model.updateMatrixWorld()
-				
-				var newAtomPosition = localCapturedAtomPositions[i].clone();
-				controllers[attachedControllerIndex].localToWorld(newAtomPosition);
-				model.worldToLocal(newAtomPosition);
-				model.setAtomPosition(capturedAtoms[i], newAtomPosition)
+				for(var i = 0, il = capturedAtoms.length; i < il; i++)
+				{
+					var model = getModelWithImol(capturedAtoms[i].imol);
+					model.updateMatrixWorld()
+					
+					var newAtomPosition = localCapturedAtomPositions[i].clone();
+					this.parent.localToWorld(newAtomPosition);
+					model.worldToLocal(newAtomPosition);
+					model.setAtomPosition(capturedAtoms[i], newAtomPosition)
+				}
 			}
 		}
-		else
-		{
-			if( controllers[attachedControllerIndex].button1Old )
-			{
-				capturedAtoms = [];
-				localCapturedAtomPositions = [];
-			}
 
-			//a cylinder. It can encompass a bunch of residues that way
-			//it has a default size
-			//bring your other hand over and you can increase it
+		if( !this.parent.button1 && this.parent.button1Old )
+		{
+			capturedAtoms = [];
+			localCapturedAtomPositions = [];
 		}
 	}
 
-	// thingsToBeUpdated.push(rigidBodyMover);
+	holdables.push(rigidBodyMover)
+	scene.add(rigidBodyMover);
+	rigidBodyMover.ordinaryParent = rigidBodyMover.parent;
+	thingsToBeUpdated.push(rigidBodyMover);
 
 	return rigidBodyMover;
 }
 
-function initAutoRotamer(socket, models)
+function initAutoRotamer( models )
 {
 	/* Rotamer changer
 	 * Put it over an atom. Sends to coot, gets different conformations, shows them. They are selectable

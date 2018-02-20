@@ -1,15 +1,17 @@
 /*
-Deal with the solid mesh problem and that kinda deals with the clipping planes bug
-
+Party event
 expenses
 train tickets
-ketopine
+Sysmic
+Transfer money to savings account
+7OSME paper
 
 TODO for EM demo
 	interatomic contacts
 	ramachandran
 	solid mesh
 
+Get it to a nice state for Jeffrey Lovelace
 Lots of shit in server to test/implement
 bugs with unfound atoms
 bug with some residues highlighting many residues?
@@ -22,6 +24,11 @@ if two things are overlapping you pick up closer. Or glow for hover
 	Button on controller reserved
 	Flash or something
 
+Maya
+	police dog handler
+	Admin
+	reddit/bluecollarwomen
+
 All tools that move atoms: Could make it so 
 	you can grab an atom or two anywhere, 
 	move it, 
@@ -30,7 +37,6 @@ All tools that move atoms: Could make it so
 Thumbstick could also be used for light intensity?
 
 A big concern at some point will be navigating folders
-
 
 */
 
@@ -62,11 +68,10 @@ A big concern at some point will be navigating folders
 	document.body.appendChild( vrButton );
 
 	var loopCallString = getStandardFunctionCallString(loop);
-	function render() {
-
+	function render()
+	{
 		eval(loopCallString);
 		renderer.render( scene, camera );
-
 	}
 	renderer.animate( render );
 
@@ -95,8 +100,7 @@ A big concern at some point will be navigating folders
 	    camera.updateProjectionMatrix();
 	}, false );
 	
-	makeScene(true);
-
+	initSurroundings(true);
 	initScaleStick();
 	initStats();
 	
@@ -107,53 +111,68 @@ A big concern at some point will be navigating folders
 
 		thingsToSpaceOut.push( 
 			initPointer(),
-			initMutator(),
+			// initMutator(),
+			initAtomLabeller(models),
 			initAtomDeleter(socket, models),
 			initResidueDeleter(socket, models),
-			initAtomLabeller(models),
-			initAutoRotamer(socket, models)
+			// initAutoRotamer(socket, models),
+			initRigidBodyMover(models),
+			initEnvironmentDistance(models)
 		);
 
-		//maybe these things could be on a desk? Easier to pick up
+		//maybe these things could be on a desk? Easier to pick up?
 
 		var toolSpacing = 0.15;
 		for(var i = 0; i < thingsToSpaceOut.length; i++)
 		{
 			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.2);
 		}
-
-		initRigidBodyMover(controllers, models)
 	}
 
-	socket = initSocket();
-	models = initModelCreationSystem(socket, visiBox.planes);
+	initSocket();
+	models = initModelCreationSystem(visiBox.planes);
 
-	socket.commandReactions["model"] = function(msg)
-	{
-		makeModelFromCootString( msg.modelDataString, visiBox.planes );
+	// socket.commandReactions["model"] = function(msg)
+	// {
+	//	console.error("does it need to be in a string? environment distances didn't need to be")
+	// 	makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
-		initTools();
-	}
-	socket.commandReactions["map"] = function(msg)
-	{
-		var newMap = Map(msg["mapFilename"], false, visiBox);
-		maps.push(newMap);
-		assemblage.add(newMap)
-	}
-	socket.commandReactions["loadTutorialModel"] = function(msg)
+	// 	initTools();
+	// }
+	// socket.commandReactions["map"] = function(msg)
+	// {
+	// 	//you have to convert it into an array buffer :/
+	// 	var newMap = Map( msg["dataString"], false, visiBox );
+	// 	maps.push(newMap);
+	// 	assemblage.add(newMap)
+	// }
+	// socket.commandReactions["loadDefaults"] = function(msg)
 	{
 		new THREE.FileLoader().load( "data/tutorialGbr.txt",
-			function( modelStringCoot )
+			function( modelDataString )
 			{
-				makeModelFromCootString( modelStringCoot, visiBox.planes );
+				makeModelFromCootString( modelDataString, visiBox.planes );
 
 				initTools();
 			}
 		);
+		
+		var req = new XMLHttpRequest();
+		req.open('GET', "data/tutorialMap.map", true);
+		req.responseType = 'arraybuffer';
+		req.onreadystatechange = function()
+		{
+			if (req.readyState === 4)
+			{
+				var newMap = Map( req.response, false, visiBox );
+				maps.push(newMap);
+				assemblage.add(newMap)
+			}
+		};
+		req.send(null);
 	}
 	socket.onopen = function()
 	{
-		document.body.appendChild( renderer.domElement );
 		render();
 	}
 })();
