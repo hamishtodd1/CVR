@@ -41,6 +41,21 @@ function checkForNewGlobals()
 }
 //also nice would be "check for unused variables"
 
+function findHighestElementInArray(arr)
+{
+	var highestValue = -Infinity;
+	var index = null;
+	for(var i = 0, il = arr.length; i < il; i++)
+	{
+		if(arr[i]>highestValue)
+		{
+			highestValue = arr[i]
+			index = i;
+		}
+	}
+	return index;
+}
+
 function DottedLineGeometry(numDots, radius)
 {
 	var geo = new THREE.Geometry();

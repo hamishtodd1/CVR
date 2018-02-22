@@ -1,38 +1,30 @@
 /*
-Party event
-expenses
-train tickets
-Sysmic
-Transfer money to savings account
-7OSME paper
-
+notify coot of atom movements
 TODO for EM demo
-	interatomic contacts
-	ramachandran
 	solid mesh
+	ramachandran
 
 Get it to a nice state for Jeffrey Lovelace
-Lots of shit in server to test/implement
 bugs with unfound atoms
 bug with some residues highlighting many residues?
 mutator
-Try just having "rigid" atom movement. THEN think about other tools.
-Refine is most important
 if two things are overlapping you pick up closer. Or glow for hover
 "undo"
 	Just coot undo, then get the result? Full refresh
 	Button on controller reserved
 	Flash or something
 
+Party event
+expenses
+train tickets
+Sysmic
+Transfer money to savings account
+7OSME paper
 Maya
 	police dog handler
 	Admin
 	reddit/bluecollarwomen
 
-All tools that move atoms: Could make it so 
-	you can grab an atom or two anywhere, 
-	move it, 
-	it decides what tool would suit the current movement and shows you the "ghost"
 
 Thumbstick could also be used for light intensity?
 
@@ -54,7 +46,7 @@ A big concern at some point will be navigating folders
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	// renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
-	renderer.vr.enabled = true;
+	// renderer.vr.enabled = true;
 	document.body.appendChild( renderer.domElement );
 
 	var vrButton = WEBVR.createButton( renderer );
@@ -81,8 +73,8 @@ A big concern at some point will be navigating folders
 	controllers = Array(2);
 	var vrInputSystem = initControllers(controllers);
 	
-	var debuggingWithoutVR = false;
-	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	var debuggingWithoutVR = true;
+	assemblage.scale.setScalar( debuggingWithoutVR ? 0.02 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;
@@ -91,6 +83,10 @@ A big concern at some point will be navigating folders
 	scene.add(assemblage);
 
 	var visiBox = initVisiBox(getAngstrom() * debuggingWithoutVR?0.06:0.5, maps);
+	for(var i = 0; i < visiBox.children.length; i++)
+	{
+		visiBox.children[i].visible = false;
+	}
 
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
@@ -148,14 +144,14 @@ A big concern at some point will be navigating folders
 	// }
 	// socket.commandReactions["loadDefaults"] = function(msg)
 	{
-		new THREE.FileLoader().load( "data/tutorialGbr.txt",
-			function( modelDataString )
-			{
-				makeModelFromCootString( modelDataString, visiBox.planes );
+		// new THREE.FileLoader().load( "data/tutorialGbr.txt",
+		// 	function( modelDataString )
+		// 	{
+		// 		makeModelFromCootString( modelDataString, visiBox.planes );
 
-				initTools();
-			}
-		);
+		// 		initTools();
+		// 	}
+		// );
 		
 		var req = new XMLHttpRequest();
 		req.open('GET', "data/tutorialMap.map", true);

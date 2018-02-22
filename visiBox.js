@@ -44,11 +44,11 @@ function initVisiBox(initialScale, maps)
 	{
 		faces[i] = new THREE.Mesh(ourSquareGeometry, new THREE.MeshLambertMaterial({color:0xFF0000,transparent:true, opacity:0.5, side:THREE.DoubleSide}) );
 		visiBox.add( faces[i] );
-		if( i === 1) faces[i].rotation.x = TAU/2;
-		if( i === 2) faces[i].rotation.x = TAU/4;
-		if( i === 3) faces[i].rotation.x = -TAU/4;
-		if( i === 4) faces[i].rotation.y = TAU/4;
-		if( i === 5) faces[i].rotation.y = -TAU/4;
+		if( i === 1 ) faces[i].rotation.x = TAU/2;
+		if( i === 2 ) faces[i].rotation.x = TAU/4;
+		if( i === 3 ) faces[i].rotation.x = -TAU/4;
+		if( i === 4 ) faces[i].rotation.y = TAU/4;
+		if( i === 5 ) faces[i].rotation.y = -TAU/4;
 		faces[i].position.set(0,0,0.5);
 		faces[i].position.applyEuler( faces[i].rotation );
 		
@@ -63,13 +63,13 @@ function initVisiBox(initialScale, maps)
 		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF, side:THREE.DoubleSide});
 		visiBox.updateMatrix();
 
-		visiBox.onLetGo = function()
-		{
-			for(var i = 0; i < maps.length; i++)
-			{
-				maps[i].extractAndRepresentBlock();
-			}
-		}
+		// visiBox.onLetGo = function()
+		// {
+		// 	for(var i = 0; i < maps.length; i++)
+		// 	{
+		// 		maps[i].extractAndRepresentBlock();
+		// 	}
+		// }
 		
 		function putOnCubeCorner(i, position)
 		{

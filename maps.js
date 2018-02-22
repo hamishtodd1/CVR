@@ -23,7 +23,7 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 	unitCellMesh.visible = false;
 	map.add(unitCellMesh);
 	var types = isDiffMap ? ['map_pos', 'map_neg'] : ['map_den'];
-	var style = "squarish";
+	var style = "squarish"; // "marching cubes"
 	if(!isolevel) isolevel = isDiffMap ? 3.0 : 1.5; //units of rmsd
 	
 	function toggleUnitCell()
@@ -57,7 +57,7 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 
 		for (var i = 0; i < types.length; i += 1)
 		{
-			var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+			var isomesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
 				color: colors[types[i]],
 				linewidth: lineWidth,
 				clippingPlanes: visiBox.planes
@@ -68,25 +68,13 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 			{
 				isolevelMultiplier = -1
 			}
-			var segmentsAndVertices = data.isomesh_in_block( isolevelMultiplier * isolevel, style);
-			isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(segmentsAndVertices.vertices), 3));
-			isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(segmentsAndVertices.segments), 1));
+			var geometricPrimitives = data.isomesh_in_block( isolevelMultiplier * isolevel, style);
+			isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
+			// isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
+			isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.faces), 1));
 			
 			map.add( isomesh );
 		}
-	}
-
-	map.toggleStyle = function()
-	{
-		if(style === "marching cubes")
-		{
-			style = "squarish"
-		}
-		else
-		{
-			style = "marching cubes"
-		}
-		refreshMeshesFromBlock();
 	}
 
 	//could be good to make it so that this is movable

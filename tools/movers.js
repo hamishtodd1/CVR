@@ -88,6 +88,9 @@ function initRigidBodyMover( models )
 		if(this.parent !== this.ordinaryParent)
 		{
 			console.error("need to notify server about movements!")
+			// msg.x = 
+			// msg.x = 
+			// msg.z = 
 
 			if( this.parent.button1 )
 			{
