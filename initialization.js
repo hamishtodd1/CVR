@@ -14,6 +14,7 @@ if two things are overlapping you pick up closer. Or glow for hover
 	Button on controller reserved
 	Flash or something
 
+Passport, birth certificate
 Party event
 expenses
 train tickets
@@ -46,7 +47,7 @@ A big concern at some point will be navigating folders
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	// renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
-	// renderer.vr.enabled = true;
+	renderer.vr.enabled = true;
 	document.body.appendChild( renderer.domElement );
 
 	var vrButton = WEBVR.createButton( renderer );

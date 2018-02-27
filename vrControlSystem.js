@@ -83,6 +83,7 @@ function initControllers(controllers, renderer,ourVrEffect)
 	vrInputSystem.update = function()
 	{
 		var gamepads = navigator.getGamepads();
+
 		for(var k = 0; k < gamepads.length; ++k)
 		{
 			if(!gamepads[k])

@@ -2,6 +2,9 @@
 	Could use a single web worker for contouring and loading file in, interactivity remains.
 	there is a "cubicles" thing in uglymol's molecules that was good for searching
 	TODO turn into proper object so you don't have to repeat the functions
+
+	May need both uglymol and threejs marching cubes systems for different styles
+	Except maybe solid is objectively better in VR?
 */
 
 function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
@@ -14,22 +17,13 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 	}
 
 	var map = new THREE.Object3D();
-	var unitCellMesh = null;
 	
 	var data = new UM.ElMap();
-	data.from_ccp4(arrayBuffer, true); //pdbe and dsn9 exist
-	var unitCellGetter = data.unit_cell.orthogonalize.bind(data.unit_cell);
-	unitCellMesh = UM.makeRgbBox(unitCellGetter, {color: {r:1,g:1,b:1}});
-	unitCellMesh.visible = false;
-	map.add(unitCellMesh);
+	data.from_ccp4(arrayBuffer); //pdbe and dsn9 exist
+
 	var types = isDiffMap ? ['map_pos', 'map_neg'] : ['map_den'];
 	var style = "squarish"; // "marching cubes"
 	if(!isolevel) isolevel = isDiffMap ? 3.0 : 1.5; //units of rmsd
-	
-	function toggleUnitCell()
-	{
-		unitCellMesh.visible = !unitCellMesh.visible;
-	}
 
 	map.extractAndRepresentBlock = function()
 	{
@@ -57,7 +51,7 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 
 		for (var i = 0; i < types.length; i += 1)
 		{
-			var isomesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+			var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
 				color: colors[types[i]],
 				linewidth: lineWidth,
 				clippingPlanes: visiBox.planes
@@ -70,17 +64,10 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 			}
 			var geometricPrimitives = data.isomesh_in_block( isolevelMultiplier * isolevel, style);
 			isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
-			// isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
-			isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.faces), 1));
+			isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
 			
 			map.add( isomesh );
 		}
-	}
-
-	//could be good to make it so that this is movable
-	map.toggleUnitCellVisibility = function()
-	{
-		unitCellMesh.visible = !unitCellMesh.visible;
 	}
 
 	map.addToIsolevel = function(addition)
@@ -112,5 +99,15 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 			removeAndDispose(o);
 		}
 	}
+
+	var unitCellMesh = data.unit_cell.getMesh();
+	// unitCellMesh.visible = false;
+	map.add(unitCellMesh);
+	//could be good to make it so that it is movable
+	map.toggleUnitCellVisibility = function()
+	{
+		unitCellMesh.visible = !unitCellMesh.visible;
+	}
+
 	return map;
 }

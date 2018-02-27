@@ -12,161 +12,132 @@
 	(factory((global.UM = {}),global.THREE));
 }(this, (function (exports,THREE) { 'use strict'; 
 
-function marchingCubes(dims, values, points, isolevel, method) {
+function marchingCubes(dims, values, points, isolevel, method)
+{
 	var seg_table = (method === 'squarish' ? segTable2 : segTable);
 	var vlist = new Array(12);
 	var vert_offsets = calculateVertOffsets(dims);
-	var vertex_values = new Float32Array(8);
 	var p0 = [0, 0, 0];
-	var vertex_points = [p0, p0, p0, p0, p0, p0, p0, p0];
+	var cornerPositions = [p0, p0, p0, p0, p0, p0, p0, p0];
+	var cornerValues = new Float32Array(8);
 	var size_x = dims[0];
 	var size_y = dims[1];
 	var size_z = dims[2];
-	if (values == null || points == null) { return; }
+	if (values == null || points == null)
+	{
+		return;
+	}
 
 	var vertices = [];
 	var segments = [];
 	var faces = [];
 	var vertex_count = 0;
 	for (var x = 0; x < size_x - 1; x++) {
-		for (var y = 0; y < size_y - 1; y++) {
-			for (var z = 0; z < size_z - 1; z++) {
-				var offset0 = z + size_z * (y + size_y * x);
-				var cubeindex = 0;
-				var i = (void 0);
-				var j = (void 0);
-				for (i = 0; i < 8; ++i) {
-					j = offset0 + vert_offsets[i];
-					cubeindex |= (values[j] < isolevel) ? 1 << i : 0;
-				}
-				if (cubeindex === 0 || cubeindex === 255) { continue; }
-				for (i = 0; i < 8; ++i) {
-					j = offset0 + vert_offsets[i];
-					vertex_values[i] = values[j];
-					vertex_points[i] = points[j];
-				}
+	for (var y = 0; y < size_y - 1; y++) {
+	for (var z = 0; z < size_z - 1; z++) {
+		// polygonize( fx, fy, fz, q, isolevel );
+		/*
+			Bring in polygonize
+			No scope.delta
+			vlist does not have same meaning
+			adding nlist as well
 
-				// 12 bit number, indicates which edges are crossed by the isosurface
-				var edge_mask = edgeTable[cubeindex];
+		*/
 
-				// check which edges are crossed, and estimate the point location
-				// using a weighted average of scalar values at edge endpoints.
-				for (i = 0; i < 12; ++i) {
-					if ((edge_mask & (1 << i)) !== 0)
-					{
-						var e = edgeIndex[i];
-						var mu = (isolevel - vertex_values[e[0]]) /
-									(vertex_values[e[1]] - vertex_values[e[0]]);
-						var p1 = vertex_points[e[0]];
-						var p2 = vertex_points[e[1]];
-						// The number of added vertices could be roughly halved
-						// if we avoided duplicates between neighbouring cells.
-						// Using a map for lookups is too slow, perhaps a big
-						// array would do?
-      					vertices.push(	p1[0] + (p2[0] - p1[0]) * mu,
-										p1[1] + (p2[1] - p1[1]) * mu,
-										p1[2] + (p2[2] - p1[2]) * mu);
-						vlist[i] = vertex_count++;
-					}
-				}
-				var t = seg_table[cubeindex];
-				for (i = 0; i < t.length; i++) {
-					segments.push(vlist[t[i]]);
-				}
 
-				//ADDITION
-				/*
-					http://mikolalysenko.github.io/Isosurface/js/marchingcubes.js
+		var offset0 = z + size_z * (y + size_y * x);
+		var i = (void 0);
+		var j = (void 0);
+		var cubeindex = 0;
+		for (i = 0; i < 8; ++i)
+		{
+			j = offset0 + vert_offsets[i];
+			cornerPositions[i] = points[j];
+			cornerValues[i] = values[j];
+			cubeindex |= (cornerValues[i] < isolevel) ? 1 << i : 0;
+		}
+		if (cubeindex === 0 || cubeindex === 255) { continue; }
 
-					We are in the process of comparing these fuckers
-					Go through them carefully I guess. Maaaaybe experiment with how threejs interprets them
-					It's not about division by 3 because of the way buffergeometry works
 
-					Given that the face only uses things in the vlist, how could it possibly get a vertex from different cubes?
-					You want vertex normals anyway so you may have to rewrite this yourself :/
-				*/
-				var f = triTable[cubeindex];
-				for(var i=0; i<f.length; i += 3)
-				{
-					faces.push(vlist[f[i]], vlist[f[i+1]], vlist[f[i+2]]);
-				}
+		// 12 bit number, indicates which edges are crossed by the isosurface
+		var edge_mask = edgeTable[cubeindex];
+
+		// check which edges are crossed, and estimate the point location
+		// using a weighted average of scalar values at edge endpoints.
+		for (i = 0; i < 12; ++i) 
+		{
+			if ((edge_mask & (1 << i)) !== 0)
+			{
+				var e = edgeIndex[i];
+				var mu = (isolevel - cornerValues[e[0]]) /
+							(cornerValues[e[1]] - cornerValues[e[0]]);
+				var p1 = cornerPositions[e[0]];
+				var p2 = cornerPositions[e[1]];
+
+				vertices.push(	p1[0] + (p2[0] - p1[0]) * mu,
+								p1[1] + (p2[1] - p1[1]) * mu,
+								p1[2] + (p2[2] - p1[2]) * mu);
+				vlist[i] = vertex_count++;
 			}
 		}
+		var t = seg_table[cubeindex];
+		for (i = 0; i < t.length; i++) {
+			segments.push(vlist[t[i]]);
+		}
+	}
+	}
 	}
 	return { vertices: vertices, segments: segments, faces: faces };
 }
 
-var UnitCell = function UnitCell(a /*:number*/, b /*:number*/, c /*:number*/,
-						alpha /*:number*/, beta /*:number*/, gamma /*:number*/) {
-	if (a <= 0 || b <= 0 || c <= 0 || alpha <= 0 || beta <= 0 || gamma <= 0) {
-		throw Error('Zero or negative unit cell parameter(s).');
+var ElMap = function ElMap()
+{
+	this.unit_cell = null;
+	this.grid = null;
+	this.stats = { mean: 0.0, rms: 1.0 };
+	this.block = new Block();
+};
+
+ElMap.prototype.unit = 'e/\u212B\u00B3';
+
+// Extract a block of density for calculating an isosurface using the
+// separate marching cubes implementation.
+ElMap.prototype.extract_block = function extract_block (radius/*:number*/, center /*:[number,number,number]*/)
+{
+	if (this.grid == null || this.unit_cell == null) { return; }
+
+	/*
+		frac2grid and grid2frac is just multiplying and dividing by dims
+		So those dimensions are probably the resolution, the distance between measurements
+		.orth and .frac are matrices
+	*/
+	var grid = this.grid;
+	var unit_cell = this.unit_cell;
+
+	var r = [radius / unit_cell.parameters[0], //scale
+			 radius / unit_cell.parameters[1],
+			 radius / unit_cell.parameters[2]];
+	var fc = multiply(center, unit_cell.frac);
+	var grid_min = grid.frac2grid([fc[0] - r[0], fc[1] - r[1], fc[2] - r[2]]);
+	var grid_max = grid.frac2grid([fc[0] + r[0], fc[1] + r[1], fc[2] + r[2]]);
+	
+	var points = [];
+	var values = [];
+	for (var i = grid_min[0]; i <= grid_max[0]; i++) {
+	for (var j = grid_min[1]; j <= grid_max[1]; j++) {
+	for (var k = grid_min[2]; k <= grid_max[2]; k++) {
+		var frac = grid.grid2frac(i, j, k);
+		var orth = multiply( frac, unit_cell.orth );
+		points.push(orth); //so these things could well be in an imperfect grid. Could ask Paul
+		var map_value = grid.get_grid_value(i, j, k);
+		values.push(map_value);
 	}
-	this.parameters = [a, b, c, alpha, beta, gamma];
-	var deg2rad = Math.PI / 180.0;
-	var cos_alpha = Math.cos(deg2rad * alpha);
-	var cos_beta = Math.cos(deg2rad * beta);
-	var cos_gamma = Math.cos(deg2rad * gamma);
-	var sin_alpha = Math.sin(deg2rad * alpha);
-	var sin_beta = Math.sin(deg2rad * beta);
-	var sin_gamma = Math.sin(deg2rad * gamma);
-	if (sin_alpha === 0 || sin_beta === 0 || sin_gamma === 0) {
-		throw Error('Impossible angle - N*180deg.');
 	}
-	var cos_alpha_star_sin_beta = (cos_beta * cos_gamma - cos_alpha) /
-																	sin_gamma;
-	var cos_alpha_star = cos_alpha_star_sin_beta / sin_beta;
-	var s1rca2 = Math.sqrt(1.0 - cos_alpha_star * cos_alpha_star);
-	// The orthogonalization matrix we use is described in ITfC B p.262:
-	// "An alternative mode of orthogonalization, used by the Protein
-	// Data Bank and most programs, is to align the a1 axis of the unit
-	// cell with the Cartesian X_1 axis, and to align the a*_3 axis with the
-	// Cartesian X_3 axis."
-	//
-	// Zeros in the matrices below are kept to make matrix multiplication
-	// faster: they make extract_block() 2x (!) faster on V8 4.5.103,
-	// no difference on FF 50.
-	/* eslint-disable no-multi-spaces, comma-spacing */
-	this.orth = [a, b * cos_gamma,c * cos_beta,
-							 0.0, b * sin_gamma, -c * cos_alpha_star_sin_beta,
-							 0.0, 0.0        ,c * sin_beta * s1rca2];
-	// based on xtal.js which is based on cctbx.uctbx
-	this.frac = [
-		1.0 / a,
-		-cos_gamma / (sin_gamma * a),
-		-(cos_gamma * cos_alpha_star_sin_beta + cos_beta * sin_gamma) /
-				(sin_beta * s1rca2 * sin_gamma * a),
-		0.0,
-		1.0 / (sin_gamma * b),
-		cos_alpha_star / (s1rca2 * sin_gamma * b),
-		0.0,
-		0.0,
-		1.0 / (sin_beta * s1rca2 * c) ];
-};
+	}
 
-UnitCell.prototype.fractionalize = function fractionalize (xyz /*:[number,number,number]*/) {
-	return multiply(xyz, this.frac);
-};
-
-UnitCell.prototype.orthogonalize = function orthogonalize (xyz /*:[number,number,number]*/) {
-	return multiply(xyz, this.orth);
-};
-
-// This function is only used with matrices frac and orth, which have 3 zeros.
-// We skip these elements, but it doesn't affect performance (on FF50 and V8).
-function multiply(xyz, mat) {
-	/* eslint-disable indent */
-	return [mat[0] * xyz[0]  + mat[1] * xyz[1]  + mat[2] * xyz[2],
-		/*mat[3] * xyz[0]*/+ mat[4] * xyz[1]  + mat[5] * xyz[2],
-		/*mat[6] * xyz[0]  + mat[7] * xyz[1]*/+ mat[8] * xyz[2]];
-}
-
-var Block = function Block() {
-	this._points = null;
-	this._values = null;
-	this._size = [0, 0, 0];
-};
-
-Block.prototype.set = function set (points /*:Num3[]*/, values/*:number[]*/, size/*:Num3*/) {
+	var size = [grid_max[0] - grid_min[0] + 1,
+				grid_max[1] - grid_min[1] + 1,
+				grid_max[2] - grid_min[2] + 1];
 	if (size[0] <= 0 || size[1] <= 0 || size[2] <= 0) {
 		throw Error('Grid dimensions are zero along at least one edge');
 	}
@@ -175,104 +146,17 @@ Block.prototype.set = function set (points /*:Num3[]*/, values/*:number[]*/, siz
 		throw Error('isosurface: array size mismatch');
 	}
 
-	this._points = points;
-	this._values = values;
-	this._size = size;
-};
-
-Block.prototype.clear = function clear () {
-	this._points = null;
-	this._values = null;
-};
-
-Block.prototype.empty = function empty () /*:boolean*/ {
-	return this._values === null;
-};
-
-// return offsets relative to vertex [0,0,0]
-function calculateVertOffsets(dims) {
-	var vert_offsets = [];
-	for (var i = 0; i < 8; ++i) {
-		var v = cubeVerts[i];
-		vert_offsets.push(v[0] + dims[2] * (v[1] + dims[1] * v[2]));
-	}
-	return vert_offsets;
-}
-
-// @flow
-
-function modulo(a, b) {
-	var reminder = a % b;
-	return reminder >= 0 ? reminder : reminder + b;
-}
-
-var GridArray = function GridArray(dim) {
-	this.dim = dim; // dimensions of the grid for the entire unit cell
-	this.values = new Float32Array(dim[0] * dim[1] * dim[2]);
-};
-
-GridArray.prototype.grid2index = function grid2index (i, j, k) {
-	i = modulo(i, this.dim[0]);
-	j = modulo(j, this.dim[1]);
-	k = modulo(k, this.dim[2]);
-	return this.dim[2] * (this.dim[1] * i + j) + k;
-};
-
-GridArray.prototype.grid2index_unchecked = function grid2index_unchecked (i, j, k) {
-	return this.dim[2] * (this.dim[1] * i + j) + k;
-};
-
-GridArray.prototype.grid2frac = function grid2frac (i, j, k) {
-	return [i / this.dim[0], j / this.dim[1], k / this.dim[2]];
-};
-
-// return grid coordinates (rounded down) for the given fractional coordinates
-GridArray.prototype.frac2grid = function frac2grid (xyz) {
-	// at one point "| 0" here made extract_block() 40% faster on V8 3.14,
-	// but I don't see any effect now
-	return [Math.floor(xyz[0] * this.dim[0]) | 0,
-					Math.floor(xyz[1] * this.dim[1]) | 0,
-					Math.floor(xyz[2] * this.dim[2]) | 0];
-};
-
-GridArray.prototype.set_grid_value = function set_grid_value (i, j, k, value) {
-	var idx = this.grid2index(i, j, k);
-	this.values[idx] = value;
-};
-
-GridArray.prototype.get_grid_value = function get_grid_value (i, j, k) {
-	var idx = this.grid2index(i, j, k);
-	return this.values[idx];
-};
-
-function calculate_stddev(a, offset) {
-	var sum = 0;
-	var sq_sum = 0;
-	var alen = a.length;
-	for (var i = offset; i < alen; i++) {
-		sum += a[i];
-		sq_sum += a[i] * a[i];
-	}
-	var mean = sum / (alen - offset);
-	var variance = sq_sum / (alen - offset) - mean * mean;
-	return {mean: mean, rms: Math.sqrt(variance)};
-}
-
-var ElMap = function ElMap() {
-	this.unit_cell = null;
-	this.grid = null;
-	this.stats = { mean: 0.0, rms: 1.0 };
-	this.block = new Block();
-};
-
-ElMap.prototype.abs_level = function abs_level (sigma /*:number*/) {
-	return sigma * this.stats.rms + this.stats.mean;
+	this.block._points = points;
+	this.block._values = values;
+	this.block._size = size;
 };
 
 // http://www.ccp4.ac.uk/html/maplib.html#description
 // eslint-disable-next-line complexity
-ElMap.prototype.from_ccp4 = function from_ccp4 (buf /*:ArrayBuffer*/, expand_symmetry /*:?boolean*/) {
-	if (expand_symmetry === undefined) { expand_symmetry = true; }
+ElMap.prototype.from_ccp4 = function from_ccp4 (buf /*:ArrayBuffer*/)
+{
+	var expand_symmetry = true;
+
 	if (buf.byteLength < 1024) { throw Error('File shorter than 1024 bytes.'); }
 	//console.log('buf type: ' + Object.prototype.toString.call(buf));
 	// for now we assume both file and host are little endian
@@ -447,44 +331,177 @@ ElMap.prototype.from_dsn6 = function from_dsn6 (buf /*: ArrayBuffer*/) {
 	//this.show_debug_info();
 };
 
-// Extract a block of density for calculating an isosurface using the
-// separate marching cubes implementation.
-ElMap.prototype.extract_block = function extract_block (radius/*:number*/, center /*:[number,number,number]*/) {
-	var grid = this.grid;
-	var unit_cell = this.unit_cell;
-	if (grid == null || unit_cell == null) { return; }
-	var fc = unit_cell.fractionalize(center);
-	var r = [radius / unit_cell.parameters[0],
-						 radius / unit_cell.parameters[1],
-						 radius / unit_cell.parameters[2]];
-	var grid_min = grid.frac2grid([fc[0] - r[0], fc[1] - r[1], fc[2] - r[2]]);
-	var grid_max = grid.frac2grid([fc[0] + r[0], fc[1] + r[1], fc[2] + r[2]]);
-	var size = [grid_max[0] - grid_min[0] + 1,
-								grid_max[1] - grid_min[1] + 1,
-								grid_max[2] - grid_min[2] + 1];
-	var points = [];
-	var values = [];
-	for (var i = grid_min[0]; i <= grid_max[0]; i++) {
-		for (var j = grid_min[1]; j <= grid_max[1]; j++) {
-			for (var k = grid_min[2]; k <= grid_max[2]; k++) {
-				var frac = grid.grid2frac(i, j, k);
-				var orth = unit_cell.orthogonalize(frac);
-				points.push(orth);
-				var map_value = grid.get_grid_value(i, j, k);
-				values.push(map_value);
-			}
-		}
-	}
-	this.block.set(points, values, size);
-};
-
-ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, method/*:string*/) {
-	var abs_level = this.abs_level(sigma);
+ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, method/*:string*/)
+{
+	var abs_level = sigma * this.stats.rms + this.stats.mean;
 	return marchingCubes(this.block._size, this.block._values, this.block._points,
 											 abs_level, method);
 };
 
-ElMap.prototype.unit = 'e/\u212B\u00B3';
+var UnitCell = function UnitCell(a /*:number*/, b /*:number*/, c /*:number*/,
+						alpha /*:number*/, beta /*:number*/, gamma /*:number*/) {
+	if (a <= 0 || b <= 0 || c <= 0 || alpha <= 0 || beta <= 0 || gamma <= 0) {
+		throw Error('Zero or negative unit cell parameter(s).');
+	}
+	this.parameters = [a, b, c, alpha, beta, gamma];
+	var deg2rad = Math.PI / 180.0;
+	var cos_alpha = Math.cos(deg2rad * alpha);
+	var cos_beta = Math.cos(deg2rad * beta);
+	var cos_gamma = Math.cos(deg2rad * gamma);
+	var sin_alpha = Math.sin(deg2rad * alpha);
+	var sin_beta = Math.sin(deg2rad * beta);
+	var sin_gamma = Math.sin(deg2rad * gamma);
+	if (sin_alpha === 0 || sin_beta === 0 || sin_gamma === 0) {
+		throw Error('Impossible angle - N*180deg.');
+	}
+	var cos_alpha_star_sin_beta = (cos_beta * cos_gamma - cos_alpha) /
+																	sin_gamma;
+	var cos_alpha_star = cos_alpha_star_sin_beta / sin_beta;
+	var s1rca2 = Math.sqrt(1.0 - cos_alpha_star * cos_alpha_star);
+	// The orthogonalization matrix we use is described in ITfC B p.262:
+	// "An alternative mode of orthogonalization, used by the Protein
+	// Data Bank and most programs, is to align the a1 axis of the unit
+	// cell with the Cartesian X_1 axis, and to align the a*_3 axis with the
+	// Cartesian X_3 axis."
+	//
+	// Zeros in the matrices below are kept to make matrix multiplication
+	// faster: they make extract_block() 2x (!) faster on V8 4.5.103,
+	// no difference on FF 50.
+	/* eslint-disable no-multi-spaces, comma-spacing */
+	this.orth = [a, b * cos_gamma,c * cos_beta,
+							 0.0, b * sin_gamma, -c * cos_alpha_star_sin_beta,
+							 0.0, 0.0        ,c * sin_beta * s1rca2];
+	// based on xtal.js which is based on cctbx.uctbx
+	this.frac = [
+		1.0 / a,
+		-cos_gamma / (sin_gamma * a),
+		-(cos_gamma * cos_alpha_star_sin_beta + cos_beta * sin_gamma) /
+				(sin_beta * s1rca2 * sin_gamma * a),
+		0.0,
+		1.0 / (sin_gamma * b),
+		cos_alpha_star / (s1rca2 * sin_gamma * b),
+		0.0,
+		0.0,
+		1.0 / (sin_beta * s1rca2 * c) ];
+};
+
+UnitCell.prototype.orthogonalize = function orthogonalize (xyz /*:[number,number,number]*/) {
+  return multiply(xyz, this.orth);
+};
+
+// A cube with 3 edges (for x, y, z axes) colored in red, green and blue.
+UnitCell.prototype.getMesh = function getMesh()
+{
+	var orthogonalMatrix = this.orth;
+	var vertices = CUBE_EDGES.map(function (a) {
+		return { xyz: multiply(a, orthogonalMatrix) };
+	});
+	var colors = [
+		new THREE.Color(0xff0000), new THREE.Color(0xffaa00),
+		new THREE.Color(0x00ff00), new THREE.Color(0xaaff00),
+		new THREE.Color(0x0000ff), new THREE.Color(0x00aaff) ];
+	for (var j = 6; j < CUBE_EDGES.length; j++) {
+		colors.push({r:1,g:1,b:1});
+	}
+	var material = makeLineMaterial({
+		gl_lines: true,
+		linewidth: 1,
+		segments: true,
+	});
+	// $FlowFixMe: the type of vertices confuses flow
+	return makeLineSegments(material, vertices, colors);
+}
+
+// This function is only used with matrices frac and orth, which have 3 zeros.
+// We skip these elements, but it doesn't affect performance (on FF50 and V8).
+function multiply(xyz, mat) {
+	return [mat[0] * xyz[0]  + mat[1] * xyz[1]  + mat[2] * xyz[2],
+		  /*mat[3] * xyz[0]*/+ mat[4] * xyz[1]  + mat[5] * xyz[2],
+		  /*mat[6] * xyz[0]  + mat[7] * xyz[1]*/+ mat[8] * xyz[2]];
+}
+
+var Block = function Block() {
+	this._points = null;
+	this._values = null;
+	this._size = [0, 0, 0];
+};
+
+Block.prototype.clear = function clear () {
+	this._points = null;
+	this._values = null;
+};
+
+Block.prototype.empty = function empty () /*:boolean*/ {
+	return this._values === null;
+};
+
+// return offsets relative to vertex [0,0,0]
+function calculateVertOffsets(dims) {
+	var vert_offsets = [];
+	for (var i = 0; i < 8; ++i) {
+		var v = cubeVerts[i];
+		vert_offsets.push(v[0] + dims[2] * (v[1] + dims[1] * v[2]));
+	}
+	return vert_offsets;
+}
+
+// @flow
+
+function modulo(a, b) {
+	var reminder = a % b;
+	return reminder >= 0 ? reminder : reminder + b;
+}
+
+var GridArray = function GridArray(dim) {
+	this.dim = dim; // dimensions of the grid for the entire unit cell
+	this.values = new Float32Array(dim[0] * dim[1] * dim[2]);
+};
+
+GridArray.prototype.grid2index = function grid2index (i, j, k) {
+	i = modulo(i, this.dim[0]);
+	j = modulo(j, this.dim[1]);
+	k = modulo(k, this.dim[2]);
+	return this.dim[2] * (this.dim[1] * i + j) + k;
+};
+
+GridArray.prototype.grid2index_unchecked = function grid2index_unchecked (i, j, k) {
+	return this.dim[2] * (this.dim[1] * i + j) + k;
+};
+
+GridArray.prototype.grid2frac = function grid2frac (i, j, k) {
+	return [i / this.dim[0], j / this.dim[1], k / this.dim[2]];
+};
+
+// return grid coordinates (rounded down) for the given fractional coordinates
+GridArray.prototype.frac2grid = function frac2grid (xyz)
+{
+	return [Math.floor(xyz[0] * this.dim[0]) | 0,
+			Math.floor(xyz[1] * this.dim[1]) | 0,
+			Math.floor(xyz[2] * this.dim[2]) | 0];
+};
+
+GridArray.prototype.set_grid_value = function set_grid_value (i, j, k, value) {
+	var idx = this.grid2index(i, j, k);
+	this.values[idx] = value;
+};
+
+GridArray.prototype.get_grid_value = function get_grid_value (i, j, k) {
+	var idx = this.grid2index(i, j, k);
+	return this.values[idx];
+};
+
+function calculate_stddev(a, offset) {
+	var sum = 0;
+	var sq_sum = 0;
+	var alen = a.length;
+	for (var i = offset; i < alen; i++) {
+		sum += a[i];
+		sq_sum += a[i] * a[i];
+	}
+	var mean = sum / (alen - offset);
+	var variance = sq_sum / (alen - offset) - mean * mean;
+	return {mean: mean, rms: Math.sqrt(variance)};
+}
 
 // symop -> matrix ([x,y,z] = matrix * [x,y,z,1])
 function parse_symop(symop) {
@@ -526,8 +543,8 @@ var CUBE_EDGES = [[0, 0, 0], [1, 0, 0],
 										[0, 1, 1], [1, 1, 1]];
 
 function makeCube(size /*:number*/,
-												 ctr /*:Vector3*/,
-												 options /*:{[key:string]: any}*/) {
+				 ctr /*:Vector3*/,
+				 options /*:{[key:string]: any}*/) {
 	var vertices = CUBE_EDGES.map(function (a) {
 		return {
 			x: ctr.x + size * (a[0] - 0.5),
@@ -542,28 +559,6 @@ function makeCube(size /*:number*/,
 		segments: true,
 	});
 	return makeLineSegments(material, vertices);
-}
-
-// A cube with 3 edges (for x, y, z axes) colored in red, green and blue.
-function makeRgbBox(transform_func /*:Num3 => Num3*/,
-													 options /*:{[key:string]: any}*/) {
-	var vertices = CUBE_EDGES.map(function (a) {
-		return { xyz: transform_func(a) };
-	});
-	var colors = [
-		new THREE.Color(0xff0000), new THREE.Color(0xffaa00),
-		new THREE.Color(0x00ff00), new THREE.Color(0xaaff00),
-		new THREE.Color(0x0000ff), new THREE.Color(0x00aaff) ];
-	for (var j = 6; j < CUBE_EDGES.length; j++) {
-		colors.push(options.color);
-	}
-	var material = makeLineMaterial({
-		gl_lines: true,
-		linewidth: 1,
-		segments: true,
-	});
-	// $FlowFixMe: the type of vertices confuses flow
-	return makeLineSegments(material, vertices, colors);
 }
 
 function makeSimpleLineMaterial(options) {
@@ -1460,7 +1455,6 @@ var edgeIndex = [[0,1], [1,2], [2,3], [3,0], [4,5], [5,6],
 									 [6,7], [7,4], [0,4], [1,5], [2,6], [3,7]];
 // edge directions: [x, y, -x, -y, x, y, -x, -y, z, z, z, z]
 
-exports.makeRgbBox = makeRgbBox;
 exports.ElMap = ElMap;
 
 })));

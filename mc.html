@@ -110,30 +110,31 @@
 				opacity: 0.9
 				 } );
 
-			var resolution = 63;
-			var mcSystem = new initMcSystem( resolution );
 			
 			//making data
+			var dimension = 63;
+			var field = new Float32Array( dimension*dimension*dimension );
+			
 			{
 				// Adds a reciprocal ball (nice and blobby) that, to be fast, fades to zero after
 				// a fixed distance, determined by strength and subtract.
 
-				function addBallToField( ballx, bally, ballz, strength, subtract ) {
-
+				function addBallToField( ballx, bally, ballz, strength, subtract )
+				{
 					var sign = Math.sign( strength );
 					strength = Math.abs( strength );
 
-					var radius = mcSystem.size * Math.sqrt( strength / subtract ),
-						zs = ballz * mcSystem.size,
-						ys = bally * mcSystem.size,
-						xs = ballx * mcSystem.size;
+					var radius = dimension * Math.sqrt( strength / subtract ),
+						zs = ballz * dimension,
+						ys = bally * dimension,
+						xs = ballx * dimension;
 
 					var min_z = Math.floor( zs - radius ); if ( min_z < 1 ) min_z = 1;
-					var max_z = Math.floor( zs + radius ); if ( max_z > mcSystem.size - 1 ) max_z = mcSystem.size - 1;
+					var max_z = Math.floor( zs + radius ); if ( max_z > dimension - 1 ) max_z = dimension - 1;
 					var min_y = Math.floor( ys - radius ); if ( min_y < 1 ) min_y = 1;
-					var max_y = Math.floor( ys + radius ); if ( max_y > mcSystem.size - 1 ) max_y = mcSystem.size - 1;
+					var max_y = Math.floor( ys + radius ); if ( max_y > dimension - 1 ) max_y = dimension - 1;
 					var min_x = Math.floor( xs - radius ); if ( min_x < 1  ) min_x = 1;
-					var max_x = Math.floor( xs + radius ); if ( max_x > mcSystem.size - 1 ) max_x = mcSystem.size - 1;
+					var max_x = Math.floor( xs + radius ); if ( max_x > dimension - 1 ) max_x = dimension - 1;
 
 
 					// Don't polygonize in the outer layer because normals aren't
@@ -143,21 +144,21 @@
 
 					for ( z = min_z; z < max_z; z ++ ) {
 
-						z_offset = mcSystem.size2 * z;
-						fz = z / mcSystem.size - ballz;
+						z_offset = dimension*dimension * z;
+						fz = z / dimension - ballz;
 						fz2 = fz * fz;
 
 						for ( y = min_y; y < max_y; y ++ ) {
 
-							y_offset = z_offset + mcSystem.size * y;
-							fy = y / mcSystem.size - bally;
+							y_offset = z_offset + dimension * y;
+							fy = y / dimension - bally;
 							fy2 = fy * fy;
 
 							for ( x = min_x; x < max_x; x ++ ) {
 
-								fx = x / mcSystem.size - ballx;
+								fx = x / dimension - ballx;
 								val = strength / ( 0.000001 + fx * fx + fy2 + fz2 ) - subtract;
-								if ( val > 0.0 ) mcSystem.field[ y_offset + x ] += val * sign;
+								if ( val > 0.0 ) field[ y_offset + x ] += val * sign;
 
 							}
 
@@ -175,11 +176,14 @@
 				addBallToField(0, 0, 0, strength,subtract);
 				addBallToField(1, 0, 0, strength,subtract);
 				addBallToField(1, 1, 0, strength,subtract);
-
 			}
 
-			var standardMesh = new THREE.Mesh( mcSystem.generateGeometry(), material );
-			console.log(standardMesh.geometry)
+			var isolevel = 50.0
+			var mcSystem = new initMcSystem();
+			var clock = new THREE.Clock();
+			clock.getDelta();
+			var standardMesh = new THREE.Mesh( mcSystem.getGeometry(field,dimension,isolevel), material );
+			console.log(clock.getDelta()*1000);
 			scene.add( standardMesh );
 
 			function render()
