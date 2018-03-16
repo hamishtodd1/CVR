@@ -1,10 +1,13 @@
 /*
 notify coot of atom movements
 TODO for EM demo
-	solid mesh
+	accepting mtz
+	visualize the person's head in the coot window and vice versa
+	refinement
 	ramachandran
+	fucking surfaces
 
-Get it to a nice state for Jeffrey Lovelace
+make that testing thing for paul
 bugs with unfound atoms
 bug with some residues highlighting many residues?
 mutator
@@ -14,17 +17,25 @@ if two things are overlapping you pick up closer. Or glow for hover
 	Button on controller reserved
 	Flash or something
 
-Passport, birth certificate
-Party event
+Thankyou letters
+Get stuff from Diego
+Tickets to Oxford then back from Stoke on Trent
+Book 7Osme things
+Sysmic
+Meet mathematics dude
+Further pips paperwork
+Poland travel
+Go to Newbattle
+Figure out newbattle topics
 expenses
 train tickets
 Sysmic
 Transfer money to savings account
-7OSME paper
 Maya
-	police dog handler
 	Admin
 	reddit/bluecollarwomen
+	http://www.nts.org.uk/wildlifesurvey/
+	http://www.wildlifeinformation.co.uk/about_volunteering.php
 
 
 Thumbstick could also be used for light intensity?
@@ -74,7 +85,7 @@ A big concern at some point will be navigating folders
 	controllers = Array(2);
 	var vrInputSystem = initControllers(controllers);
 	
-	var debuggingWithoutVR = true;
+	var debuggingWithoutVR = false;
 	assemblage.scale.setScalar( debuggingWithoutVR ? 0.02 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
@@ -129,30 +140,31 @@ A big concern at some point will be navigating folders
 	initSocket();
 	models = initModelCreationSystem(visiBox.planes);
 
-	// socket.commandReactions["model"] = function(msg)
-	// {
-	//	console.error("does it need to be in a string? environment distances didn't need to be")
-	// 	makeModelFromCootString( msg.modelDataString, visiBox.planes );
-
-	// 	initTools();
-	// }
-	// socket.commandReactions["map"] = function(msg)
-	// {
-	// 	//you have to convert it into an array buffer :/
-	// 	var newMap = Map( msg["dataString"], false, visiBox );
-	// 	maps.push(newMap);
-	// 	assemblage.add(newMap)
-	// }
-	// socket.commandReactions["loadDefaults"] = function(msg)
+	socket.commandReactions["model"] = function(msg)
 	{
-		// new THREE.FileLoader().load( "data/tutorialGbr.txt",
-		// 	function( modelDataString )
-		// 	{
-		// 		makeModelFromCootString( modelDataString, visiBox.planes );
+		console.error("does it need to be in a string? environment distances didn't need to be")
+		makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
-		// 		initTools();
-		// 	}
-		// );
+		initTools();
+	}
+	socket.commandReactions["map"] = function(msg)
+	{
+		//you have to convert it into an array buffer :/
+		// console.log(msg["dataString"])
+		// var newMap = Map( msg["dataString"], false, visiBox );
+		// maps.push(newMap);
+		// assemblage.add(newMap)
+	}
+	socket.commandReactions["loadTutorialModel"] = function(msg)
+	{
+		new THREE.FileLoader().load( "data/tutorialGbr.txt",
+			function( modelDataString )
+			{
+				makeModelFromCootString( modelDataString, visiBox.planes );
+
+				initTools();
+			}
+		);
 		
 		var req = new XMLHttpRequest();
 		req.open('GET', "data/tutorialMap.map", true);

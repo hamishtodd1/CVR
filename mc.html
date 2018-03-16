@@ -183,6 +183,7 @@
 			var clock = new THREE.Clock();
 			clock.getDelta();
 			var standardMesh = new THREE.Mesh( mcSystem.getGeometry(field,dimension,isolevel), material );
+			standardMesh.position.set(-1,-1,-1)
 			console.log(clock.getDelta()*1000);
 			scene.add( standardMesh );
 

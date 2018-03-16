@@ -71,6 +71,7 @@ function Graph(data)
 	graph.position.z = -FOCALPOINT_DISTANCE
 	// graph.scale.setScalar(0.1)
 	var background = new THREE.Mesh(THREE.OriginCorneredPlaneGeometry(), new THREE.MeshBasicMaterial());
+	background.position.z = -0.0001
 	graph.add(background);
 
 	var xAxis = new THREE.Mesh(THREE.OriginCorneredPlaneGeometry(), new THREE.MeshBasicMaterial({color:0x000000}));

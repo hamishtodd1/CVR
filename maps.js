@@ -9,7 +9,6 @@
 
 function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 {
-	var lineWidth = 1.25;
 	var colors = {
 		map_den: 0x4372D2,
 		map_pos: 0x298029,
@@ -51,21 +50,17 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 
 		for (var i = 0; i < types.length; i += 1)
 		{
-			var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-				color: colors[types[i]],
-				linewidth: lineWidth,
-				clippingPlanes: visiBox.planes
-			}));
-
 			var isolevelMultiplier = 1;
 			if( types[i] === 'map_neg' )
 			{
 				isolevelMultiplier = -1
 			}
-			var geometricPrimitives = data.isomesh_in_block( isolevelMultiplier * isolevel, style);
-			isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
-			isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
-			
+
+			var isomesh = data.isomesh_in_block( 
+				isolevelMultiplier * isolevel,
+				colors[types[i]],
+				visiBox.planes,
+				"solid" );
 			map.add( isomesh );
 		}
 	}
