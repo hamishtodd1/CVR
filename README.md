@@ -1,4 +1,4 @@
-![Photo from a review by Sherri L Smith](http://hamishtodd1.github.io/personal/vrExample.png)
+![Photo from a review by Sherri L Smith](https://github.com/hamishtodd1/hamishtodd1.github.io/blob/master/personal/vrExample.png?raw=true)
 
 ## What is this?
 
