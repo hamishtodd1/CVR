@@ -1,22 +1,21 @@
+![Photo from a review by Sherri L Smith](http://hamishtodd1.github.io/personal/vrExample.png)
+
 ## What is this?
 
 This is, or will be, ["Coot"](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/) in VR. Much more will be done but so far you can *view* (but not change) the state of the molecule in VR
 
 ## Why is this being made?
 
-Because it will make Coot faster to use. *It is not for outreach.*
+We hope it will make Coot faster to use! It will be easier to see 3D features, to specify intended atom detinations, and to navigate some of the information you need to use Coot (because you have more "screen space"). It will also be easier to train people to use.
 
-## How do I use this?
+## How do I set it up
 
-It's extremely hard right now. You'll need Windows(not my fault, there is no desktop VR outside windows). You'll need an Oculus Rift and webVR (I recommend this build https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c - make sure to go to chrome://flags and enable webVR AND gamepad extensions). Run the server.py script inside coot then go to localhost:9090 in your browser. When you see some stuff on the screen press ".", then put on headset and you should be there.
-
-(firefox and chromium webvr should be ok, but test that they are working first eg with this page https://webvr.info/samples/XX-vr-controllers.html )
+Right now there's not guarantee of stability, you'll need a bit of skillz. You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c - make sure to go to chrome://flags and enable webVR AND gamepad extensions). Run the server.py script inside coot then open index.html in your browser.
 
 ## Any plans for this to be compatible with other headsets?
 
-Ok so if you have a Vive and would like to use this and it isn't working yet, email me with my github account name at gmail :) it will be trivial to extend, you could even just try commenting out the "OpenVR Gamepad" code in vrControlSystem.js...
 
-I want this to be compatible with any headset that has *hand tracking and position tracking*. If you'd like compatibility *today* with a headset other than the Rift and Vive (eg headsets from Sony, Samsung, Lenovo, Acer, Dell, HP) then let me know! But I will need one of the headsets myself.
+Yes! Actually it should work on the Vive already, just give me a poke on twitter (hamishtodd1) if it doesn't. I don't own any other position-tracked headsets, but if you work at Sony/Samsung/Lenovo/Acer/Dell/HP/wherever else, send me a headset and I should be able to get it working
 
 But no to all "Cardboard" headsets including Daydream and GearVR. In the history of this repo you will find a version compatible with daydream, but it was a nightmare to get the pointer working and it is not clear what payoff there is, apart from having a super-cheap thing available to people. Read my PhD thesis (ETA 09/2019) if you want to hear UI reasons too I guess!
 
