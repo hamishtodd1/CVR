@@ -22,7 +22,3 @@ But no to all "Cardboard" headsets including Daydream and GearVR. In the history
 ## Will you have feature <x> from Coot?
 
 I want as much of Coot's functionality in here as possible! The only things I do not currently expect to happen in here are things that require typing strings of symbols on the keyboard, eg "save as" or "fetch specific ligand from the internet".
-
-## Are you going to have voice control?
-
-NO STOP ASKING FOR THIS I AM A PURVEYOR OF FUTURISTIC SOFTWARE BUT I AM NOT A GENIE
