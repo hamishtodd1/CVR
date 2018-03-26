@@ -113,14 +113,14 @@ function loop( maps, models, controllers, vrInputSystem, visiBox )
 		thingsToBeUpdated[i].update();
 	}
 	
-	for(var i = 0; i < maps.length; i++)
-	{
-		for(var j = 0; j < maps[i].children.length; j++)
-		{
-			maps[i].children[j].material.linewidth = 0.2 / assemblage.position.distanceTo(camera.position);
-			maps[i].children[j].material.needsUpdate = true;
-		}
-	}
+	// for(var i = 0; i < maps.length; i++)
+	// {
+	// 	for(var j = 0; j < maps[i].children.length; j++)
+	// 	{
+	// 		maps[i].children[j].material.linewidth = 0.2 / assemblage.position.distanceTo(camera.position);
+	// 		maps[i].children[j].material.needsUpdate = true;
+	// 	}
+	// }
 
 	socket.update();
 }

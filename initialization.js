@@ -22,14 +22,10 @@ Get stuff from Diego
 Tickets to Oxford then back from Stoke on Trent
 Book 7Osme things
 Sysmic
-Meet mathematics dude
-Further pips paperwork
+Further pips paperwork, Meet  head of maths, Go to Newbattle, Figure out newbattle topics
 Poland travel
-Go to Newbattle
-Figure out newbattle topics
+
 expenses
-train tickets
-Sysmic
 Transfer money to savings account
 Maya
 	Admin
@@ -59,6 +55,7 @@ A big concern at some point will be navigating folders
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	// renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
 	renderer.vr.enabled = true;
+	renderer.sortObjects = false;
 	document.body.appendChild( renderer.domElement );
 
 	var vrButton = WEBVR.createButton( renderer );

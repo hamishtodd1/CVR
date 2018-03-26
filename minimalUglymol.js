@@ -296,7 +296,6 @@ function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 		var v = cubeVerts[i]
 		solidMcScope.cubeOffsets.push(v[0] + size_z * (v[1] + size_y * v[2]));
 	}
-	console.log(points[0],points[1])
 
 	// var sample = 3;
 	// for (var x = 3; x < sample+1; x++) {
@@ -393,9 +392,6 @@ function marchingCubes(size_x,size_y,size_z, values, points, isolevel, method)
 	var cornerPositions = [p0, p0, p0, p0, p0, p0, p0, p0];
 	var cornerValues = new Float32Array(8);
 
-	console.log(points[0],points[cubeOffsets[2]])
-
-
 	var vertices = [];
 	var segments = [];
 	var faces = [];
@@ -415,12 +411,6 @@ function marchingCubes(size_x,size_y,size_z, values, points, isolevel, method)
 			cornerPositions[i] = points[j];
 			cornerValues[i] = values[j];
 			cubeindex |= (cornerValues[i] < isolevel) ? 1 << i : 0;
-		}
-		if(x===0&&y===0&&z===0)
-		{
-			console.log(cornerPositions[4][0]-cornerPositions[0][0])
-			console.log(cornerPositions[3][1]-cornerPositions[0][1])
-			console.log(cornerPositions[1][2]-cornerPositions[0][2])
 		}
 		if (cubeindex === 0 || cubeindex === 255) { continue; }
 
@@ -706,15 +696,21 @@ ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, 
 	{
 		var geo = solidMarchingCubes(this.block._size[0],this.block._size[1],this.block._size[2],
 			this.block._values, this.block._points, abs_level);
-		var isomesh = new THREE.Mesh( geo, 
+		var front = new THREE.Mesh( geo, 
 			new THREE.MeshPhongMaterial({
 				color: color,
 				clippingPlanes: clippingPlanes,
 				transparent:true,
-				opacity:0.6
+				opacity:0.7
 			}));
-
-		return isomesh;
+		var back = new THREE.Mesh( geo, 
+			new THREE.MeshPhongMaterial({
+				color: color,
+				clippingPlanes: clippingPlanes,
+				side:THREE.BackSide
+			}));
+		var isomesh = new THREE.Group();
+		isomesh.add(front,back)
 	}
 	else
 	{
@@ -727,8 +723,9 @@ ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, 
 			this.block._values, this.block._points, abs_level, method);
 		isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
 		isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
-		return isomesh;
 	}
+
+	return isomesh;
 };
 
 var UnitCell = function UnitCell(a /*:number*/, b /*:number*/, c /*:number*/,

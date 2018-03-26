@@ -21,7 +21,7 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 	data.from_ccp4(arrayBuffer); //pdbe and dsn9 exist
 
 	var types = isDiffMap ? ['map_pos', 'map_neg'] : ['map_den'];
-	var style = "squarish"; // "marching cubes"
+	var style = "solid"; // "marching cubes", "solid"
 	if(!isolevel) isolevel = isDiffMap ? 3.0 : 1.5; //units of rmsd
 
 	map.extractAndRepresentBlock = function()
@@ -60,7 +60,7 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 				isolevelMultiplier * isolevel,
 				colors[types[i]],
 				visiBox.planes,
-				"solid" );
+				style );
 			map.add( isomesh );
 		}
 	}
@@ -96,7 +96,7 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 	}
 
 	var unitCellMesh = data.unit_cell.getMesh();
-	// unitCellMesh.visible = false;
+	unitCellMesh.visible = false;
 	map.add(unitCellMesh);
 	//could be good to make it so that it is movable
 	map.toggleUnitCellVisibility = function()
