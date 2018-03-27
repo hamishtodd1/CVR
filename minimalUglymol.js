@@ -696,21 +696,27 @@ ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, 
 	{
 		var geo = solidMarchingCubes(this.block._size[0],this.block._size[1],this.block._size[2],
 			this.block._values, this.block._points, abs_level);
-		var front = new THREE.Mesh( geo, 
-			new THREE.MeshPhongMaterial({
-				color: color,
-				clippingPlanes: clippingPlanes,
-				transparent:true,
-				opacity:0.7
-			}));
-		var back = new THREE.Mesh( geo, 
-			new THREE.MeshPhongMaterial({
-				color: color,
-				clippingPlanes: clippingPlanes,
-				side:THREE.BackSide
-			}));
-		var isomesh = new THREE.Group();
-		isomesh.add(front,back)
+		var isomesh = new THREE.Group().add(
+			new THREE.Mesh( geo,
+				new THREE.MeshPhongMaterial({
+					color: color,
+					clippingPlanes: clippingPlanes,
+					transparent:true,
+					opacity:0.45
+				})),
+			new THREE.Mesh( geo,
+				new THREE.MeshPhongMaterial({
+					color: color,
+					clippingPlanes: clippingPlanes,
+					side:THREE.BackSide
+				})),
+			new THREE.Mesh( geo, //could use a slightly fattened squarish to improve
+				new THREE.MeshPhongMaterial({
+					color: 0xFFFFFF,
+					clippingPlanes: clippingPlanes,
+					wireframe:true
+				}))
+			)
 	}
 	else
 	{

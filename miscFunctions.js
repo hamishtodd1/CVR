@@ -217,7 +217,7 @@ function getStandardFunctionCallString(myFunc)
 function redirectCylinder(cylinder, start, newY)
 {
 	var newX = randomPerpVector( newY ).normalize();
-	var newZ = newY.clone().cross(newX).normalize();
+	var newZ = newY.clone().cross(newX).normalize().negate();
 	
 	cylinder.matrix.makeBasis( newX, newY, newZ );
 	cylinder.matrix.setPosition( start );

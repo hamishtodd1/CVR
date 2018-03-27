@@ -1,11 +1,12 @@
 /*
 notify coot of atom movements
 TODO for EM demo
+	Thing for Paul FFS!
 	accepting mtz
-	visualize the person's head in the coot window and vice versa
 	refinement
-	ramachandran
-	fucking surfaces
+	ramachandran? There's a lot already set up
+	Head movement monitoring demo?
+	Fucking visibox
 
 make that testing thing for paul
 bugs with unfound atoms
@@ -22,17 +23,16 @@ Get stuff from Diego
 Tickets to Oxford then back from Stoke on Trent
 Book 7Osme things
 Sysmic
-Further pips paperwork, Meet  head of maths, Go to Newbattle, Figure out newbattle topics
+Further pips paperwork, Resend to Caroline
+Meet  head of maths, Go to Newbattle, Figure out newbattle topics
 Poland travel
-
-expenses
+expenses, did you get the one for CCP4EM?
 Transfer money to savings account
 Maya
 	Admin
 	reddit/bluecollarwomen
 	http://www.nts.org.uk/wildlifesurvey/
 	http://www.wildlifeinformation.co.uk/about_volunteering.php
-
 
 Thumbstick could also be used for light intensity?
 
@@ -54,18 +54,11 @@ A big concern at some point will be navigating folders
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	// renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
-	renderer.vr.enabled = true;
+	// renderer.vr.enabled = true;
 	renderer.sortObjects = false;
 	document.body.appendChild( renderer.domElement );
 
 	var vrButton = WEBVR.createButton( renderer );
-	document.addEventListener( 'keydown', function(event)
-	{
-		if(event.keyCode === 69 ) //e
-		{
-			vrButton.onclick();
-		}
-	}, false );
 	document.body.appendChild( vrButton );
 
 	var loopCallString = getStandardFunctionCallString(loop);
@@ -82,8 +75,7 @@ A big concern at some point will be navigating folders
 	controllers = Array(2);
 	var vrInputSystem = initControllers(controllers);
 	
-	var debuggingWithoutVR = false;
-	assemblage.scale.setScalar( debuggingWithoutVR ? 0.02 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( renderer.vr.enabled ? 0.02 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;
@@ -91,7 +83,7 @@ A big concern at some point will be navigating folders
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
 	scene.add(assemblage);
 
-	var visiBox = initVisiBox(getAngstrom() * debuggingWithoutVR?0.06:0.5, maps);
+	var visiBox = initVisiBox(getAngstrom() * renderer.vr.enabled ? 0.3:0.06, maps);
 	for(var i = 0; i < visiBox.children.length; i++)
 	{
 		visiBox.children[i].visible = false;
@@ -108,6 +100,7 @@ A big concern at some point will be navigating folders
 	initSurroundings(true);
 	initScaleStick();
 	initStats();
+	// initSpecatorRepresentation();
 	
 	//---------------"init part 2"
 	function initTools()

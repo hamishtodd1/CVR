@@ -95,13 +95,15 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 		}
 	}
 
-	var unitCellMesh = data.unit_cell.getMesh();
-	unitCellMesh.visible = false;
-	map.add(unitCellMesh);
-	//could be good to make it so that it is movable
-	map.toggleUnitCellVisibility = function()
 	{
-		unitCellMesh.visible = !unitCellMesh.visible;
+		var unitCellMesh = data.unit_cell.getMesh();
+		unitCellMesh.visible = false;
+		map.add(unitCellMesh);
+		//could be good to make it so that it is movable
+		map.toggleUnitCellVisibility = function()
+		{
+			unitCellMesh.visible = !unitCellMesh.visible;
+		}
 	}
 
 	return map;
