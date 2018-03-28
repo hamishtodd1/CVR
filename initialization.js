@@ -53,13 +53,15 @@ A big concern at some point will be navigating folders
 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	// renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
-	// renderer.vr.enabled = true;
+	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
 	renderer.sortObjects = false;
 	document.body.appendChild( renderer.domElement );
 
-	var vrButton = WEBVR.createButton( renderer );
-	document.body.appendChild( vrButton );
+	{
+		renderer.vr.enabled = true;
+		var vrButton = WEBVR.createButton( renderer );
+		document.body.appendChild( vrButton );
+	}
 
 	var loopCallString = getStandardFunctionCallString(loop);
 	function render()
