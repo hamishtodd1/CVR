@@ -7,6 +7,7 @@ TODO for EM demo
 	ramachandran? There's a lot already set up
 	Head movement monitoring demo?
 	Fucking visibox
+	Notify server about movements
 
 make that testing thing for paul
 bugs with unfound atoms
@@ -58,26 +59,31 @@ A big concern at some point will be navigating folders
 	document.body.appendChild( renderer.domElement );
 
 	{
-		renderer.vr.enabled = true;
-		var vrButton = WEBVR.createButton( renderer );
-		document.body.appendChild( vrButton );
+		// renderer.vr.enabled = true;
+		// var vrButton = WEBVR.createButton( renderer );
+		// document.body.appendChild( vrButton );
 	}
-
-	var loopCallString = getStandardFunctionCallString(loop);
-	function render()
 	{
-		eval(loopCallString);
-		renderer.render( scene, camera );
+		var ourVrEffect = new THREE.VREffect( renderer );
+		var loopCallString = getStandardFunctionCallString(loop);
+		function render()
+		{
+			eval(loopCallString);
+			ourVrEffect.requestAnimationFrame( function()
+			{
+				//a reasonable indicator is ourVREffect.isPresenting
+				ourVrEffect.render( scene, camera );
+				render();
+			} );
+		}
 	}
-	renderer.animate( render );
+	controllers = Array(2);
+	var vrInputSystem = initVrInputSystem(controllers, renderer,ourVrEffect);
 
 	var maps = [];
 	var atoms = null; //because fixed length
 	
-	controllers = Array(2);
-	var vrInputSystem = initControllers(controllers);
-	
-	assemblage.scale.setScalar( renderer.vr.enabled ? 0.02 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( 0.045 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;
@@ -85,11 +91,8 @@ A big concern at some point will be navigating folders
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
 	scene.add(assemblage);
 
-	var visiBox = initVisiBox(getAngstrom() * renderer.vr.enabled ? 0.3:0.06, maps);
-	for(var i = 0; i < visiBox.children.length; i++)
-	{
-		visiBox.children[i].visible = false;
-	}
+	var visiBox = initVisiBox(getAngstrom() * 10, maps);
+	scene.add(visiBox)
 
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
@@ -174,6 +177,7 @@ A big concern at some point will be navigating folders
 	}
 	socket.onopen = function()
 	{
+		//hmm there was "animate" above, do you need this?
 		render();
 	}
 })();

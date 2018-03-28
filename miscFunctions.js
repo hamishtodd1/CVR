@@ -77,8 +77,8 @@ function DottedLineGeometry(numDots, radius)
 				i*radiusSegments*2+(j+1)%radiusSegments)
 			geo.faces[i*radiusSegments*2+j*2+1] = new THREE.Face3(
 				bottomRightVertex+radiusSegments,
-				i*radiusSegments*2+(j+1)%radiusSegments+radiusSegments,
-				i*radiusSegments*2+(j+1)%radiusSegments );
+				i*radiusSegments*2+(j+1)%radiusSegments,
+				i*radiusSegments*2+(j+1)%radiusSegments+radiusSegments );
 		}
 	}
 	geo.computeFaceNormals();

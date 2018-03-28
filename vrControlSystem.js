@@ -1,7 +1,25 @@
 //Left and right on stick = contour, up and down is for currently selected menu?
 
-function initControllers(controllers, renderer,ourVrEffect)
+function initVrInputSystem(controllers, renderer,ourVrEffect)
 {
+	var cameraRepositioner = new THREE.VRControls( camera );
+
+	document.addEventListener( 'keydown', function( event )
+	{
+		if(event.keyCode === 69 && ( navigator.getVRDisplays !== undefined || navigator.getVRDevices !== undefined ) )
+		{
+			event.preventDefault();
+			if(cameraRepositioner.vrInputs.length < 1)
+			{
+				console.error("no vr input? Check steamVR or Oculus to make sure it's working correctly")
+			}
+				
+			cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }])
+			
+			ourVrEffect.setFullScreen( true );
+		}
+	}, false ); 
+	
 	var vrInputSystem = {};
 
 	var riftControllerKeys = {
@@ -82,6 +100,11 @@ function initControllers(controllers, renderer,ourVrEffect)
 
 	vrInputSystem.update = function()
 	{
+		if(cameraRepositioner)
+		{
+			cameraRepositioner.update();
+		}
+
 		var gamepads = navigator.getGamepads();
 
 		for(var k = 0; k < gamepads.length; ++k)

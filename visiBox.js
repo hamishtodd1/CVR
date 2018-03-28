@@ -60,16 +60,17 @@ function initVisiBox(initialScale, maps)
 		visiBox.corners = Array(8);
 		var cornerGeometry = new THREE.EfficientSphereBufferGeometry(1);
 		cornerGeometry.computeBoundingSphere();
-		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF, side:THREE.DoubleSide});
+		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF});
 		visiBox.updateMatrix();
 
-		// visiBox.onLetGo = function()
-		// {
-		// 	for(var i = 0; i < maps.length; i++)
-		// 	{
-		// 		maps[i].extractAndRepresentBlock();
-		// 	}
-		// }
+		assemblage.onLetGo = function()
+		{
+			console.log("yo")
+			for(var i = 0; i < maps.length; i++)
+			{
+				maps[i].extractAndRepresentBlock();
+			}
+		}
 		
 		function putOnCubeCorner(i, position)
 		{
@@ -90,7 +91,6 @@ function initVisiBox(initialScale, maps)
 		for(var i = 0; i < visiBox.corners.length; i++)
 		{
 			visiBox.corners[i] = new THREE.Mesh( cornerGeometry, cornerMaterial );
-			visiBox.corners[i].scale.setScalar( 0.01 );
 			visiBox.corners[i].boundingSphere = cornerGeometry.boundingSphere;
 			visiBox.corners[i].onLetGo = visiBox.onLetGo;
 			visiBox.add( visiBox.corners[i] );
@@ -102,6 +102,7 @@ function initVisiBox(initialScale, maps)
 			
 			holdables.push( visiBox.corners[i] );
 		}
+		console.log(visiBox.corners[0].visible)
 	}
 
 	var cornerRadius = 0.01;
@@ -141,11 +142,12 @@ function initVisiBox(initialScale, maps)
 		{
 			facesVisible = true;
 		}
+		var cornerScale = new THREE.Vector3(cornerRadius/visiBox.scale.x,cornerRadius/visiBox.scale.y,cornerRadius/visiBox.scale.z);
 		for(var i = 0; i < visiBox.corners.length; i++)
 		{
 			if(visiBox.corners[i].parent === visiBox)
 			{
-				visiBox.corners[i].scale.set(cornerRadius/visiBox.scale.x,cornerRadius/visiBox.scale.y,cornerRadius/visiBox.scale.z);
+				visiBox.corners[i].scale.copy(cornerScale);
 				visiBox.corners[i].rotation.set(0,0,0);
 				putOnCubeCorner(i, visiBox.corners[i].position );
 			}
@@ -156,7 +158,7 @@ function initVisiBox(initialScale, maps)
 		}
 		for(var i = 0; i < faces.length; i++)
 		{
-			faces[i].visible = facesVisible;
+			// faces[i].visible = facesVisible;
 		}
 		
 		//beware, the planes may be the negatives of what you expect, seemingly because of threejs bug

@@ -78,32 +78,32 @@ function loop( maps, models, controllers, vrInputSystem, visiBox )
 			controllers[1].position ) / 
 			controllers[0].oldPosition.distanceTo( controllers[1].oldPosition );
 		
-		visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 
-		visiBox.scale.multiplyScalar( handSeparationDifferential );
-		visiBox.position.multiplyScalar(visiBox.scale.x);
+		// visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 
+		// visiBox.scale.multiplyScalar( handSeparationDifferential );
+		// visiBox.position.multiplyScalar(visiBox.scale.x);
 		
 		assemblage.position.multiplyScalar( 1 / assemblage.scale.x ); 
 		assemblage.scale.multiplyScalar( handSeparationDifferential );
 		assemblage.position.multiplyScalar(assemblage.scale.x);
 
-		establishAttachment(visiBox, controllers[bothAttachedController]);
+		// establishAttachment(visiBox, controllers[bothAttachedController]);
 		establishAttachment(assemblage, controllers[bothAttachedController]);
 		// establishAttachment(visiBox, scene);
 		// establishAttachment(assemblage, scene);
 	}
 	else if( controllers[bothAttachedController].grippingSide && !controllers[1-bothAttachedController].grippingSide )
 	{
-		establishAttachment(visiBox, controllers[bothAttachedController]);
+		// establishAttachment(visiBox, controllers[bothAttachedController]);
 		establishAttachment(assemblage, controllers[bothAttachedController]);
 	}
 	else if( controllers[1-bothAttachedController].grippingSide && !controllers[bothAttachedController].grippingSide )
 	{
 		establishAttachment(assemblage, controllers[1-bothAttachedController]);
-		establishAttachment(visiBox, scene);
+		// establishAttachment(visiBox, scene);
 	}
 	else
 	{
-		establishAttachment(visiBox, scene);
+		// establishAttachment(visiBox, scene);
 		establishAttachment(assemblage, scene);
 	}
 
