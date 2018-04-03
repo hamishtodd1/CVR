@@ -1,13 +1,11 @@
 /*
 notify coot of atom movements
 TODO for EM demo
-	Thing for Paul FFS!
-	accepting mtz
+	Notify server about atom movements
 	refinement
-	ramachandran? There's a lot already set up
-	Head movement monitoring demo?
-	Fucking visibox
-	Notify server about movements
+	ramachandran?
+	Non-vr head movement sensetivity demo?
+	coot converts mtz to CCP4 right?
 
 make that testing thing for paul
 bugs with unfound atoms
@@ -19,16 +17,16 @@ if two things are overlapping you pick up closer. Or glow for hover
 	Button on controller reserved
 	Flash or something
 
-Thankyou letters
-Get stuff from Diego
+Sort out oxford nonsense, it would be nice to see everyone
+expenses, and buying CCP4EM ticket
+Transfer money to savings account
+Fucking graph dude
 Tickets to Oxford then back from Stoke on Trent
 Book 7Osme things
 Sysmic
-Further pips paperwork, Resend to Caroline
-Meet  head of maths, Go to Newbattle, Figure out newbattle topics
+Newbattle shit - further pips paperwork, resend to Caroline
 Poland travel
-expenses, did you get the one for CCP4EM?
-Transfer money to savings account
+Get stuff from Diego
 Maya
 	Admin
 	reddit/bluecollarwomen
