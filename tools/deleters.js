@@ -1,5 +1,5 @@
 //TODO turning white is a bad way to highlight, they're inside a ball
-function initAtomDeleter( models)
+function initAtomDeleter()
 {
 	var atomDeleter = new THREE.Object3D();
 	
@@ -39,7 +39,7 @@ function initAtomDeleter( models)
 						if( models[i].atoms[j].selected )
 						{
 							var msg = {command:"deleteAtom"};
-							models[i].atoms[j].assignAtomSpecToMessage( msg );
+							models[i].atoms[j].assignAtomSpecToObject( msg );
 							socket.send(JSON.stringify(msg));
 						}
 					}
@@ -59,6 +59,7 @@ function initAtomDeleter( models)
 						{
 							if(!models[i].atoms[j].selected)
 							{
+								console.log("selecting?")
 								models[i].atoms[j].selected = true;
 								models[i].colorAtom(models[i].atoms[j], highlightColor);
 							}
@@ -75,23 +76,11 @@ function initAtomDeleter( models)
 				}
 			}
 		}
-		else
-		{
-			//probably various things can highlight something, be sure to always do cleanup
-			//heh but what if you want a tool in each hand?
-			for(var i = 0; i < models.length; i++)
-			{
-				for(var j = 0, jl = models[i].atoms[j].length; j < jl; j++)
-				{
-					if( models[i].atoms[j].selected )
-					{
-						models[i].atoms[j].selected = false;
-						models[i].colorAtom( models[i].atoms[j] );
-					}
-				}
-			}
-		}
 	}
+
+	//probably various things can highlight something, be sure to always do cleanup
+	//heh but what if you want a tool in each hand?
+	atomDeleter.onLetGo = turnOffAllHighlights;
 	
 	thingsToBeUpdated.push(atomDeleter);
 	holdables.push(atomDeleter)
@@ -102,7 +91,7 @@ function initAtomDeleter( models)
 }
 
 //seems to have a bug if you delete two residues at the same time
-function initResidueDeleter( models)
+function initResidueDeleter()
 {
 	var residueDeleter = new THREE.Object3D();
 	
@@ -131,9 +120,12 @@ function initResidueDeleter( models)
 		if(this.parent !== scene)
 		{
 			if( this.parent.button1 && !this.parent.button1Old )
-			{
+			{	
 				for(var i = 0; i < models.length; i++)
 				{
+					if(!logged)
+						console.log("yo")
+					logged = 1
 					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 					{
 						if( models[i].atoms[j].selected )
@@ -144,7 +136,7 @@ function initResidueDeleter( models)
 								{
 									//would be more efficient on coot side to delete all at once
 									var msg = {command:"deleteAtom"};
-									models[i].atoms[k].assignAtomSpecToMessage( msg );
+									models[i].atoms[k].assignAtomSpecToObject( msg );
 									socket.send(JSON.stringify(msg));
 								}
 							}

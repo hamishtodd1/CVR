@@ -75,10 +75,34 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 	}
 	
 	var controllerMaterial = new THREE.MeshLambertMaterial({color:0x444444});
+	var laserRadius = 0.001;
 	for(var i = 0; i < 2; i++)
 	{
 		controllers[ i ] = new THREE.Object3D();
 		scene.add( controllers[ i ] );
+
+		{
+			controllers[ i ].laser = new THREE.Mesh(
+				new THREE.CylinderBufferGeometryUncentered( laserRadius, 2), 
+				new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) 
+			);
+			controllers[ i ].laser.rotation.x = -TAU/4
+			controllers[ i ].laser.visible = false;
+			controllers[ i ].add(controllers[ i ].laser);
+			var raycaster = new THREE.Raycaster();
+			controllers[ i ].intersectLaserWithObject = function(object3D)
+			{
+				this.laser.updateMatrixWorld();
+				var origin = new THREE.Vector3(0,0,0);
+				this.laser.localToWorld(origin)
+				var direction = new THREE.Vector3(0,1,0);
+				this.laser.localToWorld(direction)
+				direction.sub(origin).normalize();
+
+				raycaster.set(origin,direction);
+				return raycaster.intersectObject(object3D);
+			}
+		}
 
 		for( var propt in riftControllerKeys )
 		{
@@ -106,7 +130,9 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 		}
 
 		var gamepads = navigator.getGamepads();
-
+		
+		//If controllers aren't getting input even from XX-vr-controllers,
+		//Try restarting computer. Urgh. Just browser isn't enough. Maybe oculus app?
 		for(var k = 0; k < gamepads.length; ++k)
 		{
 			if(!gamepads[k])
@@ -142,6 +168,7 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 				continue;
 			}
 			
+			// Thumbstick could also be used for light intensity?
 			controllers[affectedControllerIndex].thumbStickAxes[0] = gamepads[k].axes[0];
 			controllers[affectedControllerIndex].thumbStickAxes[1] = gamepads[k].axes[1];
 			

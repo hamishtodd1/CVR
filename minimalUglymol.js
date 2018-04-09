@@ -702,7 +702,7 @@ ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, 
 					color: color,
 					clippingPlanes: clippingPlanes,
 					transparent:true,
-					opacity:0.45
+					opacity:0.42
 				})),
 			new THREE.Mesh( geo,
 				new THREE.MeshPhongMaterial({
