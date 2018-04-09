@@ -1,6 +1,8 @@
+from coot import *
+
 runningInCoot = True
 try:
-	get_map_radius()
+	coot_version()
 except NameError:
 	runningInCoot = False
 	print("Not running in coot")
@@ -13,7 +15,7 @@ def connect(self):
 	if runningInCoot == False:
 		self.write_message({"command":"loadTutorialModel"})
 
-		mapMsg = {'command':"map",'mapFilename':'data/tutorialMap.map'}
+		mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
 		self.write_message( mapMsg )
 
 	else:
@@ -29,13 +31,22 @@ def connect(self):
 
 		make_and_draw_map ("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "", 0, 0)
 
-		mapMsg = {'command':"map"}
-		imolMap = imol_refinement_map();
+		# mapMsg = {'command':"map"}
+		# imolMap = imol_refinement_map();
 
-		temporaryFileName = "export.map" #Paul could speed this up
-		export_map(imolMap, temporaryFileName)
-		mapMsg['mapFilename'] = temporaryFileName
+		# temporaryFileName = "export.map" #Paul could speed this up
+		# export_map(imolMap, temporaryFileName)
+		# temporaryFile = open(temporaryFileName)
+		# mapMsg['dataString'] = temporaryFile.read()
 
+		# print("we COULD send it")
+		# print(type(mapMsg['dataString'] ))
+		# exampleStr = "yo"
+		# print(type(exampleStr ))
+
+		# self.write_message( mapMsg )
+
+		mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
 		self.write_message( mapMsg )
 
 #you have to use ["thing"] rather than .thing. Changeable, but not trivially
@@ -49,20 +60,21 @@ def command(self, msgContainer):
 			print("deletion of atom permitted")
 		self.write_message(msgContainer);
 
-	# elif msg["command"] == "moveAtom":
+	elif msg["command"] == "getEnvironmentDistances":
+		returnMsg = {"command":"environmentDistances"}
+		returnMsg["data"] = get_environment_distances_representation_py( 
+			msg["imol"], [ msg["chainId"], msg["resNo"], msg["insertionCode"] ] )
+		returnMsg["imol"] = msg["imol"]
+		self.write_message( returnMsg )
 
-	# 	if runningInCoot:
-	# 		set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
-	# 		set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
-	# 		set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
-	# 	else:
-	# 		print("movement of atom permitted")
-	# 	self.write_message(msg);
+	elif msg["command"] == "moveAtom":
+		if runningInCoot:
+			set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
+			set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
+			set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
 
-
-	#needs an atom's worth of stuff evidently
-	#it wants imol_coords, which we expect is imol
 	elif msg["command"] == "autoFitBestRotamer":
+		print("commanded to rotamer")
 
 		if runningInCoot == False:
 			print("requires coot")
@@ -75,48 +87,51 @@ def command(self, msgContainer):
 				msg["resNo"], msg["altloc"], msg["insertionCode"],msg["chainId"],msg["imol"],
 				imolMap, clashFlag, lowestProbability);
 
-			returnMsg = {"command":"atomMovements"}
-			returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+			returnMsg = {"command":"residueInfo"}
+			returnMsg["atoms"] = residue_info_py(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+			returnMsg["imol"] = msg["imol"]
+			self.write_message(returnMsg)
 
-			print(returnMsg["atomList"])
-			# self.write_message(str(returnMsg))
-		
+	# elif msg["command"] == "mutateAndAutoFit":
 
-	elif msg["command"] == "mutateAndAutoFit":
+	# 	if runningInCoot == False:
+	# 		print("requires coot")
+	# 	else:
+	# 		imolMap = imol_refinement_map(); #not necessarily
 
-		if runningInCoot == False:
-			print("requires coot")
-		else:
-			imolMap = imol_refinement_map(); #not necessarily
+	# 		mutate_and_auto_fit( 
+	# 			msg["resNo"], msg["chainId"],msg["imol"],imolMap, msg["residue"])
 
-			mutate_and_auto_fit( 
-				msg["resNo"], msg["chainId"],msg["imol"],imolMap, msg["residue"])
-
-			returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
-			returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+	# 		returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
+	# 		returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
 			
-			print(returnMsg)
-			# self.write_message(str(returnMsg))
+	# 		print(returnMsg)
+	# 		# self.write_message(str(returnMsg))
+	# (0, [['A', 88, ''], ['A', 89, ''], ['A', 90, '']])
 
-	elif msg["command"] == "printThis":
 
-		if runningInCoot == False:
-			print("requires coot")
-		else:
-			imolMap = imol_refinement_map(); #not necessarily
+	#-------------Refinement stuff
+	elif msg["command"] == "commenceRefinement":
+		startedStatus = refine_residues_py(msg["imol"], msg["residues"])
+		if startedStatus == False:
+			print("disallowed refinement???")
 
-			mutate_and_auto_fit( 
-				msg["resNo"], msg["chainId"],msg["imol"],imolMap, msg["residue"])
+	elif msg["command"] == "requestingIntermediateAtoms":
+		#did we decide to just do this periodically? :/
+		sendIntermediateRepresentation(self)
 
-			returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
-			returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
-			
-			print(returnMsg)
-			# self.write_message(str(returnMsg))
+	elif msg["command"] == "ceaseRefinement":
+		sendIntermediateRepresentation(self)
+		accept_regularizement()
 
-	# if msg["command"] == "getEnvironmentDistances":
-	# 	envDistances = get_environment_distances_representation_py(imol, residue_spec)
-	# 	print(envDistances)
+	# elif msg["command"] == "forceRestraints":
+	# 	for atomSpec in msg["atomSpecs"]:
+	# 		drag_intermediate_atom_py(atomSpec,position)
+	# 		#position is a list of 3 numbers
+
+	# elif msg["command"] == "rejectRefinement":
+	# 	clear_atom_pull_restraint()
+	# 	clear_up_moving_atoms()
 
 	else:
 		print('received unrecognized message:', msg,msg["command"])
@@ -130,3 +145,13 @@ def command(self, msgContainer):
 	view-matrix
 	set-view-matrix
 	'''
+
+def sendIntermediateRepresentation(self):
+	intermediateRepresentation = get_intermediate_atoms_bonds_representation()
+	if intermediateRepresentation != False:
+		returnMsg = {
+			"command":"intermediateRepresentation",
+			"imol":0, #hem hem
+			"intermediateRepresentation":intermediateRepresentation
+		}
+		self.write_message(returnMsg)
