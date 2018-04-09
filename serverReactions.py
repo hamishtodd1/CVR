@@ -132,19 +132,26 @@ def command(self, msgContainer):
 	# elif msg["command"] == "rejectRefinement":
 	# 	clear_atom_pull_restraint()
 	# 	clear_up_moving_atoms()
+	#	sendIntermediateRepresentation(self)
+
+	#--------------Spectation stuff
+	# view-matrix
+	# set-view-matrix
+	elif msg["command"] == "requestingSpectatorData":
+		spectatorDataMessage = {
+			"command":"spectatorCameraUpdate"
+			"position":[0,0,0],
+			"quaternion":[0,0,0,1],
+			"pointsOnMouseRay0":[0,0,0],
+			"pointsOnMouseRay1":[0,0,0],
+		}
+		self.write_message(returnMsg)
+
+	elif msg["command"] == "vrSpectatorData":
+		msg["vrHeadPosition"]
 
 	else:
 		print('received unrecognized message:', msg,msg["command"])
-
-	'''
-	Also useful
-	pepflip-active-residue
-	%coot-listener-socket
-	active_residue()
-	add-molecule
-	view-matrix
-	set-view-matrix
-	'''
 
 def sendIntermediateRepresentation(self):
 	intermediateRepresentation = get_intermediate_atoms_bonds_representation()
