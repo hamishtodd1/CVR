@@ -107,12 +107,12 @@ def command(self, msgContainer):
 			
 	# 		print(returnMsg)
 	# 		# self.write_message(str(returnMsg))
-	# (0, [['A', 88, ''], ['A', 89, ''], ['A', 90, '']])
 
+	# (0, [['A', 88, ''], ['A', 89, ''], ['A', 90, '']])
 
 	#-------------Refinement stuff
 	elif msg["command"] == "commenceRefinement":
-		startedStatus = refine_residues_py(msg["imol"], msg["residues"])
+		startedStatus = refine_residues_py(msg["imol"], msg["residues"] )
 		if startedStatus == False:
 			print("disallowed refinement???")
 
@@ -124,22 +124,24 @@ def command(self, msgContainer):
 		sendIntermediateRepresentation(self)
 		accept_regularizement()
 
-	# elif msg["command"] == "forceRestraints":
-	# 	for atomSpec in msg["atomSpecs"]:
-	# 		drag_intermediate_atom_py(atomSpec,position)
-	# 		#position is a list of 3 numbers
+	elif msg["command"] == "forceRestraint":
+		print("happenning")
+		atomSpec = [msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"]]
+		drag_intermediate_atom_py(atomSpec,msg["newPosition"])
 
 	# elif msg["command"] == "rejectRefinement":
 	# 	clear_atom_pull_restraint()
 	# 	clear_up_moving_atoms()
 	#	sendIntermediateRepresentation(self)
 
+	# residue_distortions(imol, residueSpecList)
+
+
 	#--------------Spectation stuff
-	# view-matrix
-	# set-view-matrix
 	elif msg["command"] == "requestingSpectatorData":
+		# view-matrix
 		spectatorDataMessage = {
-			"command":"spectatorCameraUpdate"
+			"command":"spectatorCameraUpdate",
 			"position":[0,0,0],
 			"quaternion":[0,0,0,1],
 			"pointsOnMouseRay0":[0,0,0],
@@ -149,6 +151,7 @@ def command(self, msgContainer):
 
 	elif msg["command"] == "vrSpectatorData":
 		msg["vrHeadPosition"]
+		# set-view-matrix
 
 	else:
 		print('received unrecognized message:', msg,msg["command"])

@@ -31,24 +31,35 @@ function initSpecatorRepresentation()
 	head.add(pointer)
 
 	thingsToBeUpdated.push(head)
-	var controlPoints = [new THREE.Vector3(),new THREE.Vector3(1,1,0)];
+	var pointsOnMouseRay = [new THREE.Vector3(),new THREE.Vector3(1,1,0)];
 	head.update = function()
 	{
-		// controlPoints[1].applyAxisAngle(yVector,0.01)
-		// controlPoints[1].sub(controlPoints[0]).setLength(5).add(controlPoints[0])
-		// redirectCylinder(pointer,controlPoints[0],controlPoints[1].clone().sub(controlPoints[0]))
+		// pointsOnMouseRay[1].applyAxisAngle(yVector,0.01)
+		// pointsOnMouseRay[1].sub(pointsOnMouseRay[0]).setLength(5).add(pointsOnMouseRay[0])
+		// redirectCylinder(pointer,pointsOnMouseRay[0],pointsOnMouseRay[1].clone().sub(pointsOnMouseRay[0]))
 
 		// head.position.set(0,0,-0.2);
 		// assemblage.worldToLocal(head.position)
 
 		this.scale.setScalar(1.0/getAngstrom())
+
+		if(frameCount % 40 === 0)
+		{
+			//hopefully? =/
+			var cameraPositionInCootSpace = camera.position.clone();
+			var msg = {
+				command:"vrSpectatorData",
+				position:[camera]
+			}
+			socket.send(JSON.stringify(msg));
+		}
 	}
 
 	socket.commandReactions.residueInfo = function(msg)
 	{
-		controlPoints[0].set(msg.something)
-		controlPoints[1].set(msg.something)
-		redirectCylinder(pointer,controlPoints[0],controlPoints[1].clone().sub(controlPoints[0]))
+		pointsOnMouseRay[0].set(msg.something)
+		pointsOnMouseRay[1].set(msg.something)
+		redirectCylinder(pointer,pointsOnMouseRay[0],pointsOnMouseRay[1].clone().sub(pointsOnMouseRay[0]))
 
 		head.position.set(msg.something);
 		head.rotation.set(msg.something);

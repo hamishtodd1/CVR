@@ -30,17 +30,19 @@ function loop( maps, models, controllers, vrInputSystem, visiBox )
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 && frameCount % 3 === 0 )
+		// Not now, it will bias the data
+		if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 && 
+			frameCount % 10 === 0 )
 		{
 			for(var j = 0; j < maps.length; j++)
 			{
-				maps[j].addToIsolevel( 0.09 * controllers[i].thumbStickAxes[1] )
+				maps[j].addToIsolevel( 0.22 * controllers[i].thumbStickAxes[1] )
 			}
 		}
 		
 		if( controllers[i].grippingTop )
 		{
-			if( controllers[i].children.length === 1)
+			if( controllers[i].children.length === 2)
 			{
 				var distanceOfClosestObject = Infinity;
 				selectedHoldable = null;

@@ -1,7 +1,7 @@
 //environment distances is a bunch of spheres you can stick in there (and leave). They stay in model space
 
 
-function initEnvironmentDistance(models)
+function initEnvironmentDistance()
 {
 	var environmentDistancer = new THREE.Object3D();
 	
@@ -77,7 +77,7 @@ function initEnvironmentDistance(models)
 				if(mostRecentlyRequestedResNo !== closestAtomResNo )
 				{
 					var msg = { command: "getEnvironmentDistances" };
-					closestAtom.assignAtomSpecToMessage( msg );
+					closestAtom.assignAtomSpecToObject( msg );
 					socket.send( JSON.stringify( msg ) );
 				}
 			}

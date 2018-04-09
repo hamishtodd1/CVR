@@ -41,6 +41,22 @@ function checkForNewGlobals()
 }
 //also nice would be "check for unused variables"
 
+function clamp(value, min, max)
+{
+	if(value < min)
+	{
+		return min;
+	}
+	else if(value > max )
+	{
+		return max;
+	}
+	else
+	{
+		return value;
+	}
+}
+
 function findHighestElementInArray(arr)
 {
 	var highestValue = -Infinity;
@@ -72,8 +88,8 @@ function DottedLineGeometry(numDots, radius)
 			geo.vertices[bottomRightVertex+radiusSegments] = new THREE.Vector3(radius,2*i+1, 0).applyAxisAngle(yVector,TAU*j/radiusSegments);
 
 			geo.faces[i*radiusSegments*2+j*2]   = new THREE.Face3(
-				bottomRightVertex,
 				bottomRightVertex+radiusSegments,
+				bottomRightVertex,
 				i*radiusSegments*2+(j+1)%radiusSegments)
 			geo.faces[i*radiusSegments*2+j*2+1] = new THREE.Face3(
 				bottomRightVertex+radiusSegments,

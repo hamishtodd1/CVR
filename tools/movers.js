@@ -8,48 +8,11 @@
  * Regularizer is pinch
  */
 
-/* Refinement
-	
-	startRefinement(imol, residue_list)
-	    refine_residues(imol, residue_list) //hope this doesn't block??
-
-	getIntermediateAtoms(newDrags):
-		for(drag in newDrags)
-	    intermediateAtoms = get_intermediate_atoms_bonds_representation()
-	    if( intermediateAtoms == False )
-	    	//we're finished, need to send final thing
-	    else:
-	    	if()
-	    	intermediate_atoms_distortions(residues_spec_list)
-	    	jsify_and_send( intermediateAtoms )
-
-	acceptRefinement():
-	    accept_regularizement()
-	    sendAtomPositions
-
-	pullAtom(atom_spec, position):
-	    drag_intermediate_atom_py(atom_spec, position)
-
-	rejectCurrentRefinement():
-	    clear_atom_pull_restraint()
-	    clear_up_moving_atoms()
-	    sendAtomPositions
-
-	intermediate_atoms_distortions(residues_spec_list)
-
-	continue to hold the thing in place and it continues to send force vectors
 
 
-	"residues_distortions(imol, residues_spec_list)"
 
-	You may want to see environment distances as the things are moving
-	
- */
-
-
-//this is the default thing that your hands do
 //you know so well what your hand is doing, do you HAVE to have refinement turned on for this?
-function initRigidBodyMover( models )
+function initRigidBodyMover()
 {
 	/*
 		Replaces peptide flipper and sidechainflipper.
@@ -87,11 +50,6 @@ function initRigidBodyMover( models )
 
 		if(this.parent !== this.ordinaryParent)
 		{
-			console.error("need to notify server about movements!")
-			// msg.x = 
-			// msg.x = 
-			// msg.z = 
-
 			if( this.parent.button1 )
 			{
 				this.parent.updateMatrixWorld();
@@ -126,13 +84,25 @@ function initRigidBodyMover( models )
 					var newAtomPosition = localCapturedAtomPositions[i].clone();
 					this.parent.localToWorld(newAtomPosition);
 					model.worldToLocal(newAtomPosition);
-					model.setAtomPosition(capturedAtoms[i], newAtomPosition)
+					model.setAtomRepresentationPosition(capturedAtoms[i], newAtomPosition)
 				}
 			}
 		}
 
 		if( !this.parent.button1 && this.parent.button1Old )
 		{
+			for(var i = 0, il = capturedAtoms.length; i < il; i++)
+			{
+				var msg = {
+					command: "moveAtom",
+					x: capturedAtoms[i].position.x,
+					y: capturedAtoms[i].position.y,
+					z: capturedAtoms[i].position.z
+				};
+				capturedAtoms[i].assignAtomSpecToObject( msg );
+				socket.send(JSON.stringify(msg));
+			}
+
 			capturedAtoms = [];
 			localCapturedAtomPositions = [];
 		}
@@ -146,7 +116,7 @@ function initRigidBodyMover( models )
 	return rigidBodyMover;
 }
 
-function initAutoRotamer( models )
+function initAutoRotamer()
 {
 	/* Rotamer changer
 	 * Put it over an atom. Sends to coot, gets different conformations, shows them. They are selectable
@@ -187,7 +157,7 @@ function initAutoRotamer( models )
 						if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
 						{
 							var msg = {command:"autoFitBestRotamer"};
-							models[i].atoms[j].assignAtomSpecToMessage( msg );
+							models[i].atoms[j].assignAtomSpecToObject( msg );
 							socket.send(JSON.stringify(msg));
 							//TODO this gets sent more than you would like
 						}

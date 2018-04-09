@@ -1,42 +1,58 @@
 /*
 notify coot of atom movements
-TODO for EM demo
-	Notify server about atom movements
-	refinement
+TODO before newbattle
+	expenses
+	Maryam Mirzakhani
+	Dogs
+	Sysmic finalize
+	Newbattle shit - further pips paperwork, resend to Caroline
+	Book 7Osme things
+	Poland travel
+	Get stuff from Diego
 	ramachandran?
-	Non-vr head movement sensetivity demo?
-	coot converts mtz to CCP4 right?
+	Non-vr head movement sensetivity demo
 
-make that testing thing for paul
-bugs with unfound atoms
-bug with some residues highlighting many residues?
+TODO for EM demo
+	look for bugs generally, do lots of stuff consecutively
+	Make sure it works on your laptop
+		Pull in vm
+		Try with everything plugged in on desk
+
+	With Paul:
+		Intermediate updates only seem to come after some event that is indicated in the console
+		if async working, try moving and deleting atoms
+			Make some non-VR dummy camera movement
+		Can my text be a special color?
+		look at the encoding on those maps!
+		I would like to get these surface things in
+		Still got -1 for an imol in refinement??
+		I only *appear* to get the one refinement update?
+		bug with some residues highlighting many residues?
+		Talk about force restraints
+			Ok so when I thought it out I realized it was maybe bad
+				You make the movement, but then you're "holding the things in place"
+			What instead?
+				Currently I take the central atom and pull it
+				Possibly humans only think in single vectors, hence center
+				This is interesting
+
+	Sick bags
+	Gel insoles?
+	Plastic sheet on floor?
+
+transfer the map
+
 mutator
-if two things are overlapping you pick up closer. Or glow for hover
 "undo"
 	Just coot undo, then get the result? Full refresh
 	Button on controller reserved
 	Flash or something
 
-Sort out oxford nonsense, it would be nice to see everyone
-expenses, and buying CCP4EM ticket
-Transfer money to savings account
-Fucking graph dude
-Tickets to Oxford then back from Stoke on Trent
-Book 7Osme things
-Sysmic
-Newbattle shit - further pips paperwork, resend to Caroline
-Poland travel
-Get stuff from Diego
 Maya
 	Admin
 	reddit/bluecollarwomen
 	http://www.nts.org.uk/wildlifesurvey/
 	http://www.wildlifeinformation.co.uk/about_volunteering.php
-
-Thumbstick could also be used for light intensity?
-
-A big concern at some point will be navigating folders
-
 */
 
 
@@ -81,15 +97,17 @@ A big concern at some point will be navigating folders
 	var maps = [];
 	var atoms = null; //because fixed length
 	
-	assemblage.scale.setScalar( 0.045 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;
 	}
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
+	assemblage.position.y = -0.11;
 	scene.add(assemblage);
 
-	var visiBox = initVisiBox(getAngstrom() * 10, maps);
+	var visiBox = initVisiBox(0.45, maps);
+	visiBox.position.copy(assemblage.position)
 	scene.add(visiBox)
 
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
@@ -102,7 +120,8 @@ A big concern at some point will be navigating folders
 	
 	initSurroundings(true);
 	initScaleStick();
-	initStats();
+	initStats(visiBox.position);
+	// initMenus();
 	// initSpecatorRepresentation();
 	
 	//---------------"init part 2"
@@ -113,12 +132,13 @@ A big concern at some point will be navigating folders
 		thingsToSpaceOut.push( 
 			initPointer(),
 			// initMutator(),
-			initAtomLabeller(models),
-			initAtomDeleter(socket, models),
-			initResidueDeleter(socket, models),
-			// initAutoRotamer(socket, models),
-			initRigidBodyMover(models),
-			initEnvironmentDistance(models)
+			initAtomLabeller(),
+			initAtomDeleter(),
+			initResidueDeleter(),
+			initAutoRotamer(),
+			initRefiner(),
+			initRigidBodyMover(),
+			initEnvironmentDistance()
 		);
 
 		//maybe these things could be on a desk? Easier to pick up?
@@ -135,7 +155,7 @@ A big concern at some point will be navigating folders
 
 	socket.commandReactions["model"] = function(msg)
 	{
-		console.error("does it need to be in a string? environment distances didn't need to be")
+		//does it need to be in a string? environment distances didn't need to be
 		makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
 		initTools();
@@ -148,19 +168,10 @@ A big concern at some point will be navigating folders
 		// maps.push(newMap);
 		// assemblage.add(newMap)
 	}
-	socket.commandReactions["loadTutorialModel"] = function(msg)
+	socket.commandReactions["mapFilename"] = function(msg)
 	{
-		new THREE.FileLoader().load( "data/tutorialGbr.txt",
-			function( modelDataString )
-			{
-				makeModelFromCootString( modelDataString, visiBox.planes );
-
-				initTools();
-			}
-		);
-		
 		var req = new XMLHttpRequest();
-		req.open('GET', "data/tutorialMap.map", true);
+		req.open('GET', msg.mapFilename, true);
 		req.responseType = 'arraybuffer';
 		req.onreadystatechange = function()
 		{
@@ -172,6 +183,17 @@ A big concern at some point will be navigating folders
 			}
 		};
 		req.send(null);
+	}
+	socket.commandReactions["loadTutorialModel"] = function(msg)
+	{
+		new THREE.FileLoader().load( "data/tutorialGbr.txt",
+			function( modelDataString )
+			{
+				makeModelFromCootString( modelDataString, visiBox.planes );
+
+				initTools();
+			}
+		);
 	}
 	socket.onopen = function()
 	{

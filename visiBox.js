@@ -32,7 +32,6 @@ function initVisiBox(initialScale, maps)
 	thingsToBeUpdated.push(visiBox)
 	
 	visiBox.scale.setScalar(initialScale);
-	visiBox.position.z = -FOCALPOINT_DISTANCE;
 	visiBox.ordinaryParent = scene;
 	visiBox.ordinaryParent.add(visiBox);
 	
@@ -63,9 +62,9 @@ function initVisiBox(initialScale, maps)
 		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF});
 		visiBox.updateMatrix();
 
+		assemblage.ordinaryParent = scene;
 		assemblage.onLetGo = function()
 		{
-			console.log("yo")
 			for(var i = 0; i < maps.length; i++)
 			{
 				maps[i].extractAndRepresentBlock();
@@ -102,7 +101,6 @@ function initVisiBox(initialScale, maps)
 			
 			holdables.push( visiBox.corners[i] );
 		}
-		console.log(visiBox.corners[0].visible)
 	}
 
 	var cornerRadius = 0.01;

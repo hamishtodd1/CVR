@@ -62,7 +62,7 @@ function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc)
 		console.error("unrecognized element: ", element)
 	}
 }
-Atom.prototype.assignAtomSpecToMessage = function(msg)
+Atom.prototype.assignAtomSpecToObject = function(msg)
 {
 	msg.imol = this.imol;
 	msg.chainId = this.chainId;
@@ -369,7 +369,7 @@ function initModelCreationSystem( visiBoxPlanes)
 			}
 		}
 		
-		molecule.setAtomPosition = function( atom, newPosition )
+		molecule.setAtomRepresentationPosition = function( atom, newPosition )
 		{
 			if(newPosition)
 			{
@@ -411,6 +411,11 @@ function initModelCreationSystem( visiBoxPlanes)
 					bondRadius );
 			}
 			this.geometry.attributes.position.needsUpdate = true;
+
+			if(atom.label)
+			{
+				atom.label.position.copy(atom.position)
+			}
 		}
 		
 		var cylinderFirstFaceIndex = atoms.length * nSphereFaces;
@@ -458,7 +463,7 @@ function initModelCreationSystem( visiBoxPlanes)
 			}
 
 			molecule.colorAtom(atoms[i]);
-			molecule.setAtomPosition(atoms[i])
+			molecule.setAtomRepresentationPosition(atoms[i])
 		}
 
 		return molecule;
@@ -533,22 +538,41 @@ function initModelCreationSystem( visiBoxPlanes)
 
 	//------------Socket
 	{
-		function getAtomWithSpecContainedInHere(objectContainingSpec)
+		function getAtomWithSpecContainedInHere(objectOrArrayContainingSpec)
 		{
-			var model = getModelWithImol(objectContainingSpec.imol);
-
-			for( var i = 0, il = model.atoms.length; i < il; i++ )
+			if(objectOrArrayContainingSpec.imol !== undefined)
 			{
-				if( model.atoms[i].imol === objectContainingSpec.imol &&
-					model.atoms[i].chainId === objectContainingSpec.chainId &&
-					model.atoms[i].resNo === objectContainingSpec.resNo &&
-					model.atoms[i].insertionCode === objectContainingSpec.insertionCode &&
-					model.atoms[i].name === objectContainingSpec.name &&
-					model.atoms[i].altloc === objectContainingSpec.altloc )
+				var model = getModelWithImol(objectOrArrayContainingSpec.imol);
+
+				for( var i = 0, il = model.atoms.length; i < il; i++ )
 				{
-					return model.atoms[i];
+					if( model.atoms[i].chainId === objectOrArrayContainingSpec.chainId &&
+						model.atoms[i].resNo === objectOrArrayContainingSpec.resNo &&
+						model.atoms[i].insertionCode === objectOrArrayContainingSpec.insertionCode &&
+						model.atoms[i].name === objectOrArrayContainingSpec.name &&
+						model.atoms[i].altloc === objectOrArrayContainingSpec.altloc )
+					{
+						return model.atoms[i];
+					}
 				}
 			}
+			else
+			{
+				var model = (objectOrArrayContainingSpec[0] === -1 ? models[0]:models[objectOrArrayContainingSpec[0]]);
+
+				for( var i = 0, il = model.atoms.length; i < il; i++ )
+				{
+					if( model.atoms[i].chainId === objectOrArrayContainingSpec[1] &&
+						model.atoms[i].resNo === objectOrArrayContainingSpec[2] &&
+						model.atoms[i].insertionCode === objectOrArrayContainingSpec[3] &&
+						model.atoms[i].name === objectOrArrayContainingSpec[4] &&
+						model.atoms[i].altloc === objectOrArrayContainingSpec[5] )
+					{
+						return model.atoms[i];
+					}
+				}
+			}
+			
 			console.error("couldn't find atom with requested spec")
 		}
 
@@ -596,11 +620,25 @@ function initModelCreationSystem( visiBoxPlanes)
 			{
 				var atom = model.atoms[msg.atoms[i][3]];
 				atom.position.fromArray( msg.atoms[i][2] );
-				model.setAtomPosition(atom);
+				model.setAtomRepresentationPosition(atom);
+			}
+			model.geometry.attributes.position.needsUpdate = true;
+		}
 
-				if(atom.label)
+		//could they have different connectivity? :/
+		socket.commandReactions.intermediateRepresentation = function(msg)
+		{
+			console.log("receiving?")
+			var model = getModelWithImol(msg.imol);
+
+			var arrayWithSpecs = msg.intermediateRepresentation[0];
+			for(var i = 0; i < arrayWithSpecs.length; i++)
+			{
+				for(var j = 0; j < arrayWithSpecs[i].length; j++)
 				{
-					atom.label.position.copy(atom.position)
+					var atom = getAtomWithSpecContainedInHere( arrayWithSpecs[i][j][2] );
+					atom.position.fromArray( arrayWithSpecs[i][j][0] );
+					model.setAtomRepresentationPosition( atom );
 				}
 			}
 			model.geometry.attributes.position.needsUpdate = true;
