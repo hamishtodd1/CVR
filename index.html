@@ -1,4 +1,6 @@
 <!--
+
+
 And by the way, go to top right arrow>settings>region & language>plus sign and put in eng UK and minus sign to get rid of fucking eng US
 
 Install procedure
@@ -18,9 +20,8 @@ Install procedure
 Update procedure, in autobuild:
 	Switch virtual machine connection mode to NAT
 	in gitcoot/coot, git pull
-	usually unneeded, does configure stuff:
-		in gitcoot/coot, bash autogen.sh
-		in gitcoot/build, bash CIH 
+	in gitcoot/coot, bash autogen.sh
+	in gitcoot/build, bash CIH 
 	in gitcoot/build, make
 	in gitcoot/build, make install
 	It is now in Linux-localhost
@@ -105,16 +106,18 @@ Need to optimize this workflow.
 		<script src="lib/three.min.js"></script>
 		<script src="lib/WireframeGeometry.js"></script>
 
-		<script src="lib/SceneFromDemo.js"></script>
 		<script src="lib/OBJLoader.js"></script>
 		<script src="lib/PDBLoader.js"></script>
 		
-		<script src="lib/WebVR.js"></script>
-		<script src="lib/VREffect.js"></script>
-		<script src="lib/VRControls.js"></script>
-		
-		<script src="minimalUglymol.js"></script>
-		<script src="map.js?v=3"></script>
+		<!--<script src="lib/vrEnabledWebVr.js"></script>-->
+		<script src="lib/tempWebVR.js"></script>
+		<script src="lib/tempVREffect.js"></script>
+		<script src="lib/tempVrHeadControl.js"></script>
+		<!--<script src="tempVr.js"></script>-->
+
+		<script src="surroundings.js"></script>
+		<script src="minimalUglymol.js?v=4"></script>
+		<script src="maps.js"></script>
 		
 		<script src="miscFunctions.js"></script>
 		<script src="variables.js"></script>
@@ -124,11 +127,14 @@ Need to optimize this workflow.
 		<script src="holdables.js"></script>
 		<script src="text.js"></script>
 		
-		<script src="tools/deleters.js"></script>
-		<script src="tools/misc.js"></script>
-		<script src="tools/pointer.js"></script>
+			<script src="tools/deleters.js"></script>
+			<script src="tools/misc.js"></script>
+			<script src="tools/movers.js"></script>
+			<script src="tools/refine.js"></script>
 
 		<script src="stats.js"></script>
+		<script src="menus.js"></script>
+		<script src="spectatorRepresentation.js"></script>
 		
 		<script src="scaleStick.js"></script>
 		<script src="visiBox.js"></script>

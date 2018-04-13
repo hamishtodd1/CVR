@@ -1,152 +1,128 @@
 /*
-expenses
-train tickets
-ketopine
+notify coot of atom movements
+TODO before newbattle
+	expenses
+	Maryam Mirzakhani
+	Dogs
+	Sysmic finalize
+	Newbattle shit - further pips paperwork, resend to Caroline
+	Book 7Osme things
+	Poland travel
+	Get stuff from Diego
+	ramachandran?
+	Non-vr head movement sensetivity demo
 
 TODO for EM demo
-	interatomic contacts
-	ramachandran
-	solid mesh
+	look for bugs generally, do lots of stuff consecutively
+	Make sure it works on your laptop
+		Pull in vm
+		Try with everything plugged in on desk
 
-Lots of shit in server to test/implement
+	With Paul:
+		Intermediate updates only seem to come after some event that is indicated in the console
+		if async working, try moving and deleting atoms
+			Make some non-VR dummy camera movement
+		Can my text be a special color?
+		look at the encoding on those maps!
+		I would like to get these surface things in
+		Still got -1 for an imol in refinement??
+		I only *appear* to get the one refinement update?
+		bug with some residues highlighting many residues?
+		Talk about force restraints
+			Ok so when I thought it out I realized it was maybe bad
+				You make the movement, but then you're "holding the things in place"
+			What instead?
+				Currently I take the central atom and pull it
+				Possibly humans only think in single vectors, hence center
+				This is interesting
+
+	Sick bags
+	Gel insoles?
+	Plastic sheet on floor?
+
+transfer the map
+
 mutator
-Try just having "rigid" atom movement. THEN think about other tools. Refine is most important
-if two things are overlapping you pick up closer. Or glow for hover
 "undo"
-	Just coot undo, then get the result?
+	Just coot undo, then get the result? Full refresh
 	Button on controller reserved
 	Flash or something
 
-All tools that move atoms: Could make it so 
-	you can grab an atom or two anywhere, 
-	move it, 
-	it decides what tool would suit the current movement and shows you the "ghost"
-
-Thumbstick could also be used for light intensity?
-
-A big concern at some point will be navigating folders
-
-
+Maya
+	Admin
+	reddit/bluecollarwomen
+	http://www.nts.org.uk/wildlifesurvey/
+	http://www.wildlifeinformation.co.uk/about_volunteering.php
 */
 
 
 
 (function init()
 {
-	if(!WEBVR.checkAvailability())
-	{
-		console.error("No webvr!")
-		return;
-	}
-
-	var launcher = {
-		socketOpened: false,
-		initComplete:false,
-		attemptLaunch: function()
-		{
-			for(var condition in this)
-			{
-				if( !this[condition] )
-				{
-					return;
-				}
-			}
-			
-			document.body.appendChild( renderer.domElement );
-			render();
-		}
-	}
-	//TODO: async await for the various things. There was also different stuff here previously
+	// if(!WEBVR.checkAvailability())
+	// {
+	// 	console.error("No webvr!")
+	// 	return;
+	// }
 
 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	renderer.vr.enabled = true;
+	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
+	renderer.sortObjects = false;
 	document.body.appendChild( renderer.domElement );
 
-	var vrButton = WEBVR.createButton( renderer );
-	document.addEventListener( 'keydown', function(event)
 	{
-		if(event.keyCode === 69 )
-		{
-			vrButton.onclick();
-		}
-	}, false );
-	document.body.appendChild( vrButton );
-
-	var loopCallString = getStandardFunctionCallString(loop);
-	function render() {
-
-		eval(loopCallString);
-		renderer.render( scene, camera );
-
+		// renderer.vr.enabled = true;
+		// var vrButton = WEBVR.createButton( renderer );
+		// document.body.appendChild( vrButton );
 	}
-	renderer.animate( render );
+	{
+		var ourVrEffect = new THREE.VREffect( renderer );
+		var loopCallString = getStandardFunctionCallString(loop);
+		function render()
+		{
+			eval(loopCallString);
+			ourVrEffect.requestAnimationFrame( function()
+			{
+				//a reasonable indicator is ourVREffect.isPresenting
+				ourVrEffect.render( scene, camera );
+				render();
+			} );
+		}
+	}
+	controllers = Array(2);
+	var vrInputSystem = initVrInputSystem(controllers, renderer,ourVrEffect);
 
 	var maps = [];
 	var atoms = null; //because fixed length
 	
-	controllers = Array(2);
-	var vrInputSystem = initControllers(controllers);
-
-	initScaleStick();
-
-	initStats();
-	
-	var debuggingWithoutVR = false;
-	assemblage.scale.setScalar( debuggingWithoutVR ? 0.002 : 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;
 	}
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
+	assemblage.position.y = -0.11;
 	scene.add(assemblage);
 
-	var visiBox = initVisiBox(getAngstrom() * debuggingWithoutVR?0.06:0.5, maps);
+	var visiBox = initVisiBox(0.45, maps);
+	visiBox.position.copy(assemblage.position)
+	scene.add(visiBox)
 
 	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
-	window.addEventListener( 'resize', function(){
-	    renderer.setSize( window.innerWidth, window.innerHeight ); //nothing about vr effect?
+	window.addEventListener( 'resize', function(){ //doesn't work if in VR
+	    renderer.setSize( window.innerWidth, window.innerHeight );
 	    camera.aspect = window.innerWidth / window.innerHeight;
 	    camera.updateProjectionMatrix();
 	}, false );
 	
-	makeScene(true);
-	
-	{
-		var blinker = new THREE.Mesh(new THREE.PlaneBufferGeometry(10,10),new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0}))
-		blinker.blinkProgress = 1;
-		camera.add(blinker);
-		
-		document.addEventListener( 'keydown', function(event)
-		{
-			if(event.keyCode === 13 )
-			{
-				blinker.blinkProgress = -1;
-			}
-		}, false );
-		
-		blinker.update = function()
-		{
-			var oldBlinkProgress = blinker.blinkProgress;
-			
-			blinker.blinkProgress += frameDelta * 7;
-			blinker.material.opacity = 1-Math.abs(this.blinkProgress);
-			blinker.position.z = -camera.near - 0.00001;
-			
-			if( oldBlinkProgress < 0 && this.blinkProgress > 0)
-			{
-				ourVrEffect.toggleEyeSeparation();
-				if( visiBox.position.distanceTo(camera.position) < camera.near )
-				{
-					visiBox.position.setLength(camera.near * 1.1);
-				}
-			}
-		}
-		
-		thingsToBeUpdated.push( blinker );
-	}
+	initSurroundings(true);
+	initScaleStick();
+	initStats(visiBox.position);
+	// initMenus();
+	// initSpecatorRepresentation();
 	
 	//---------------"init part 2"
 	function initTools()
@@ -155,12 +131,17 @@ A big concern at some point will be navigating folders
 
 		thingsToSpaceOut.push( 
 			initPointer(),
-			initMutator(),
-			initAtomDeleter(socket, models),
-			initResidueDeleter(socket, models),
-			initAtomLabeller(models),
-			initAutoRotamer(socket, models)
+			// initMutator(),
+			initAtomLabeller(),
+			initAtomDeleter(),
+			initResidueDeleter(),
+			initAutoRotamer(),
+			initRefiner(),
+			initRigidBodyMover(),
+			initEnvironmentDistance()
 		);
+
+		//maybe these things could be on a desk? Easier to pick up?
 
 		var toolSpacing = 0.15;
 		for(var i = 0; i < thingsToSpaceOut.length; i++)
@@ -169,38 +150,54 @@ A big concern at some point will be navigating folders
 		}
 	}
 
-	socket = initSocket();
-	models = initModelCreationSystem(socket, visiBox.planes);
+	initSocket();
+	models = initModelCreationSystem(visiBox.planes);
 
-	socket.onopen = function()
-	{
-		launcher.socketOpened = true;
-		launcher.attemptLaunch();
-	}
 	socket.commandReactions["model"] = function(msg)
 	{
-		console.log("hm")
+		//does it need to be in a string? environment distances didn't need to be
 		makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
 		initTools();
 	}
 	socket.commandReactions["map"] = function(msg)
 	{
-		var newMap = Map(msg["mapFilename"], false, visiBox);
-		maps.push(newMap);
-		assemblage.add(newMap)
+		//you have to convert it into an array buffer :/
+		// console.log(msg["dataString"])
+		// var newMap = Map( msg["dataString"], false, visiBox );
+		// maps.push(newMap);
+		// assemblage.add(newMap)
+	}
+	socket.commandReactions["mapFilename"] = function(msg)
+	{
+		var req = new XMLHttpRequest();
+		req.open('GET', msg.mapFilename, true);
+		req.responseType = 'arraybuffer';
+		req.onreadystatechange = function()
+		{
+			if (req.readyState === 4)
+			{
+				var newMap = Map( req.response, false, visiBox );
+				maps.push(newMap);
+				assemblage.add(newMap)
+			}
+		};
+		req.send(null);
 	}
 	socket.commandReactions["loadTutorialModel"] = function(msg)
 	{
 		new THREE.FileLoader().load( "data/tutorialGbr.txt",
-			function( modelStringCoot )
+			function( modelDataString )
 			{
-				makeModelFromCootString( modelStringCoot, visiBox.planes );
+				makeModelFromCootString( modelDataString, visiBox.planes );
 
 				initTools();
 			}
 		);
 	}
-	launcher.initComplete = true;
-	launcher.attemptLaunch();
+	socket.onopen = function()
+	{
+		//hmm there was "animate" above, do you need this?
+		render();
+	}
 })();

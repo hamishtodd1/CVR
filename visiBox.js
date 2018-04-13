@@ -32,7 +32,6 @@ function initVisiBox(initialScale, maps)
 	thingsToBeUpdated.push(visiBox)
 	
 	visiBox.scale.setScalar(initialScale);
-	visiBox.position.z = -FOCALPOINT_DISTANCE;
 	visiBox.ordinaryParent = scene;
 	visiBox.ordinaryParent.add(visiBox);
 	
@@ -44,11 +43,11 @@ function initVisiBox(initialScale, maps)
 	{
 		faces[i] = new THREE.Mesh(ourSquareGeometry, new THREE.MeshLambertMaterial({color:0xFF0000,transparent:true, opacity:0.5, side:THREE.DoubleSide}) );
 		visiBox.add( faces[i] );
-		if( i === 1) faces[i].rotation.x = TAU/2;
-		if( i === 2) faces[i].rotation.x = TAU/4;
-		if( i === 3) faces[i].rotation.x = -TAU/4;
-		if( i === 4) faces[i].rotation.y = TAU/4;
-		if( i === 5) faces[i].rotation.y = -TAU/4;
+		if( i === 1 ) faces[i].rotation.x = TAU/2;
+		if( i === 2 ) faces[i].rotation.x = TAU/4;
+		if( i === 3 ) faces[i].rotation.x = -TAU/4;
+		if( i === 4 ) faces[i].rotation.y = TAU/4;
+		if( i === 5 ) faces[i].rotation.y = -TAU/4;
 		faces[i].position.set(0,0,0.5);
 		faces[i].position.applyEuler( faces[i].rotation );
 		
@@ -60,10 +59,11 @@ function initVisiBox(initialScale, maps)
 		visiBox.corners = Array(8);
 		var cornerGeometry = new THREE.EfficientSphereBufferGeometry(1);
 		cornerGeometry.computeBoundingSphere();
-		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF, side:THREE.DoubleSide});
+		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF});
 		visiBox.updateMatrix();
 
-		visiBox.onLetGo = function()
+		assemblage.ordinaryParent = scene;
+		assemblage.onLetGo = function()
 		{
 			for(var i = 0; i < maps.length; i++)
 			{
@@ -90,7 +90,6 @@ function initVisiBox(initialScale, maps)
 		for(var i = 0; i < visiBox.corners.length; i++)
 		{
 			visiBox.corners[i] = new THREE.Mesh( cornerGeometry, cornerMaterial );
-			visiBox.corners[i].scale.setScalar( 0.01 );
 			visiBox.corners[i].boundingSphere = cornerGeometry.boundingSphere;
 			visiBox.corners[i].onLetGo = visiBox.onLetGo;
 			visiBox.add( visiBox.corners[i] );
@@ -141,11 +140,12 @@ function initVisiBox(initialScale, maps)
 		{
 			facesVisible = true;
 		}
+		var cornerScale = new THREE.Vector3(cornerRadius/visiBox.scale.x,cornerRadius/visiBox.scale.y,cornerRadius/visiBox.scale.z);
 		for(var i = 0; i < visiBox.corners.length; i++)
 		{
 			if(visiBox.corners[i].parent === visiBox)
 			{
-				visiBox.corners[i].scale.set(cornerRadius/visiBox.scale.x,cornerRadius/visiBox.scale.y,cornerRadius/visiBox.scale.z);
+				visiBox.corners[i].scale.copy(cornerScale);
 				visiBox.corners[i].rotation.set(0,0,0);
 				putOnCubeCorner(i, visiBox.corners[i].position );
 			}
@@ -156,7 +156,7 @@ function initVisiBox(initialScale, maps)
 		}
 		for(var i = 0; i < faces.length; i++)
 		{
-			faces[i].visible = facesVisible;
+			// faces[i].visible = facesVisible;
 		}
 		
 		//beware, the planes may be the negatives of what you expect, seemingly because of threejs bug

@@ -14,29 +14,35 @@ function establishAttachment(child, intendedParent)
 		{
 			child.onLetGo();
 		}
+		if(intendedParent !== child.ordinaryParent && child.onGrab)
+		{
+			child.onGrab();
+		}
 	}
 }
 
-function loop( socket, maps, models, controllers, vrInputSystem, visiBox )
+function loop( maps, models, controllers, vrInputSystem, visiBox )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;
 	
-	vrInputSystem.update( socket );
+	vrInputSystem.update();
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		if(Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 && frameCount % 3 === 0 )
+		// Not now, it will bias the data
+		if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 && 
+			frameCount % 10 === 0 )
 		{
 			for(var j = 0; j < maps.length; j++)
 			{
-				maps[j].addToIsolevel( 0.09 * controllers[i].thumbStickAxes[1] )
+				maps[j].addToIsolevel( 0.22 * controllers[i].thumbStickAxes[1] )
 			}
 		}
 		
 		if( controllers[i].grippingTop )
 		{
-			if( controllers[i].children.length === 1)
+			if( controllers[i].children.length === 2)
 			{
 				var distanceOfClosestObject = Infinity;
 				selectedHoldable = null;
@@ -74,32 +80,32 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox )
 			controllers[1].position ) / 
 			controllers[0].oldPosition.distanceTo( controllers[1].oldPosition );
 		
-		visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 
-		visiBox.scale.multiplyScalar( handSeparationDifferential );
-		visiBox.position.multiplyScalar(visiBox.scale.x);
+		// visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 
+		// visiBox.scale.multiplyScalar( handSeparationDifferential );
+		// visiBox.position.multiplyScalar(visiBox.scale.x);
 		
 		assemblage.position.multiplyScalar( 1 / assemblage.scale.x ); 
 		assemblage.scale.multiplyScalar( handSeparationDifferential );
 		assemblage.position.multiplyScalar(assemblage.scale.x);
 
-		establishAttachment(visiBox, controllers[bothAttachedController]);
+		// establishAttachment(visiBox, controllers[bothAttachedController]);
 		establishAttachment(assemblage, controllers[bothAttachedController]);
 		// establishAttachment(visiBox, scene);
 		// establishAttachment(assemblage, scene);
 	}
 	else if( controllers[bothAttachedController].grippingSide && !controllers[1-bothAttachedController].grippingSide )
 	{
-		establishAttachment(visiBox, controllers[bothAttachedController]);
+		// establishAttachment(visiBox, controllers[bothAttachedController]);
 		establishAttachment(assemblage, controllers[bothAttachedController]);
 	}
 	else if( controllers[1-bothAttachedController].grippingSide && !controllers[bothAttachedController].grippingSide )
 	{
-		establishAttachment(visiBox, controllers[1-bothAttachedController]);
-		establishAttachment(assemblage, scene);
+		establishAttachment(assemblage, controllers[1-bothAttachedController]);
+		// establishAttachment(visiBox, scene);
 	}
 	else
 	{
-		establishAttachment(visiBox, scene);
+		// establishAttachment(visiBox, scene);
 		establishAttachment(assemblage, scene);
 	}
 
@@ -109,14 +115,14 @@ function loop( socket, maps, models, controllers, vrInputSystem, visiBox )
 		thingsToBeUpdated[i].update();
 	}
 	
-	for(var i = 0; i < maps.length; i++)
-	{
-		for(var j = 0; j < maps[i].children.length; j++)
-		{
-			maps[i].children[j].material.linewidth = 0.2 / assemblage.position.distanceTo(camera.position);
-			maps[i].children[j].material.needsUpdate = true;
-		}
-	}
+	// for(var i = 0; i < maps.length; i++)
+	// {
+	// 	for(var j = 0; j < maps[i].children.length; j++)
+	// 	{
+	// 		maps[i].children[j].material.linewidth = 0.2 / assemblage.position.distanceTo(camera.position);
+	// 		maps[i].children[j].material.needsUpdate = true;
+	// 	}
+	// }
 
-	socket.checkOnExpectedCommands();
+	socket.update();
 }

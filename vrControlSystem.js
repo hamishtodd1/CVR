@@ -1,7 +1,25 @@
 //Left and right on stick = contour, up and down is for currently selected menu?
 
-function initControllers(controllers, renderer,ourVrEffect)
+function initVrInputSystem(controllers, renderer,ourVrEffect)
 {
+	var cameraRepositioner = new THREE.VRControls( camera );
+
+	document.addEventListener( 'keydown', function( event )
+	{
+		if(event.keyCode === 69 && ( navigator.getVRDisplays !== undefined || navigator.getVRDevices !== undefined ) )
+		{
+			event.preventDefault();
+			if(cameraRepositioner.vrInputs.length < 1)
+			{
+				console.error("no vr input? Check steamVR or Oculus to make sure it's working correctly")
+			}
+				
+			cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }])
+			
+			ourVrEffect.setFullScreen( true );
+		}
+	}, false ); 
+	
 	var vrInputSystem = {};
 
 	var riftControllerKeys = {
@@ -57,10 +75,34 @@ function initControllers(controllers, renderer,ourVrEffect)
 	}
 	
 	var controllerMaterial = new THREE.MeshLambertMaterial({color:0x444444});
+	var laserRadius = 0.001;
 	for(var i = 0; i < 2; i++)
 	{
 		controllers[ i ] = new THREE.Object3D();
 		scene.add( controllers[ i ] );
+
+		{
+			controllers[ i ].laser = new THREE.Mesh(
+				new THREE.CylinderBufferGeometryUncentered( laserRadius, 2), 
+				new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) 
+			);
+			controllers[ i ].laser.rotation.x = -TAU/4
+			controllers[ i ].laser.visible = false;
+			controllers[ i ].add(controllers[ i ].laser);
+			var raycaster = new THREE.Raycaster();
+			controllers[ i ].intersectLaserWithObject = function(object3D)
+			{
+				this.laser.updateMatrixWorld();
+				var origin = new THREE.Vector3(0,0,0);
+				this.laser.localToWorld(origin)
+				var direction = new THREE.Vector3(0,1,0);
+				this.laser.localToWorld(direction)
+				direction.sub(origin).normalize();
+
+				raycaster.set(origin,direction);
+				return raycaster.intersectObject(object3D);
+			}
+		}
 
 		for( var propt in riftControllerKeys )
 		{
@@ -80,9 +122,17 @@ function initControllers(controllers, renderer,ourVrEffect)
 		loadControllerModel(i);
 	}
 
-	vrInputSystem.update = function(socket)
+	vrInputSystem.update = function()
 	{
+		if(cameraRepositioner)
+		{
+			cameraRepositioner.update();
+		}
+
 		var gamepads = navigator.getGamepads();
+		
+		//If controllers aren't getting input even from XX-vr-controllers,
+		//Try restarting computer. Urgh. Just browser isn't enough. Maybe oculus app?
 		for(var k = 0; k < gamepads.length; ++k)
 		{
 			if(!gamepads[k])
@@ -118,6 +168,7 @@ function initControllers(controllers, renderer,ourVrEffect)
 				continue;
 			}
 			
+			// Thumbstick could also be used for light intensity?
 			controllers[affectedControllerIndex].thumbStickAxes[0] = gamepads[k].axes[0];
 			controllers[affectedControllerIndex].thumbStickAxes[1] = gamepads[k].axes[1];
 			
