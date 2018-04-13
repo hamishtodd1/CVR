@@ -1,4 +1,5 @@
 from coot import *
+import json
 
 runningInCoot = True
 try:
@@ -19,7 +20,8 @@ def connect(self):
 		self.write_message( mapMsg )
 
 	else:
-		pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
+		# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
+		pdbFileString = "/home/htodd/CVR/data/6eoj.pdb";
 		# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
 		# pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
 		handle_read_draw_molecule_with_recentre(pdbFileString, 1)
@@ -29,7 +31,12 @@ def connect(self):
 		modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
 		self.write_message( modelMsg )
 
-		make_and_draw_map ("/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "", 0, 0)
+		mtzFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz"
+		make_and_draw_map (mtzFileString, "FWT", "PHWT", "", 0, 0)
+
+		# mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
+		mapMsg = {'command':"mapFilename",'mapFilename':'data/emd_3908.map'}
+		self.write_message( mapMsg )
 
 		# mapMsg = {'command':"map"}
 		# imolMap = imol_refinement_map();
@@ -37,17 +44,10 @@ def connect(self):
 		# temporaryFileName = "export.map" #Paul could speed this up
 		# export_map(imolMap, temporaryFileName)
 		# temporaryFile = open(temporaryFileName)
-		# mapMsg['dataString'] = temporaryFile.read()
-
-		# print("we COULD send it")
-		# print(type(mapMsg['dataString'] ))
-		# exampleStr = "yo"
-		# print(type(exampleStr ))
+		# mapMsg['dataString'] = temporaryFile
 
 		# self.write_message( mapMsg )
 
-		mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
-		self.write_message( mapMsg )
 
 #you have to use ["thing"] rather than .thing. Changeable, but not trivially
 def command(self, msgContainer):
@@ -113,6 +113,7 @@ def command(self, msgContainer):
 	#-------------Refinement stuff
 	elif msg["command"] == "commenceRefinement":
 		startedStatus = refine_residues_py(msg["imol"], msg["residues"] )
+
 		if startedStatus == False:
 			print("disallowed refinement???")
 
@@ -158,10 +159,14 @@ def command(self, msgContainer):
 
 def sendIntermediateRepresentation(self):
 	intermediateRepresentation = get_intermediate_atoms_bonds_representation()
+	print("getting intermediate represenation")
 	if intermediateRepresentation != False:
+		print("and sending it too")
 		returnMsg = {
 			"command":"intermediateRepresentation",
 			"imol":0, #hem hem
 			"intermediateRepresentation":intermediateRepresentation
 		}
 		self.write_message(returnMsg)
+	else:
+		print("but not sending it")
