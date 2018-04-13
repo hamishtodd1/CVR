@@ -7,7 +7,7 @@
 	Except maybe solid is objectively better in VR?
 */
 
-function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
+function Map(arrayBuffer, isDiffMap, visiBox, isolevel)
 {
 	var colors = {
 		map_den: 0x4372D2,
@@ -32,7 +32,7 @@ function Map(arrayBuffer, isDiffMap, visiBox, blockRadius, isolevel)
 		assemblage.worldToLocal( blockCenterVector );
 
 		var blockRadius = 2 + Math.ceil(Math.min( visiBox.corners[0].position.x * visiBox.scale.x, visiBox.corners[0].position.y * visiBox.scale.y, visiBox.corners[0].position.z * visiBox.scale.z) / getAngstrom());
-		blockRadius = clamp(blockRadius,2,4);
+		blockRadius = clamp(blockRadius,2,10);
 
 		data.extract_block( blockRadius, [ blockCenterVector.x, blockCenterVector.y, blockCenterVector.z ] );
 		refreshMeshesFromBlock();

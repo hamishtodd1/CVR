@@ -11,7 +11,7 @@ var frameDelta = 0;
 var logged = 0;
 var debugging = 0;
 
-var FOCALPOINT_DISTANCE = 0.3;
+var FOCALPOINT_DISTANCE = 0.36;
 var RIGHT_CONTROLLER_INDEX = 0;
 var LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
 var ROOM_RADIUS = 1.2;

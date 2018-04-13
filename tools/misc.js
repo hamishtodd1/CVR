@@ -53,7 +53,8 @@ function initEnvironmentDistance()
 			var closestAtomDistSq = Infinity;
 			for(var i = 0; i < models.length; i++)
 			{
-				var ourPosition = this.getWorldPosition();
+				var ourPosition = new THREE.Vector3();
+				this.getWorldPosition(ourPosition);
 				models[i].updateMatrixWorld();
 				models[i].worldToLocal(ourPosition);
 				
@@ -141,7 +142,7 @@ function initEnvironmentDistance()
 	return environmentDistancer;
 }
 
-function initAtomLabeller(models)
+function initAtomLabeller()
 {
 	var atomLabeller = new THREE.Object3D();
 	

@@ -30,7 +30,9 @@ function initRigidBodyMover()
 	*/
 
 	var rigidBodyMover = new THREE.Object3D();
-	var ball = new THREE.LineSegments( new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(1) ) );
+	var ball = new THREE.LineSegments( 
+		new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(1) ),
+		new THREE.LineBasicMaterial({color:0xFFFFFF, linewidth:3 }) );
 	rigidBodyMover.add(ball);
 	rigidBodyMover.scale.setScalar(0.1)
 	ball.geometry.computeBoundingSphere();
