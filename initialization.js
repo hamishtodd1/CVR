@@ -1,6 +1,8 @@
 /*
 notify coot of atom movements
 TODO before newbattle
+	Make an email to send to everyone
+
 	expenses
 	Maryam Mirzakhani
 	Dogs
@@ -11,8 +13,9 @@ TODO before newbattle
 	Get stuff from Diego
 	ramachandran?
 	Non-vr head movement sensetivity demo
+	Backbone-drawing yay
+	Get that structure Paul suggested
 
-TODO for EM demo
 	look for bugs generally, do lots of stuff consecutively
 	Make sure it works on your laptop
 		Pull in vm
@@ -22,8 +25,6 @@ TODO for EM demo
 		Intermediate updates only seem to come after some event that is indicated in the console
 		if async working, try moving and deleting atoms
 			Make some non-VR dummy camera movement
-		Can my text be a special color?
-		look at the encoding on those maps!
 		I would like to get these surface things in
 		Still got -1 for an imol in refinement??
 		I only *appear* to get the one refinement update?
