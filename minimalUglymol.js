@@ -281,10 +281,12 @@ function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 		return;
 	}
 
-	//not sure why we're so sure these won't be overflowed
-	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * 3 );
-	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * 3 );
-	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * 3 );
+	//TODO formerly 12 was frikkin 3
+	//threejsMC seemed confident they wouldn't be overflowed. They were.
+	//maybe it was clever about how it divided stuff up?
+	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * 12 );
+	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * 12 );
+	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * 12 );
 	solidMcScope.count = 0;
 	solidMcScope.values = values;
 
@@ -688,7 +690,8 @@ ElMap.prototype.from_dsn6 = function from_dsn6 (buf /*: ArrayBuffer*/) {
 	//this.show_debug_info();
 };
 
-ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, color, clippingPlanes, method/*:string*/)
+ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, color, 
+ clippingPlanes, method/*:string*/)
 {
 	var abs_level = sigma * this.stats.rms + this.stats.mean;
 
@@ -699,10 +702,10 @@ ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, 
 		var isomesh = new THREE.Group().add(
 			new THREE.Mesh( geo,
 				new THREE.MeshPhongMaterial({
-					color: color,
+					color: color, //less white or bluer. Back should be less blue because nitrogen
 					clippingPlanes: clippingPlanes,
 					transparent:true,
-					opacity:0.42
+					opacity:0.3
 				})),
 			new THREE.Mesh( geo,
 				new THREE.MeshPhongMaterial({
@@ -727,8 +730,12 @@ ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, 
 		}));
 		var geometricPrimitives = marchingCubes(this.block._size[0],this.block._size[1],this.block._size[2],
 			this.block._values, this.block._points, abs_level, method);
+		
 		isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
 		isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
+
+		// isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array([0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]), 3));
+		// isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
 	}
 
 	return isomesh;

@@ -106,21 +106,19 @@ Atom.prototype.setLabelVisibility = function(labelVisibility)
 }
 function updateLabel()
 {
-	if(this.parent === scene)
-	{
-		this.scale.setScalar( 0.2 * Math.sqrt(this.position.distanceTo(camera.position)));
-		
-		camera.updateMatrix();
-		var cameraUp = yVector.clone().applyQuaternion(camera.quaternion);
-		cameraUp.add(this.parent.getWorldPosition())
-		this.parent.worldToLocal(cameraUp)
-		this.up.copy(cameraUp);
+	this.scale.setScalar( 0.06 * Math.sqrt(this.position.distanceTo(camera.position)));
+	
+	this.parent.updateMatrixWorld()
+	
+	camera.updateMatrix();
+	var cameraUp = yVector.clone().applyQuaternion(camera.quaternion);
+	cameraUp.add(this.parent.getWorldPosition())
+	this.parent.worldToLocal(cameraUp)
+	this.up.copy(cameraUp);
 
-		this.parent.updateMatrixWorld()
-		var localCameraPosition = camera.position.clone()
-		this.parent.worldToLocal(localCameraPosition);
-		this.lookAt(localCameraPosition);
-	}
+	var localCameraPosition = camera.position.clone()
+	this.parent.worldToLocal(localCameraPosition);
+	this.lookAt(localCameraPosition);
 }
 
 function initModelCreationSystem( visiBoxPlanes)
@@ -474,7 +472,8 @@ function initModelCreationSystem( visiBoxPlanes)
 	{
 		for(var i = 0; i < models.length; i++)
 		{
-			var localPosition = sphericalObject.getWorldPosition();
+			var localPosition = new THREE.Vector3();
+			sphericalObject.getWorldPosition(localPosition);
 			models[i].updateMatrixWorld();
 			models[i].worldToLocal(localPosition);
 			
@@ -628,7 +627,7 @@ function initModelCreationSystem( visiBoxPlanes)
 		//could they have different connectivity? :/
 		socket.commandReactions.intermediateRepresentation = function(msg)
 		{
-			console.log("receiving?")
+			// console.log("receiving?")
 			var model = getModelWithImol(msg.imol);
 
 			var arrayWithSpecs = msg.intermediateRepresentation[0];

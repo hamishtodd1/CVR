@@ -74,6 +74,7 @@ function initStats(visiBoxPosition)
 	var requestCommencementTime = null;
 	var positionPointedTo = null;
 	var atomPositionToPutInCenterOfVisiBox = null;
+	var extraHighlightCountDown = null;
 
 	thingsToBeUpdated.push(randomGraph)
 	randomGraph.update = function()
@@ -95,7 +96,7 @@ function initStats(visiBoxPosition)
 			{
 				controllers[i].laser.visible = true;
 				
-				if(controllers[i].button1)
+				if(controllers[i].button1 && !controllers[i].button1Old)
 				{
 					positionPointedTo = intersections[0].point;
 					//The rubbish part
@@ -106,6 +107,7 @@ function initStats(visiBoxPosition)
 
 					atomPositionToPutInCenterOfVisiBox = models[0].atoms[focusedAtomIndex].position;
 					requestCommencementTime = ourClock.getElapsedTime();
+					extraHighlightCountDown = 0.98;
 				}
 			}
 			else
@@ -144,7 +146,15 @@ function initStats(visiBoxPosition)
 		}
 		else
 		{
-			graphToPointLaser.visible = false;
+			if( extraHighlightCountDown !== null)
+			{
+				extraHighlightCountDown -= frameDelta;
+				if(extraHighlightCountDown <= 0)
+				{
+					graphToPointLaser.visible = false;
+					extraHighlightCountDown = null;
+				}
+			}
 		}
 	}
 }

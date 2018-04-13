@@ -13,20 +13,23 @@ TODO before newbattle
 	Non-vr head movement sensetivity demo
 
 TODO for EM demo
+	Fix refinement
+	Fix contouring for EM
+	Atom labeller
 	look for bugs generally, do lots of stuff consecutively
 	Make sure it works on your laptop
 		Pull in vm
 		Try with everything plugged in on desk
+	Show contour boundaries?
 
 	With Paul:
+		Put some real data in the graph
 		Intermediate updates only seem to come after some event that is indicated in the console
 		if async working, try moving and deleting atoms
 			Make some non-VR dummy camera movement
 		Can my text be a special color?
 		look at the encoding on those maps!
 		I would like to get these surface things in
-		Still got -1 for an imol in refinement??
-		I only *appear* to get the one refinement update?
 		bug with some residues highlighting many residues?
 		Talk about force restraints
 			Ok so when I thought it out I realized it was maybe bad
@@ -97,7 +100,7 @@ Maya
 	var maps = [];
 	var atoms = null; //because fixed length
 	
-	assemblage.scale.setScalar( 0.02 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( 0.028 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;
@@ -130,15 +133,15 @@ Maya
 		var thingsToSpaceOut = [];
 
 		thingsToSpaceOut.push( 
-			initPointer(),
-			// initMutator(),
+			// initPointer(),
 			initAtomLabeller(),
-			initAtomDeleter(),
+			// initMutator(),
+			// initAtomDeleter(),
+			initEnvironmentDistance(),
 			initResidueDeleter(),
-			initAutoRotamer(),
-			initRefiner(),
 			initRigidBodyMover(),
-			initEnvironmentDistance()
+			initAutoRotamer()
+			// initRefiner()
 		);
 
 		//maybe these things could be on a desk? Easier to pick up?
@@ -146,7 +149,7 @@ Maya
 		var toolSpacing = 0.15;
 		for(var i = 0; i < thingsToSpaceOut.length; i++)
 		{
-			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.2);
+			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.16);
 		}
 	}
 
@@ -162,7 +165,6 @@ Maya
 	}
 	socket.commandReactions["map"] = function(msg)
 	{
-		//you have to convert it into an array buffer :/
 		// console.log(msg["dataString"])
 		// var newMap = Map( msg["dataString"], false, visiBox );
 		// maps.push(newMap);
@@ -177,7 +179,14 @@ Maya
 		{
 			if (req.readyState === 4)
 			{
-				var newMap = Map( req.response, false, visiBox );
+				if( msg.mapFilename === "data/emd_3908.map")
+				{
+					var newMap = Map( req.response, false, visiBox, 7.87 );
+				}
+				else
+				{
+					var newMap = Map( req.response, false, visiBox );
+				}
 				maps.push(newMap);
 				assemblage.add(newMap)
 			}
