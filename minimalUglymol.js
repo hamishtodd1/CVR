@@ -705,7 +705,7 @@ ElMap.prototype.isomesh_in_block = function isomesh_in_block (sigma/*:number*/, 
 					color: color, //less white or bluer. Back should be less blue because nitrogen
 					clippingPlanes: clippingPlanes,
 					transparent:true,
-					opacity:0.3
+					opacity:0.34
 				})),
 			new THREE.Mesh( geo,
 				new THREE.MeshPhongMaterial({

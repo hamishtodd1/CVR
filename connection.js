@@ -2,7 +2,7 @@ function initSocket()
 {
 	var ip = "192.168.63.3";
 	// var ip = "192.168.56.101"
-	// ip = "localhost"
+	ip = "localhost"
 	// ip = "10.0.2.15"
 	socket = new WebSocket("ws://"+ip+":9090/ws");
 	oldReadyState = socket.readyState;

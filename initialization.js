@@ -1,43 +1,37 @@
 /*
-notify coot of atom movements
-TODO before newbattle
-	Make an email to send to everyone
+TODO before newbattle, July 1st
+	Bridges resub, 30th
+	Change to simpleHttpServer so you can have communication done in a thread. Sigh. Import thread
+	Grabbing two ends of a chain
+	Make an email to send to everyone. Advize not to actually use coot
+	You want a reset button.
+	Recontouring should be clever
+	Get some data from Paul
+	Octree selection?
+	Add terminal residue
+	"Carbon alpha mode", often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
+	Abstract target: do the whole coot tutorial, and the EM one too
+	Force restraints
+		Ok so when I thought it out I realized it was maybe bad
+			You make the movement, but then you're "holding the things in place"
+		What instead?
+			Currently I take the central atom and pull it
+			Possibly humans only think in single vectors, hence center
 
-	expenses
+	
+	Get new shampoo
 	Maryam Mirzakhani
 	Dogs
-	Sysmic finalize
-	Newbattle shit - further pips paperwork, resend to Caroline
 	Book 7Osme things
 	Get stuff from Diego
-	ramachandran?
 	Non-vr head movement sensetivity demo
 	Backbone-drawing yay
 	Get that structure Paul suggested
+	Ramachandran diagrams
 
-	Make sure it works on your laptop
-		Pull in vm
-		Try with everything plugged in on desk
-	Show contour boundaries?
-
-	With Paul:
-		Put some real data in the graph
-		Intermediate updates only seem to come after some event that is indicated in the console
-		if async working, try moving and deleting atoms
-			Make some non-VR dummy camera movement
-		I would like to get these surface things in
-		bug with some residues highlighting many residues?
-		Talk about force restraints
-			Ok so when I thought it out I realized it was maybe bad
-				You make the movement, but then you're "holding the things in place"
-			What instead?
-				Currently I take the central atom and pull it
-				Possibly humans only think in single vectors, hence center
-				This is interesting
-
-	Sick bags
-	Gel insoles?
-	Plastic sheet on floor?
+	if async working, try moving and deleting atoms
+		Make some non-VR dummy camera movement
+	bug with some residues highlighting many residues?
 
 transfer the map
 
@@ -53,7 +47,6 @@ Maya
 	http://www.nts.org.uk/wildlifesurvey/
 	http://www.wildlifeinformation.co.uk/about_volunteering.php
 */
-
 
 
 (function init()
@@ -131,13 +124,13 @@ Maya
 		thingsToSpaceOut.push( 
 			// initPointer(),
 			initAtomLabeller(),
-			// initMutator(),
+			initMutator(),
 			// initAtomDeleter(),
-			initEnvironmentDistance(),
-			initResidueDeleter(),
-			initRigidBodyMover(),
-			initAutoRotamer()
+			// initEnvironmentDistance(),
+			// initResidueDeleter(),
+			// initAutoRotamer()
 			// initRefiner()
+			initRigidBodyMover()
 		);
 
 		//maybe these things could be on a desk? Easier to pick up?

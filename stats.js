@@ -43,6 +43,9 @@
 	"hover" = see a bunch of things highlighted on the chain that
 		are not usually visible.
 	At the very least, when a stat highlights a thing, you should show the map there
+
+	Having the graph is probably at least good for navigating
+		But you shouldn't have to flick gaze between it and molecule, so stuff goes on there!
 */
 
 //we can do better than bar charts and ramachandran.

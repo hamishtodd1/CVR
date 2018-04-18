@@ -112,7 +112,9 @@ function updateLabel()
 	
 	camera.updateMatrix();
 	var cameraUp = yVector.clone().applyQuaternion(camera.quaternion);
-	cameraUp.add(this.parent.getWorldPosition())
+	var parentWorldPosition = new THREE.Vector3();
+	this.parent.getWorldPosition(parentWorldPosition);
+	cameraUp.add(parentWorldPosition)
 	this.parent.worldToLocal(cameraUp)
 	this.up.copy(cameraUp);
 

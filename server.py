@@ -6,11 +6,12 @@ import imp
 
 port = 9090
 import os
+runningInCoot = False
 if os.name == 'posix':
 	serverReactions = imp.load_source('serverReactionsName', '/home/htodd/CVR/serverReactions.py')
 	ip = "192.168.56.101"
+	runningInCoot = True
 else:
-	serverReactions = imp.load_source('serverReactionsName', 'C:/CVR/serverReactions.py')
 	ip = "localhost"
 print("websocket (NOT address bar) link: " + ip + ":" + str(port))
 
@@ -19,10 +20,19 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		return True
 		
 	def open(self):
-		serverReactions.connect(self)
+		print('Opened connection')
+		if runningInCoot == False:
+			self.write_message({"command":"loadTutorialModel"})
+
+			mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
+			self.write_message( mapMsg )
+		else:
+			serverReactions.connect(self)
 
 	def on_message(self, msgContainer):
-		serverReactions.command(self, msgContainer)
+		#get runningInCoot here
+		if runningInCoot:
+			serverReactions.command(self, msgContainer)
 
 	def on_close(self):
 		print('Closed connection')

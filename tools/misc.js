@@ -201,6 +201,8 @@ function initAtomLabeller()
 	Or a torus so that it has a specific plane that you can put the AA in
 	
 	It should also be possible to select between them using the thumbstick, so you can look at different results without moving your eyes
+
+	When selecting, their ramachandran diagrams should appear?
  */
 function initMutator()
 {
@@ -318,6 +320,10 @@ function initMutator()
 
 			this.AAs[i].scale.setScalar(mutatorAaAngstrom);
 		}
+
+		// var msg = { command: "mutateAndAutofit" };
+		// closestAtom.assignAtomSpecToObject( msg );
+		// socket.send( JSON.stringify( msg ) );
 
 		label.visible = this.parent === scene;
 	}
