@@ -2,6 +2,7 @@
 TODO before newbattle, July 1st
 	Bridges resub, 30th
 	Change to simpleHttpServer so you can have communication done in a thread. Sigh. Import thread
+	Backbone-drawing yay
 	Grabbing two ends of a chain
 	Make an email to send to everyone. Advize not to actually use coot
 	You want a reset button.
@@ -17,29 +18,25 @@ TODO before newbattle, July 1st
 		What instead?
 			Currently I take the central atom and pull it
 			Possibly humans only think in single vectors, hence center
+	Mutate
+	Transfer map
+	Spectation
 
-	
 	Get new shampoo
 	Maryam Mirzakhani
 	Dogs
 	Book 7Osme things
 	Get stuff from Diego
+	
+TODO at some point
 	Non-vr head movement sensetivity demo
-	Backbone-drawing yay
 	Get that structure Paul suggested
 	Ramachandran diagrams
-
-	if async working, try moving and deleting atoms
-		Make some non-VR dummy camera movement
+	"undo"
+		Just coot undo, then get the result? Full refresh
+		Button on controller reserved
+		Flash or something
 	bug with some residues highlighting many residues?
-
-transfer the map
-
-mutator
-"undo"
-	Just coot undo, then get the result? Full refresh
-	Button on controller reserved
-	Flash or something
 
 Maya
 	Admin
