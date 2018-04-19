@@ -8,9 +8,15 @@ This is, or will be, ["Coot"](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/co
 
 We hope it will make Coot faster to use! It will be easier to see 3D features, to specify intended atom detinations, and to navigate some of the information you need to use Coot (because you have more "screen space"). It will also be easier to train people to use.
 
+## What's the schedule
+
+Beta starts on October 15th 2018. Build should be guaranteed stable (and more usable!) as of July 29th 2018.
+
 ## How do I set it up
 
-Right now there's not guarantee of stability, you'll need a bit of skillz. You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/file/d/15OHw1VtXu-QXTvmz9qNLut6K_KhDMcMK - make sure to go to chrome://flags and enable webVR AND gamepad extensions). Run server.py with python 2.7. and open index.html in your browser, you should know what to do next!
+This is pre-beta so you're not really supposed to :) but if you are super eager, and don't mind that there are very few features and no guarantee of stability...
+
+You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/file/d/15OHw1VtXu-QXTvmz9qNLut6K_KhDMcMK - make sure to go to chrome://flags and enable webVR AND gamepad extensions). Run server.py with python 2.7. and open index.html in your browser, you should know what to do next.
 
 ## I have an issue
 
