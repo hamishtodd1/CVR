@@ -10,7 +10,7 @@ We hope it will make Coot faster to use! It will be easier to see 3D features, t
 
 ## How do I set it up
 
-Right now there's not guarantee of stability, you'll need a bit of skillz. You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c - make sure to go to chrome://flags and enable webVR AND gamepad extensions). Run server.py with python 2.7. and open index.html in your browser, you should know what to do next!
+Right now there's not guarantee of stability, you'll need a bit of skillz. You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/file/d/15OHw1VtXu-QXTvmz9qNLut6K_KhDMcMK - make sure to go to chrome://flags and enable webVR AND gamepad extensions). Run server.py with python 2.7. and open index.html in your browser, you should know what to do next!
 
 ## I have an issue
 
