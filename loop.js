@@ -30,7 +30,6 @@ function loop( maps, models, controllers, vrInputSystem, visiBox )
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		// Not now, it will bias the data
 		if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 && 
 			frameCount % 10 === 0 )
 		{

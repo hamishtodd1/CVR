@@ -61,7 +61,8 @@ function initRigidBodyMover()
 					var localRadiusSq = sq(this.scale.x / getAngstrom())
 					for(var i = 0; i < models.length; i++)
 					{
-						var ourPosition = this.getWorldPosition();
+						var ourPosition = new THREE.Vector3();
+						this.getWorldPosition(ourPosition);
 						models[i].updateMatrixWorld();
 						models[i].worldToLocal(ourPosition);
 						
