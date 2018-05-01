@@ -1,25 +1,31 @@
 from coot import *
+import json
+
+# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
+# pdbFileString = "/home/htodd/CVR/data/6eoj.pdb";
+pdbFileString = "/home/htodd/CVR/data/drugIsInteresting.pdb";
+# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
+# pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
+handle_read_draw_molecule_with_recentre(pdbFileString, 1)
+
+# mtzFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz"
+# make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
+mapFileString = "/home/htodd/CVR/data/drugIsInteresting.map";
+handle_read_ccp4_map( mapFileString, 0 ) #second arg is whether it's a difference map
 
 def connect(self):
-	self.set_nodelay(True)
-
-	# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
-	pdbFileString = "/home/htodd/CVR/data/6eoj.pdb";
-	# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
-	# pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
-	handle_read_draw_molecule_with_recentre(pdbFileString, 1)
+	#could reset here?
 
 	modelImol = 0
 	modelMsg = {'command':"model"}
 	modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
 	self.write_message( modelMsg )
 
-	mtzFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz"
-	make_and_draw_map (mtzFileString, "FWT", "PHWT", "", 0, 0)
-
 	# mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
-	mapMsg = {'command':"mapFilename",'mapFilename':'data/emd_3908.map'}
+	# mapMsg = {'command':"mapFilename",'mapFilename':'data/emd_3908.map'}
+	mapMsg = {'command':"mapFilename",'mapFilename':'data/drugIsInteresting.map'}
 	self.write_message( mapMsg )
+
 
 	# mapMsg = {'command':"map"}
 	# imolMap = imol_refinement_map();
@@ -53,8 +59,6 @@ def command(self, msgContainer):
 		set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
 
 	elif msg["command"] == "autoFitBestRotamer":
-		print("commanded to rotamer")
-
 		imolMap = imol_refinement_map();
 		clashFlag = 1;
 		lowestProbability = 0.01;
@@ -68,20 +72,23 @@ def command(self, msgContainer):
 		returnMsg["imol"] = msg["imol"]
 		self.write_message(returnMsg)
 
-	# elif msg["command"] == "mutateAndAutoFit":
+	elif msg["command"] == "mutateAndAutoFit":
+		imolMap = imol_refinement_map();
 
-		# imolMap = imol_refinement_map(); #not necessarily
+		mutate_and_auto_fit( 
+			msg["resNo"], msg["chainId"],msg["imol"], imolMap, msg["newResidue"])
 
-		# mutate_and_auto_fit( 
-		# 	msg["resNo"], msg["chainId"],msg["imol"],imolMap, msg["residue"])
-
-		# returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
-		# returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+		returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
+		returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
 		
-		# print(returnMsg)
+		print(returnMsg)
 		# self.write_message(str(returnMsg))
 
 	# (0, [['A', 88, ''], ['A', 89, ''], ['A', 90, '']])
+		
+
+	#-------------Stats
+	# cis_peptides()
 
 	#-------------Refinement stuff
 	elif msg["command"] == "commenceRefinement":
