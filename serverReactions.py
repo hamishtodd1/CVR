@@ -1,52 +1,40 @@
 from coot import *
 import json
 
-runningInCoot = True
-try:
-	coot_version()
-except NameError:
-	runningInCoot = False
-	print("Not running in coot")
+# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
+# pdbFileString = "/home/htodd/CVR/data/6eoj.pdb";
+pdbFileString = "/home/htodd/CVR/data/drugIsInteresting.pdb";
+# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
+# pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
+handle_read_draw_molecule_with_recentre(pdbFileString, 1)
+
+# mtzFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz"
+# make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
+mapFileString = "/home/htodd/CVR/data/drugIsInteresting.map";
+handle_read_ccp4_map( mapFileString, 0 ) #second arg is whether it's a difference map
 
 def connect(self):
-	self.set_nodelay(True)
+	#could reset here?
 
-	print('Opened connection')
+	modelImol = 0
+	modelMsg = {'command':"model"}
+	modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
+	self.write_message( modelMsg )
 
-	if runningInCoot == False:
-		self.write_message({"command":"loadTutorialModel"})
+	# mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
+	# mapMsg = {'command':"mapFilename",'mapFilename':'data/emd_3908.map'}
+	mapMsg = {'command':"mapFilename",'mapFilename':'data/drugIsInteresting.map'}
+	self.write_message( mapMsg )
 
-		mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
-		self.write_message( mapMsg )
+	# mapMsg = {'command':"map"}
+	# imolMap = imol_refinement_map();
 
-	else:
-		# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
-		pdbFileString = "/home/htodd/CVR/data/6eoj.pdb";
-		# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
-		# pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
-		handle_read_draw_molecule_with_recentre(pdbFileString, 1)
+	# temporaryFileName = "export.map" #Paul could speed this up
+	# export_map(imolMap, temporaryFileName)
+	# temporaryFile = open(temporaryFileName)
+	# mapMsg['dataString'] = temporaryFile
 
-		modelImol = 0
-		modelMsg = {'command':"model"}
-		modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
-		self.write_message( modelMsg )
-
-		mtzFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz"
-		make_and_draw_map (mtzFileString, "FWT", "PHWT", "", 0, 0)
-
-		# mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
-		mapMsg = {'command':"mapFilename",'mapFilename':'data/emd_3908.map'}
-		self.write_message( mapMsg )
-
-		# mapMsg = {'command':"map"}
-		# imolMap = imol_refinement_map();
-
-		# temporaryFileName = "export.map" #Paul could speed this up
-		# export_map(imolMap, temporaryFileName)
-		# temporaryFile = open(temporaryFileName)
-		# mapMsg['dataString'] = temporaryFile
-
-		# self.write_message( mapMsg )
+	# self.write_message( mapMsg )
 
 
 #you have to use ["thing"] rather than .thing. Changeable, but not trivially
@@ -54,10 +42,7 @@ def command(self, msgContainer):
 	msg = eval(msgContainer)
 
 	if msg["command"] == "deleteAtom":
-		if runningInCoot:
-			delete_atom(msg["imol"],msg["chainId"],msg["resNo"],msg["insertionCode"],msg["name"],msg["altloc"]);
-		else:
-			print("deletion of atom permitted")
+		delete_atom(msg["imol"],msg["chainId"],msg["resNo"],msg["insertionCode"],msg["name"],msg["altloc"]);
 		self.write_message(msgContainer);
 
 	elif msg["command"] == "getEnvironmentDistances":
@@ -68,47 +53,41 @@ def command(self, msgContainer):
 		self.write_message( returnMsg )
 
 	elif msg["command"] == "moveAtom":
-		if runningInCoot:
-			set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
-			set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
-			set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
+		set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "x", msg["x"]);
+		set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "y", msg["y"]);
+		set_atom_attribute(msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"], "z", msg["z"]);
 
 	elif msg["command"] == "autoFitBestRotamer":
-		print("commanded to rotamer")
+		imolMap = imol_refinement_map();
+		clashFlag = 1;
+		lowestProbability = 0.01;
 
-		if runningInCoot == False:
-			print("requires coot")
-		else:
-			imolMap = imol_refinement_map();
-			clashFlag = 1;
-			lowestProbability = 0.01;
+		auto_fit_best_rotamer(
+			msg["resNo"], msg["altloc"], msg["insertionCode"],msg["chainId"],msg["imol"],
+			imolMap, clashFlag, lowestProbability);
 
-			auto_fit_best_rotamer(
-				msg["resNo"], msg["altloc"], msg["insertionCode"],msg["chainId"],msg["imol"],
-				imolMap, clashFlag, lowestProbability);
+		returnMsg = {"command":"residueInfo"}
+		returnMsg["atoms"] = residue_info_py(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+		returnMsg["imol"] = msg["imol"]
+		self.write_message(returnMsg)
 
-			returnMsg = {"command":"residueInfo"}
-			returnMsg["atoms"] = residue_info_py(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
-			returnMsg["imol"] = msg["imol"]
-			self.write_message(returnMsg)
+	elif msg["command"] == "mutateAndAutoFit":
+		imolMap = imol_refinement_map();
 
-	# elif msg["command"] == "mutateAndAutoFit":
+		mutate_and_auto_fit( 
+			msg["resNo"], msg["chainId"],msg["imol"], imolMap, msg["newResidue"])
 
-	# 	if runningInCoot == False:
-	# 		print("requires coot")
-	# 	else:
-	# 		imolMap = imol_refinement_map(); #not necessarily
-
-	# 		mutate_and_auto_fit( 
-	# 			msg["resNo"], msg["chainId"],msg["imol"],imolMap, msg["residue"])
-
-	# 		returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
-	# 		returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
-			
-	# 		print(returnMsg)
-	# 		# self.write_message(str(returnMsg))
+		returnMsg = {"command":"residueCorrectionFromMutateAndAutofit"}
+		returnMsg["atomList"] = residue_info(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+		
+		print(returnMsg)
+		# self.write_message(str(returnMsg))
 
 	# (0, [['A', 88, ''], ['A', 89, ''], ['A', 90, '']])
+		
+
+	#-------------Stats
+	# cis_peptides()
 
 	#-------------Refinement stuff
 	elif msg["command"] == "commenceRefinement":
