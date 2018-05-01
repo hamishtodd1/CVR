@@ -26,6 +26,7 @@ def connect(self):
 	mapMsg = {'command':"mapFilename",'mapFilename':'data/drugIsInteresting.map'}
 	self.write_message( mapMsg )
 
+
 	# mapMsg = {'command':"map"}
 	# imolMap = imol_refinement_map();
 

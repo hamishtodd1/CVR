@@ -15,6 +15,7 @@ var FOCALPOINT_DISTANCE = 0.36;
 var RIGHT_CONTROLLER_INDEX = 0;
 var LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
 var ROOM_RADIUS = 1.2;
+var TETRAHEDRAL_ANGLE = 2 * Math.atan(Math.sqrt(2))
 
 var camera = new THREE.PerspectiveCamera( 70, //can be changed by VR effect
 		window.innerWidth / window.innerHeight,
@@ -33,3 +34,5 @@ var frameCount = 0;
 var thingsToBeUpdated = [];
 var holdables = [];
 var socket = null;
+
+var ourPDBLoader = new THREE.PDBLoader();

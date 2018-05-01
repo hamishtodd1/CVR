@@ -15,6 +15,8 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 			}
 				
 			cameraRepositioner.vrInputs[0].requestPresent([{ source: renderer.domElement }])
+
+			scene.add( controllers[ 0 ],controllers[ 1 ] );
 			
 			ourVrEffect.setFullScreen( true );
 		}
@@ -79,7 +81,6 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 	for(var i = 0; i < 2; i++)
 	{
 		controllers[ i ] = new THREE.Object3D();
-		scene.add( controllers[ i ] );
 
 		{
 			controllers[ i ].laser = new THREE.Mesh(

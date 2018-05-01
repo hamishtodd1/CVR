@@ -11,6 +11,9 @@
 	If you think about Paul's argument, this is objectively better because you don't get to do anything with rotation when you move a sphere
 
 	The edges also shouldn't do the silly scaling thing
+
+	Is there any reason to limit its height? Why shouldn't it go up and down and back infinitely.
+		Answer: it's the "visually distracting" thing. You don't want to be able to see more than one interesting thing at once
 */
 
 //Old notes:
