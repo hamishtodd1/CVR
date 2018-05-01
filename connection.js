@@ -1,4 +1,4 @@
-function initSocket()
+function initSocket() 
 {
 	var ip = "192.168.63.3";
 	// var ip = "192.168.56.101"
