@@ -3,6 +3,7 @@ TODO before newbattle, July 1st
 	Little video for Paul
 	Backbone-drawing yay
 	Grabbing two ends of a chain
+	probe dots?
 	Make an email to send to everyone. Advize not to actually use coot
 	You want a "reset server" button.
 	Recontouring should be clever
@@ -20,8 +21,8 @@ TODO before newbattle, July 1st
 	Mutate
 	Transfer map
 	Spectation
-	Go to Oculus
 
+	Go to Oculus
 	Get new shampoo
 	Maryam Mirzakhani
 	Dogs
@@ -123,7 +124,7 @@ Maya
 			// initPointer(),
 			initAtomLabeller(),
 			// initMutator(),
-			initPainter(),
+			// initPainter(),
 			// initAtomDeleter(),
 			// initEnvironmentDistance(),
 			// initResidueDeleter(),
@@ -147,20 +148,21 @@ Maya
 	socket.commandReactions["model"] = function(msg)
 	{
 		//does it need to be in a string? environment distances didn't need to be
-		// makeModelFromCootString( msg.modelDataString, visiBox.planes );
-
-		initTools();
-	}
-	socket.commandReactions["loadTutorialModel"] = function(msg)
-	{
-		new THREE.FileLoader().load( "data/tutorialGbr.txt",
-			function( modelDataString )
-			{
-				// makeModelFromCootString( modelDataString, visiBox.planes );
-
-				initTools();
-			}
-		);
+		if(msg.modelDataString)
+		{
+			makeModelFromCootString( msg.modelDataString, visiBox.planes );
+			initTools();
+		}
+		else
+		{
+			new THREE.FileLoader().load( "data/tutorialGbr.txt",
+				function( modelDataString )
+				{
+					makeModelFromCootString( modelDataString, visiBox.planes );
+					initTools();
+				}
+			);
+		}
 	}
 	socket.commandReactions["map"] = function(msg)
 	{

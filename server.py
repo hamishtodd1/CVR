@@ -30,7 +30,6 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			serverReactions.connect(self)
 
 	def on_message(self, msgContainer):
-		#get runningInCoot here
 		if runningInCoot:
 			serverReactions.command(self, msgContainer)
 

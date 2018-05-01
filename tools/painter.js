@@ -182,7 +182,6 @@ function initPainter()
  	changeBondToDouble(bondData[2][3][3],bondData[2][3][4]);
 
  	var paintedChain = makeMoleculeMesh( ourAtoms, false,bondData );
- 	// paintedChain.scale.setScalar(0.014);
  	var worldPosition = new THREE.Vector3(0,0,-0.5)
  	paintedChain.position.copy(worldPosition)
  	paintedChain.position.z += 0.2

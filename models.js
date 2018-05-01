@@ -267,8 +267,6 @@ function initModelCreationSystem( visiBoxPlanes)
 		else
 		{
 			bondData = Array(10);
-			//position position, bondNumber, index index
-			//coords never seem to be correct to more than three and a half decimal places
 			for(var i = 0; i < bondData.length; i++)
 			{
 				bondData[i] = [];
@@ -285,8 +283,17 @@ function initModelCreationSystem( visiBoxPlanes)
 					{
 						if( atoms[i].position.distanceTo( atoms[j].position ) < 1.81 ) //quantum chemistry
 						{
-							bondData[ atoms[i].element ].push( [[],[],1,i,j]);
-							bondData[ atoms[i].element ].push( [[],[],1,j,i]);
+							// if(atoms[i].name !== " O  ")
+							// {
+								//position position, bondNumber, index index
+								bondData[ atoms[i].element ].push( [[],[],1,i,j]);
+								// bondData[ atoms[i].element ].push( [[],[],1,j,i]);
+							// }
+							// else
+							// {
+							// 	bondData[ atoms[i].element ].push( [[],[],2,i,j]);
+							// 	bondData[ atoms[i].element ].push( [[],[],2,j,i]);
+							// }
 						}
 					}
 				}
@@ -306,20 +313,22 @@ function initModelCreationSystem( visiBoxPlanes)
 					continue;
 				}
 				var atom = atoms[bondData[i][j][3]];
-				var potentialBondPartner = atoms[ bondData[i][j][4] ];
+				var bondPartner = atoms[ bondData[i][j][4] ];
 
-				if(atom.bondPartners.indexOf(potentialBondPartner) !== -1)
+				if(atom.bondPartners.indexOf(bondPartner) !== -1)
 				{
 					continue;
 				}
 
-				atom.bondPartners.push( potentialBondPartner );
-				numberOfCylinders++;
+				atom.bondPartners.push( bondPartner );
+				bondPartner.bondPartners.push( atom );
+				numberOfCylinders += 2;
 
 				if( bondData[i][j][2] > 1)
 				{
-					atom.extraBondPartners.push(potentialBondPartner)
-					numberOfCylinders++;
+					atom.extraBondPartners.push(bondPartner)
+					bondPartner.extraBondPartners.push( atom );
+					numberOfCylinders += 2;
 
 					if( bondData[i][j][2] !== 2)
 					{
@@ -419,7 +428,7 @@ function initModelCreationSystem( visiBoxPlanes)
 				{
 					//ideally the perp vector would be in same plane as other bonds
 					var bondVector = bondPartner.position.clone().sub(atom.position)
-					var addition = randomPerpVector(bondVector).setLength(bondRadius);
+					var addition = randomPerpVector(bondVector).setLength(bondRadius*1.5);
 
 					var leftStart = atom.position.clone().add(addition);
 					var leftEnd = midPoint.clone().add(addition);
