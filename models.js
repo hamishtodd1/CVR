@@ -41,6 +41,9 @@ function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc)
 	this.bondPartners = [];
 	this.bondFirstVertexIndices = [];
 
+	this.extraBondPartners = [];
+	this.extraBondFirstVertexIndices = [];
+
 	this.imol = imol;
 	this.chainId = chainId;
 	this.resNo = resNo;
@@ -143,7 +146,7 @@ function initModelCreationSystem( visiBoxPlanes)
 
 	var defaultBondRadius = 0.055;
 
-	var hydrogenGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 2);
+	var hydrogenGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 2.5);
 	var atomGeometry = new THREE.EfficientSphereGeometry(defaultBondRadius * 5);
 	atomGeometry.vertexNormals = Array(atomGeometry.vertices.length);
 	for(var i = 0, il = atomGeometry.vertices.length; i < il; i++)
@@ -263,7 +266,7 @@ function initModelCreationSystem( visiBoxPlanes)
 		}
 		else
 		{
-			bondData = Array(4);
+			bondData = Array(10);
 			//position position, bondNumber, index index
 			//coords never seem to be correct to more than three and a half decimal places
 			for(var i = 0; i < bondData.length; i++)
@@ -288,7 +291,10 @@ function initModelCreationSystem( visiBoxPlanes)
 					}
 				}
 			}
+
+			console.log(JSON.stringify(bondData))
 		}
+
 		var numberOfCylinders = 0;
 		for(var i = 0, il = bondData.length; i < il; i++ )
 		{
@@ -300,29 +306,29 @@ function initModelCreationSystem( visiBoxPlanes)
 					continue;
 				}
 				var atom = atoms[bondData[i][j][3]];
-				var possiblyRepeatedBondPartner = atoms[ bondData[i][j][4] ];
+				var potentialBondPartner = atoms[ bondData[i][j][4] ];
 
-				for(var k = 0, kl = atom.bondPartners.length; k < kl; k++)
+				if(atom.bondPartners.indexOf(potentialBondPartner) !== -1)
 				{
-					if(atom.bondPartners[k] === possiblyRepeatedBondPartner )
-					{
-						break;
-					}
+					continue;
 				}
-				if(k === kl)
+
+				atom.bondPartners.push( potentialBondPartner );
+				numberOfCylinders++;
+
+				if( bondData[i][j][2] > 1)
 				{
-					atom.bondPartners.push( possiblyRepeatedBondPartner );
-					possiblyRepeatedBondPartner.bondPartners.push( atom );
-					numberOfCylinders += 2;
-					
-					if( bondData[i][j][2] !== 1)
+					atom.extraBondPartners.push(potentialBondPartner)
+					numberOfCylinders++;
+
+					if( bondData[i][j][2] !== 2)
 					{
-						console.log( "more than one bond! You have work to do" )
+						console.log( "You have work to do on bonds!", bondData[i][j][2] )
 					}
 				}
 			}
 		}
-		
+
 		var numberOfAtoms = atoms.length;
 		//Speedup opportunity: you only need as many colors as there are atoms and bonds, not as many as there are triangles.
 		//we are assuming fixed length for all these arrays and that is it
@@ -356,19 +362,25 @@ function initModelCreationSystem( visiBoxPlanes)
 
 			this.geometry.attributes.color.needsUpdate = true;
 
-			for(var j = 0, jl = atom.bondPartners.length; j < jl; j++)
+			for(var k = 0, kl = cylinderSides * 2; k < kl; k++)
 			{
-				var bondFirstVertexIndex = atom.bondFirstVertexIndices[j];
-				for(var k = 0, kl = cylinderSides * 2; k < kl; k++)
+				for(var j = 0, jl = atom.bondPartners.length; j < jl; j++)
 				{
-					this.geometry.attributes.color.setXYZ( bondFirstVertexIndex + k,
+					this.geometry.attributes.color.setXYZ( atom.bondFirstVertexIndices[j] + k,
+						newColor.r,
+						newColor.g,
+						newColor.b );
+				}
+				for(var j = 0, jl = atom.extraBondPartners.length; j < jl; j++)
+				{
+					this.geometry.attributes.color.setXYZ( atom.extraBondFirstVertexIndices[j] + k,
 						newColor.r,
 						newColor.g,
 						newColor.b );
 				}
 			}
 		}
-		
+
 		molecule.setAtomRepresentationPosition = function( atom, newPosition )
 		{
 			if(newPosition)
@@ -381,7 +393,7 @@ function initModelCreationSystem( visiBoxPlanes)
 			if(atom.element === 9)
 			{
 				sourceGeometry = hydrogenGeometry;
-				bondRadius = defaultBondRadius / 3
+				// bondRadius /= 3
 			}
 
 			for(var k = 0; k < nSphereVertices; k++)
@@ -394,21 +406,34 @@ function initModelCreationSystem( visiBoxPlanes)
 
 			for(var i = 0, il = atom.bondPartners.length; i < il; i++)
 			{
-				refreshCylinderCoordsAndNormals(
-					atom.position,
-					atom.position.clone().lerp(atom.bondPartners[i].position,0.5),
-					this.geometry, cylinderSides, 
-					atom.bondFirstVertexIndices[i],
-					bondRadius );
+				var bondPartner = atom.bondPartners[i];
+				var midPoint = atom.position.clone().lerp(bondPartner.position,0.5);
+				var extraBondIndex = atom.extraBondPartners.indexOf(bondPartner);
 
-				var thisBondIndexToPartner = atom.bondPartners[i].bondPartners.indexOf(atom);
-				var partnersBondFirstVertexIndex = atom.bondPartners[i].bondFirstVertexIndices[ thisBondIndexToPartner ];
-				refreshCylinderCoordsAndNormals(
-					atom.bondPartners[i].position,
-					atom.bondPartners[i].position.clone().lerp(atom.position,0.5),
-					this.geometry, cylinderSides, 
-					partnersBondFirstVertexIndex,
-					bondRadius );
+				if( extraBondIndex === -1 )
+				{
+					refreshCylinderCoordsAndNormals( atom.position, midPoint, atom.bondFirstVertexIndices[i],
+						this.geometry, cylinderSides, bondRadius );
+				}
+				else
+				{
+					//ideally the perp vector would be in same plane as other bonds
+					var bondVector = bondPartner.position.clone().sub(atom.position)
+					var addition = randomPerpVector(bondVector).setLength(bondRadius);
+
+					var leftStart = atom.position.clone().add(addition);
+					var leftEnd = midPoint.clone().add(addition);
+
+					refreshCylinderCoordsAndNormals( leftStart, leftEnd, atom.bondFirstVertexIndices[i],
+						this.geometry, cylinderSides, bondRadius );
+
+					addition.negate();
+					var rightStart = atom.position.clone().add(addition);
+					var rightEnd = midPoint.clone().add(addition);
+
+					refreshCylinderCoordsAndNormals( rightStart, rightEnd, atom.extraBondFirstVertexIndices[extraBondIndex],
+						this.geometry, cylinderSides, bondRadius );
+				}
 			}
 			this.geometry.attributes.position.needsUpdate = true;
 
@@ -422,48 +447,45 @@ function initModelCreationSystem( visiBoxPlanes)
 		var cylinderFirstVertexIndex = atoms.length * nSphereVertices;
 		for(var i = 0, il = atoms.length; i < il; i++ )
 		{
-			atoms[i].firstVertexIndex = i*nSphereVertices;
-			atoms[i].firstFaceIndex = i*nSphereFaces;
+			var atom = atoms[i];
+			atom.firstVertexIndex = i*nSphereVertices;
+			atom.firstFaceIndex = i*nSphereFaces;
 			
 			for(var k = 0; k < nSphereVertices; k++)
 			{
-				bufferGeometry.attributes.normal.setXYZ( atoms[i].firstVertexIndex + k, 
+				bufferGeometry.attributes.normal.setXYZ( atom.firstVertexIndex + k, 
 						atomGeometry.vertexNormals[k].x, 
 						atomGeometry.vertexNormals[k].y, 
 						atomGeometry.vertexNormals[k].z );
 			}
 			for(var k = 0; k < nSphereFaces; k++)
 			{
-				bufferGeometry.index.setABC( atoms[i].firstFaceIndex + k, 
-						atomGeometry.faces[k].a + atoms[i].firstVertexIndex, 
-						atomGeometry.faces[k].b + atoms[i].firstVertexIndex, 
-						atomGeometry.faces[k].c + atoms[i].firstVertexIndex );
+				bufferGeometry.index.setABC( atom.firstFaceIndex + k, 
+						atomGeometry.faces[k].a + atom.firstVertexIndex, 
+						atomGeometry.faces[k].b + atom.firstVertexIndex, 
+						atomGeometry.faces[k].c + atom.firstVertexIndex );
 			}
 
-			for(var j = 0, jl = atoms[ i ].bondPartners.length; j < jl; j++)
+			for(var j = 0, jl = atom.bondPartners.length; j < jl; j++)
 			{
-				//bondPartners could have a fixed length of 4
-				atoms[i].bondFirstVertexIndices.push(cylinderFirstVertexIndex);
+				atom.bondFirstVertexIndices.push(cylinderFirstVertexIndex);
+				insertCylinderFaceIndices( bufferGeometry, cylinderSides, cylinderFirstFaceIndex, cylinderFirstVertexIndex);
 
-				for(var k = 0; k < cylinderSides; k++)
-				{
-					bufferGeometry.index.setABC(cylinderFirstFaceIndex+k*2,
-						(k*2+1) + cylinderFirstVertexIndex,
-						(k*2+0) + cylinderFirstVertexIndex,
-						(k*2+2) % (cylinderSides*2) + cylinderFirstVertexIndex );
-					
-					bufferGeometry.index.setABC(cylinderFirstFaceIndex+k*2 + 1,
-						(k*2+1) + cylinderFirstVertexIndex,
-						(k*2+2) % (cylinderSides*2) + cylinderFirstVertexIndex,
-						(k*2+3) % (cylinderSides*2) + cylinderFirstVertexIndex );
-				}
-				
 				cylinderFirstVertexIndex += cylinderSides * 2;
 				cylinderFirstFaceIndex += cylinderSides * 2;
+
+				if( atom.extraBondPartners.indexOf( atom.bondPartners[j] ) !== -1)
+				{
+					atom.extraBondFirstVertexIndices.push(cylinderFirstVertexIndex);
+					insertCylinderFaceIndices(bufferGeometry, cylinderSides, cylinderFirstFaceIndex, cylinderFirstVertexIndex);
+					
+					cylinderFirstVertexIndex += cylinderSides * 2;
+					cylinderFirstFaceIndex += cylinderSides * 2;
+				}
 			}
 
-			molecule.colorAtom(atoms[i]);
-			molecule.setAtomRepresentationPosition(atoms[i])
+			molecule.colorAtom(atom);
+			molecule.setAtomRepresentationPosition(atom)
 		}
 
 		return molecule;
@@ -577,6 +599,11 @@ function initModelCreationSystem( visiBoxPlanes)
 			console.error("couldn't find atom with requested spec")
 		}
 
+		function removeBond()
+		{
+			//the below
+		}
+
 		socket.commandReactions.deleteAtom = function(msg)
 		{
 			var atom = getAtomWithSpecContainedInHere(msg);
@@ -584,16 +611,36 @@ function initModelCreationSystem( visiBoxPlanes)
 
 			for(var i = 0; i < atom.bondPartners.length; i++)
 			{
-				refreshCylinderCoordsAndNormals( zeroVector, zeroVector,
-					model.geometry, cylinderSides, atom.bondFirstVertexIndices[i], 0 );
+				refreshCylinderCoordsAndNormals( zeroVector, zeroVector, atom.bondFirstVertexIndices[i],
+					model.geometry, cylinderSides, 0 );
 
-				var thisBondIndex = atom.bondPartners[i].bondPartners.indexOf(atom);
+				var indexInBondPartnersArray = atom.bondPartners[i].bondPartners.indexOf(atom);
 
-				refreshCylinderCoordsAndNormals( zeroVector, zeroVector,
-					model.geometry, cylinderSides, atom.bondPartners[i].bondFirstVertexIndices[thisBondIndex], 0 );
+				var bondFirstVertexIndex = atom.bondPartners[i].bondFirstVertexIndices[indexInBondPartnersArray];
+				refreshCylinderCoordsAndNormals( zeroVector, zeroVector, bondFirstVertexIndex,
+					model.geometry, cylinderSides, 0 );
 
-				atom.bondPartners[i].bondPartners.splice(thisBondIndex, 1);
-				atom.bondPartners[i].bondFirstVertexIndices.splice(thisBondIndex, 1);
+				atom.bondPartners[i].bondPartners.splice(indexInBondPartnersArray, 1);
+				atom.bondPartners[i].bondFirstVertexIndices.splice(indexInBondPartnersArray, 1);
+
+				var iDouble = atom.extraBondPartners.indexOf(i);
+				if( iDouble !== -1)
+				{
+					refreshCylinderCoordsAndNormals( zeroVector, zeroVector, atom.extraBondFirstVertexIndices[iDouble],
+						model.geometry, cylinderSides, 0 );
+
+					var indexInBondPartnersOtherArray = atom.extraBondPartners[iDouble].bondPartners.indexOf(atom);
+
+					var extraBondFirstVertexIndex = atom.bondPartners[i].extraBondFirstVertexIndices[indexInBondPartnersOtherArray];
+					console.log(extraBondFirstVertexIndex)
+					refreshCylinderCoordsAndNormals( zeroVector, zeroVector, extraBondFirstVertexIndex,
+						model.geometry, cylinderSides, 0 );
+
+					atom.bondPartners[i].extraBondPartners.splice(indexInBondPartnersOtherArray, 1);
+					atom.bondPartners[i].extraBondFirstVertexIndices.splice(indexInBondPartnersOtherArray, 1);
+
+					//TODO test this
+				}
 			}
 			for(var k = 0; k < nSphereVertices; k++)
 			{

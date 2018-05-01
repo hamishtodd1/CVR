@@ -16,7 +16,14 @@ Beta starts on October 15th 2018. Build should be guaranteed stable (and more us
 
 This is pre-beta so you're not really supposed to :) but if you are super eager, and don't mind that there are very few features and no guarantee of stability...
 
-You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/file/d/15OHw1VtXu-QXTvmz9qNLut6K_KhDMcMK - make sure to go to chrome://flags and enable webVR AND gamepad extensions). Make sure webVR is started with the console command --allow-file-access-from-files. Run server.py with python 2.7. and open index.html in your browser, you should know what to do next.
+You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/file/d/15OHw1VtXu-QXTvmz9qNLut6K_KhDMcMK - make sure to go to chrome://flags and enable webVR AND gamepad extensions). 
+
+1. Run server.py with python 2.7
+2. Start webVR, using the console command --allow-file-access-from-files.
+3. Open index.html in your browser
+4. Press "e"
+5. Put on your headset.
+6. Try pressing buttons on the hand controllers and moving them around. If they're frozen, close chromium and restart from 2.
 
 ## I have an issue
 
@@ -30,7 +37,7 @@ One common problem is that the controllers just don't appear. If this happens tr
 
 Yes! Actually it should work on the Vive already, just give me a poke on twitter (hamishtodd1) if it doesn't. I don't own any other position-tracked headsets, but if you work at Sony/Samsung/Lenovo/Acer/Dell/HP/wherever else, send me a headset and I should be able to get it working
 
-But no to all "Cardboard" headsets including Daydream and GearVR. In the history of this repo you will find a version compatible with daydream, but it was a nightmare to get the pointer working and it is not clear what payoff there is, apart from having a super-cheap thing available to people. Read my PhD thesis (ETA 09/2019) if you want to hear UI reasons too I guess!
+But no to all "Cardboard" headsets including Daydream and GearVR. In the history of this repo you will find a version compatible with daydream, but it was a nightmare to get the pointer working and it is not clear what payoff there is, apart from having a super-cheap thing available to people. Read my PhD thesis (ETA 09/2019) if you want to hear UI reasons too!
 
 ## Will you have feature <x> from Coot?
 

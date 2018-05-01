@@ -160,7 +160,7 @@ THREE.CylinderBufferGeometryUncentered = function(radius, length, radiusSegments
 	return geometry;
 }
 
-function refreshCylinderCoordsAndNormals(A,B, bufferGeometry, cylinderSides, firstVertexIndex, radius )
+function refreshCylinderCoordsAndNormals(A,B, firstVertexIndex, bufferGeometry, cylinderSides, radius )
 {
 	var aToB = new THREE.Vector3().subVectors(B,A);
 	aToB.normalize();
@@ -175,6 +175,22 @@ function refreshCylinderCoordsAndNormals(A,B, bufferGeometry, cylinderSides, fir
 		bufferGeometry.attributes.normal.setXYZ(firstVertexIndex + i*2+1, tickVector.x,tickVector.y,tickVector.z );
 		
 		tickVector.applyAxisAngle(aToB, TAU / cylinderSides);
+	}
+}
+
+function insertCylinderFaceIndices(bufferGeometry,cylinderSides, cylinderFirstFaceIndex, cylinderFirstVertexIndex)
+{
+	for(var k = 0; k < cylinderSides; k++)
+	{
+		bufferGeometry.index.setABC(cylinderFirstFaceIndex+k*2,
+			(k*2+1) + cylinderFirstVertexIndex,
+			(k*2+0) + cylinderFirstVertexIndex,
+			(k*2+2) % (cylinderSides*2) + cylinderFirstVertexIndex );
+		
+		bufferGeometry.index.setABC(cylinderFirstFaceIndex+k*2 + 1,
+			(k*2+1) + cylinderFirstVertexIndex,
+			(k*2+2) % (cylinderSides*2) + cylinderFirstVertexIndex,
+			(k*2+3) % (cylinderSides*2) + cylinderFirstVertexIndex );
 	}
 }
 

@@ -1,11 +1,10 @@
 /*
 TODO before newbattle, July 1st
-	Bridges resub, 30th
-	Change to simpleHttpServer so you can have communication done in a thread. Sigh. Import thread
+	Little video for Paul
 	Backbone-drawing yay
 	Grabbing two ends of a chain
 	Make an email to send to everyone. Advize not to actually use coot
-	You want a reset button.
+	You want a "reset server" button.
 	Recontouring should be clever
 	Get some data from Paul
 	Octree selection?
@@ -21,11 +20,12 @@ TODO before newbattle, July 1st
 	Mutate
 	Transfer map
 	Spectation
+	Go to Oculus
 
 	Get new shampoo
 	Maryam Mirzakhani
 	Dogs
-	Book 7Osme things
+	Book Bridges travel
 	Get stuff from Diego
 	
 TODO at some point
@@ -37,6 +37,7 @@ TODO at some point
 		Button on controller reserved
 		Flash or something
 	bug with some residues highlighting many residues?
+	NMR data should totally be in there, a set of springs
 
 Maya
 	Admin
@@ -121,7 +122,8 @@ Maya
 		thingsToSpaceOut.push( 
 			// initPointer(),
 			initAtomLabeller(),
-			initMutator(),
+			// initMutator(),
+			initPainter(),
 			// initAtomDeleter(),
 			// initEnvironmentDistance(),
 			// initResidueDeleter(),
@@ -145,9 +147,20 @@ Maya
 	socket.commandReactions["model"] = function(msg)
 	{
 		//does it need to be in a string? environment distances didn't need to be
-		makeModelFromCootString( msg.modelDataString, visiBox.planes );
+		// makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
 		initTools();
+	}
+	socket.commandReactions["loadTutorialModel"] = function(msg)
+	{
+		new THREE.FileLoader().load( "data/tutorialGbr.txt",
+			function( modelDataString )
+			{
+				// makeModelFromCootString( modelDataString, visiBox.planes );
+
+				initTools();
+			}
+		);
 	}
 	socket.commandReactions["map"] = function(msg)
 	{
@@ -158,37 +171,27 @@ Maya
 	}
 	socket.commandReactions["mapFilename"] = function(msg)
 	{
-		var req = new XMLHttpRequest();
-		req.open('GET', msg.mapFilename, true);
-		req.responseType = 'arraybuffer';
-		req.onreadystatechange = function()
-		{
-			if (req.readyState === 4)
-			{
-				if( msg.mapFilename === "data/emd_3908.map")
-				{
-					var newMap = Map( req.response, false, visiBox, 7.87 );
-				}
-				else
-				{
-					var newMap = Map( req.response, false, visiBox );
-				}
-				maps.push(newMap);
-				assemblage.add(newMap)
-			}
-		};
-		req.send(null);
-	}
-	socket.commandReactions["loadTutorialModel"] = function(msg)
-	{
-		new THREE.FileLoader().load( "data/tutorialGbr.txt",
-			function( modelDataString )
-			{
-				makeModelFromCootString( modelDataString, visiBox.planes );
-
-				initTools();
-			}
-		);
+		// var req = new XMLHttpRequest();
+		// req.open('GET', msg.mapFilename, true);
+		// req.responseType = 'arraybuffer';
+		// req.onreadystatechange = function()
+		// {
+		// 	if (req.readyState === 4)
+		// 	{
+		// 		console.log(msg.mapFilename)
+		// 		if( msg.mapFilename === "data/emd_3908.map")
+		// 		{
+		// 			var newMap = Map( req.response, false, visiBox, 7.87 );
+		// 		}
+		// 		else
+		// 		{
+		// 			var newMap = Map( req.response, false, visiBox );
+		// 		}
+		// 		maps.push(newMap);
+		// 		assemblage.add(newMap)
+		// 	}
+		// };
+		// req.send(null);
 	}
 	socket.onopen = function()
 	{

@@ -34,3 +34,5 @@ var frameCount = 0;
 var thingsToBeUpdated = [];
 var holdables = [];
 var socket = null;
+
+var ourPDBLoader = new THREE.PDBLoader();
