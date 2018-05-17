@@ -5,6 +5,17 @@
 
 	May need both uglymol and threejs marching cubes systems for different styles
 	Except maybe solid is objectively better in VR?
+
+	Does putting the mesh in memory take much more time than calculating it? Probably not but do check
+
+	So you have a worker that constantly:
+		Calculates new contour chunks
+		Adds them to the scene
+		Removes
+		Unless there's nothing to be done
+	Break it up into chunks. When you move it, they don't all have to go
+
+	threejs web worker https://threejs.org/examples/webgl_loader_obj2_run_director.html
 */
 
 function Map(arrayBuffer, isDiffMap, visiBox, isolevel)

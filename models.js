@@ -125,6 +125,20 @@ function updateLabel()
 	this.parent.worldToLocal(localCameraPosition);
 	this.lookAt(localCameraPosition);
 }
+function changeBondBetweenAtomsToDouble(bondData, atomA, atomB)
+{
+	for(var j = 0; j < bondData.length; j++)
+	{
+		for(var i = 0; i < bondData[j].length; i++)
+		{
+			if( (atomA === bondData[j][i][3] && atomB === bondData[j][i][4])
+			 || (atomB === bondData[j][i][3] && atomA === bondData[j][i][4]) )
+			{
+				bondData[j][i][2] = 2;
+			}
+		}
+	}
+}
 
 function initModelCreationSystem( visiBoxPlanes)
 {
@@ -235,6 +249,16 @@ function initModelCreationSystem( visiBoxPlanes)
 		}
 	}
 
+	makeModelFromElementsAndCoords = function(elements,coords)
+	{
+		var atoms = Array(elements.length);
+		for(var i = 0; i < atoms.length; i++)
+		{
+			atoms[i] = new Atom( elements[i], new THREE.Vector3().fromArray(coords,3*i) );
+		}
+		return makeMoleculeMesh( atoms, false );
+	}
+
 	makeMoleculeMesh = function( atoms, clip, bondDataFromCoot )
 	{
 		var molecule = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
@@ -299,7 +323,7 @@ function initModelCreationSystem( visiBoxPlanes)
 				}
 			}
 
-			console.log(JSON.stringify(bondData))
+			console.error(JSON.stringify(bondData))
 		}
 
 		var numberOfCylinders = 0;
@@ -423,10 +447,15 @@ function initModelCreationSystem( visiBoxPlanes)
 				{
 					refreshCylinderCoordsAndNormals( atom.position, midPoint, atom.bondFirstVertexIndices[i],
 						this.geometry, cylinderSides, bondRadius );
+
+					var bfviFromPartnersPov = bondPartner.bondFirstVertexIndices[ bondPartner.bondPartners.indexOf( atom ) ];
+					refreshCylinderCoordsAndNormals( bondPartner.position, midPoint, bfviFromPartnersPov,
+						this.geometry, cylinderSides, bondRadius );
 				}
 				else
 				{
 					//ideally the perp vector would be in same plane as other bonds
+					//WON'T WORK WHEN YOU MOVE A DOUBLE BOND
 					var bondVector = bondPartner.position.clone().sub(atom.position)
 					var addition = randomPerpVector(bondVector).setLength(bondRadius*1.5);
 

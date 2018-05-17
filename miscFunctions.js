@@ -200,6 +200,35 @@ THREE.Quaternion.prototype.distanceTo = function(q2)
 	if (theta>Math.PI/2) theta = Math.PI - theta;
 	return theta;
 }
+THREE.Quaternion.prototype.getAxisWithAngleAsLength = function()
+{
+	var scaleFactor = Math.sqrt(1-qw*qw);
+	var axis = new THREE.Vector3(
+		this.x / scaleFactor,
+		this.y / scaleFactor,
+		this.z / scaleFactor
+		);
+	axis.setLength(2 * Math.acos(this.w));
+	return axis;
+}
+THREE.Quaternion.prototype.multiplyScalar = function(scalar)
+{
+	this.x *= scalar;
+	this.y *= scalar;
+	this.z *= scalar;
+	this.w *= scalar;
+
+	return this;
+}
+THREE.Quaternion.prototype.add = function(q2)
+{
+	this.x += q2.x;
+	this.y += q2.y;
+	this.z += q2.z;
+	this.w += q2.w;
+
+	return this;
+}
 
 THREE.Face3.prototype.getCorner = function(i)
 {

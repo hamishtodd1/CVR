@@ -41,6 +41,7 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 	
 	function overlappingHoldable(holdable)
 	{
+		//TODO once a weird bug here where geometry was undefined
 		var ourPosition = this.controllerModel.geometry.boundingSphere.center.clone();
 		this.localToWorld( ourPosition );
 		
@@ -117,6 +118,8 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 
 		controllers[ i ].oldPosition = controllers[ i ].position.clone();
 		controllers[ i ].oldQuaternion = controllers[ i ].quaternion.clone();
+		controllers[ i ].deltaQuaternion = controllers[ i ].quaternion.clone();
+		controllers[ i ].deltaPosition = controllers[ i ].position.clone();
 		
 		controllers[ i ].overlappingHoldable = overlappingHoldable;
 		
@@ -179,6 +182,10 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 			controllers[affectedControllerIndex].position.fromArray( gamepads[k].pose.position );
 			controllers[affectedControllerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
 			controllers[affectedControllerIndex].updateMatrixWorld();
+
+			controllers[affectedControllerIndex].deltaPosition.copy(controllers[ affectedControllerIndex ].position).sub(controllers[ affectedControllerIndex ].oldPosition);
+			// console.log(controllers[affectedControllerIndex].deltaPosition,controllers[ affectedControllerIndex ].position,controllers[ affectedControllerIndex ].oldPosition)
+			controllers[affectedControllerIndex].deltaQuaternion.copy(controllers[affectedControllerIndex].oldQuaternion).inverse().multiply(controllers[affectedControllerIndex].quaternion);
 
 			for( var propt in riftControllerKeys )
 			{

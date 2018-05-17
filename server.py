@@ -28,7 +28,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 		if runningInCoot == False:
 			self.write_message({"command":"model"})
-			self.write_message({"command":"mapFilename",'mapFilename':'data/tutorialMap.map'})
+			self.write_message({"command":"mapFilename",'mapFilename':'data/tutorial.map'})
 		else:
 			serverReactions.connect(self)
 

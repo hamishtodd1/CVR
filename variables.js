@@ -1,5 +1,6 @@
 //-----Mathematical
 var TAU = Math.PI * 2;
+var HS3 = Math.sqrt(3)/2;
 var zVector = new THREE.Vector3(0,0,1); //also used as a placeholder normal
 var yVector = new THREE.Vector3(0,1,0);
 var xVector = new THREE.Vector3(1,0,0);

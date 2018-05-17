@@ -52,15 +52,9 @@ function initMutator()
 				newPlaque.position.copy(position);
 				mutator.add( newPlaque );
 
-				var aaAtoms = Array(geometryAtoms.elements.length);
-			 	for(var i = 0; i < aaAtoms.length; i++)
-			 	{
-			 		aaAtoms[i] = new Atom( geometryAtoms.elements[i], new THREE.Vector3().fromArray(geometryAtoms.attributes.position.array,3*i) );
-			 	}
-			 	
-			 	mutator.AAs[aaIndex] = makeMoleculeMesh( aaAtoms, false );
-			 	
-			 	mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
+				mutator.AAs[aaIndex] = makeModelFromElementsAndCoords(geometryAtoms.elements,geometryAtoms.attributes.position.array)
+				
+				mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
 				newPlaque.add( mutator.AAs[aaIndex] );
 				
 				var nameMesh = makeTextSign( aaNames[aaIndex] );

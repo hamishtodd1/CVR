@@ -139,6 +139,8 @@ function initStats(visiBoxPosition)
 
 			if(proportionThroughMovement >= 1)
 			{
+				//and also set zoom level?
+
 				assemblage.onLetGo()
 
 				requestCommencementTime = null;

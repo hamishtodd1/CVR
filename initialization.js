@@ -1,17 +1,17 @@
 /*
 TODO before newbattle, July 1st
-	Little video for Paul
-	Backbone-drawing yay
+	Improve painter
 	Grabbing two ends of a chain
 	probe dots?
-	Make an email to send to everyone. Advize not to actually use coot
 	You want a "reset server" button.
 	Recontouring should be clever
 	Get some data from Paul
 	Octree selection?
-	Add terminal residue
+	Ramachandran diagrams, hard spheres
 	"Carbon alpha mode", often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
 	Abstract target: do the whole coot tutorial, and the EM one too
+	Little video of environment distances for drug discoverers - 4zzn
+	Extended video showing all features for "beta"
 	Force restraints
 		Ok so when I thought it out I realized it was maybe bad
 			You make the movement, but then you're "holding the things in place"
@@ -32,13 +32,13 @@ TODO before newbattle, July 1st
 TODO at some point
 	Non-vr head movement sensetivity demo
 	Get that structure Paul suggested
-	Ramachandran diagrams
 	"undo"
 		Just coot undo, then get the result? Full refresh
 		Button on controller reserved
 		Flash or something
 	bug with some residues highlighting many residues?
 	NMR data should totally be in there, a set of springs
+	Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
 
 Maya
 	Admin
@@ -88,7 +88,7 @@ Maya
 	var maps = [];
 	var atoms = null; //because fixed length
 	
-	assemblage.scale.setScalar( 0.028 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( 0.036 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	getAngstrom = function()
 	{
 		return assemblage.scale.x;
@@ -115,22 +115,26 @@ Maya
 	// initMenus();
 	// initSpecatorRepresentation();
 	
-	//---------------"init part 2"
-	function initTools()
+	function initPartTwo(modelDataString)
 	{
+		// makeModelFromCootString( modelDataString, visiBox.planes );
+
 		var thingsToSpaceOut = [];
 
+		var visiblePlace = visiBox.position.clone()
+		// assemblage.worldToLocal(visiblePlace)
 		thingsToSpaceOut.push( 
 			// initPointer(),
-			initAtomLabeller(),
+			// initAtomLabeller(),
 			// initMutator(),
-			// initPainter(),
 			// initAtomDeleter(),
 			// initEnvironmentDistance(),
 			// initResidueDeleter(),
-			// initAutoRotamer()
-			// initRefiner()
-			initRigidBodyMover()
+			// initAutoRotamer(),
+			// initRefiner(),
+			// initRigidBodyMover(),
+			// initProteinPainter(),
+			initNucleicAcidPainter()
 		);
 
 		//maybe these things could be on a desk? Easier to pick up?
@@ -150,16 +154,14 @@ Maya
 		//does it need to be in a string? environment distances didn't need to be
 		if(msg.modelDataString)
 		{
-			makeModelFromCootString( msg.modelDataString, visiBox.planes );
-			initTools();
+			initPartTwo(msg.modelDataString)
 		}
 		else
 		{
 			new THREE.FileLoader().load( "data/tutorialGbr.txt",
 				function( modelDataString )
 				{
-					makeModelFromCootString( modelDataString, visiBox.planes );
-					initTools();
+					initPartTwo(modelDataString)
 				}
 			);
 		}
