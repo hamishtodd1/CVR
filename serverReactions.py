@@ -146,3 +146,11 @@ def sendIntermediateRepresentation(self):
 		self.write_message(returnMsg)
 	else:
 		print("but not sending it")
+
+def getMetrics(imol):
+	residueSpecs = all_residues(imol)
+	residueCorrelations = map_to_model_correlation_per_residue_py(imol, residueSpecs, 1, imol_refinement_map())
+	geometryDistortions = residues_distortions_py(imol, residueSpecs)
+	rotamerScores = all_molecule_rotamer_score_py()
+	ramachandranScores = all_molecule_ramachandran_score_py()
+	return (rs, geometryDistortions, rotamerScores, ramachandranScores)
