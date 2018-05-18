@@ -102,7 +102,6 @@ def command(self, msgContainer):
 		accept_regularizement()
 
 	elif msg["command"] == "forceRestraint":
-		print("happenning")
 		atomSpec = [msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"]]
 		drag_intermediate_atom_py(atomSpec,msg["newPosition"])
 
