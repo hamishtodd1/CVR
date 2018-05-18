@@ -21,7 +21,7 @@ def connect(self):
 	modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
 	self.write_message( modelMsg )
 
-	# mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
+	# mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorial.map'}
 	# mapMsg = {'command':"mapFilename",'mapFilename':'data/emd_3908.map'}
 	mapMsg = {'command':"mapFilename",'mapFilename':'data/drugIsInteresting.map'}
 	self.write_message( mapMsg )
@@ -68,7 +68,7 @@ def command(self, msgContainer):
 			imolMap, clashFlag, lowestProbability);
 
 		returnMsg = {"command":"residueInfo"}
-		returnMsg["atoms"] = residue_info_py(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
+		returnMsg["atoms"] = residue_info_py( msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
 		returnMsg["imol"] = msg["imol"]
 		self.write_message(returnMsg)
 

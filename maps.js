@@ -11,7 +11,7 @@
 	So you have a worker that constantly:
 		Calculates new contour chunks
 		Adds them to the scene
-		Removes
+		Removes 
 		Unless there's nothing to be done
 	Break it up into chunks. When you move it, they don't all have to go
 
@@ -43,7 +43,7 @@ function Map(arrayBuffer, isDiffMap, visiBox, isolevel)
 		assemblage.worldToLocal( blockCenterVector );
 
 		var blockRadius = 2 + Math.ceil(Math.min( visiBox.corners[0].position.x * visiBox.scale.x, visiBox.corners[0].position.y * visiBox.scale.y, visiBox.corners[0].position.z * visiBox.scale.z) / getAngstrom());
-		blockRadius = clamp(blockRadius,2,10);
+		blockRadius = 3;
 
 		data.extract_block( blockRadius, [ blockCenterVector.x, blockCenterVector.y, blockCenterVector.z ] );
 		refreshMeshesFromBlock();

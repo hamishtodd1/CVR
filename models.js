@@ -227,11 +227,6 @@ function initModelCreationSystem( visiBoxPlanes)
 		}
 
 		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
-
-		// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
-		// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
-		// 		carbonAlphas.length*8, 0.1, 16 );
-		// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
 		
 		model.imol = model.atoms[0].imol;
 		assemblage.add(model);
@@ -247,6 +242,8 @@ function initModelCreationSystem( visiBoxPlanes)
 			averagePosition.multiplyScalar( 1 / model.atoms.length);
 			assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
 		}
+
+		return model;
 	}
 
 	makeModelFromElementsAndCoords = function(elements,coords)
@@ -526,6 +523,11 @@ function initModelCreationSystem( visiBoxPlanes)
 			molecule.setAtomRepresentationPosition(atom)
 		}
 
+		// var traceGeometry = new THREE.TubeBufferGeometry(
+		// 		new THREE.CatmullRomCurve3( carbonAlphas ),
+		// 		carbonAlphas.length*8, 0.1, 16 );
+		// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
+
 		return molecule;
 	}
 
@@ -707,7 +709,7 @@ function initModelCreationSystem( visiBoxPlanes)
 				var atom = model.atoms[msg.atoms[i][3]];
 				atom.position.fromArray( msg.atoms[i][2] );
 				model.setAtomRepresentationPosition(atom);
-			}
+			} 
 			model.geometry.attributes.position.needsUpdate = true;
 		}
 

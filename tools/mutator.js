@@ -125,9 +125,9 @@ function initMutator()
 			this.AAs[i].scale.setScalar(mutatorAaAngstrom);
 		}
 
-		// var msg = { command: "mutateAndAutofit" };
-		// closestAtom.assignAtomSpecToObject( msg );
-		// socket.send( JSON.stringify( msg ) );
+		var msg = { command: "mutateAndAutofit", newResidue:"CYS" };
+		closestAtom.assignAtomSpecToObject( msg );
+		socket.send( JSON.stringify( msg ) );
 
 		label.visible = this.parent === scene;
 	}

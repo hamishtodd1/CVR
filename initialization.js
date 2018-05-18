@@ -1,11 +1,11 @@
 /*
 TODO before newbattle, July 1st
-	Improve painter
-	Grabbing two ends of a chain
+	You want a "reset server" button before you make them interact again
+	Painter works as "add terminal residue"
+	Refinement
+		Grabbing two ends of a chain defines it as refinement area
 	probe dots?
-	You want a "reset server" button.
 	Recontouring should be clever
-	Get some data from Paul
 	Octree selection?
 	Ramachandran diagrams, hard spheres
 	"Carbon alpha mode", often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
@@ -13,14 +13,11 @@ TODO before newbattle, July 1st
 	Little video of environment distances for drug discoverers - 4zzn
 	Extended video showing all features for "beta"
 	Force restraints
-		Ok so when I thought it out I realized it was maybe bad
-			You make the movement, but then you're "holding the things in place"
-		What instead?
-			Currently I take the central atom and pull it
-			Possibly humans only think in single vectors, hence center
 	Mutate
 	Transfer map
-	Spectation
+	Spectation, or at least "Save"
+	Get some data from Paul
+	Test monomer tool
 
 	Go to Oculus
 	Get new shampoo
@@ -30,6 +27,9 @@ TODO before newbattle, July 1st
 	Get stuff from Diego
 	
 TODO at some point
+	Get monomer with web speech
+	Selection of rotamers
+	"Add alt conformer"
 	Non-vr head movement sensetivity demo
 	Get that structure Paul suggested
 	"undo"
@@ -136,6 +136,7 @@ Maya
 			// initProteinPainter(),
 			initNucleicAcidPainter()
 		);
+		// initMonomerReceiver()
 
 		//maybe these things could be on a desk? Easier to pick up?
 
@@ -168,34 +169,26 @@ Maya
 	}
 	socket.commandReactions["map"] = function(msg)
 	{
-		// console.log(msg["dataString"])
+		//TODO get the default isolevel from coot
 		// var newMap = Map( msg["dataString"], false, visiBox );
 		// maps.push(newMap);
 		// assemblage.add(newMap)
 	}
 	socket.commandReactions["mapFilename"] = function(msg)
 	{
-		// var req = new XMLHttpRequest();
-		// req.open('GET', msg.mapFilename, true);
-		// req.responseType = 'arraybuffer';
-		// req.onreadystatechange = function()
-		// {
-		// 	if (req.readyState === 4)
-		// 	{
-		// 		console.log(msg.mapFilename)
-		// 		if( msg.mapFilename === "data/emd_3908.map")
-		// 		{
-		// 			var newMap = Map( req.response, false, visiBox, 7.87 );
-		// 		}
-		// 		else
-		// 		{
-		// 			var newMap = Map( req.response, false, visiBox );
-		// 		}
-		// 		maps.push(newMap);
-		// 		assemblage.add(newMap)
-		// 	}
-		// };
-		// req.send(null);
+		var req = new XMLHttpRequest();
+		req.open('GET', msg.mapFilename, true);
+		req.responseType = 'arraybuffer';
+		req.onreadystatechange = function()
+		{
+			if (req.readyState === 4)
+			{
+				var newMap = Map( req.response, false, visiBox );
+				maps.push(newMap);
+				assemblage.add(newMap)
+			}
+		};
+		req.send(null);
 	}
 	socket.onopen = function()
 	{
