@@ -1,17 +1,14 @@
 from coot import *
 import json
 
-# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
-# pdbFileString = "/home/htodd/CVR/data/6eoj.pdb";
-pdbFileString = "/home/htodd/CVR/data/drugIsInteresting.pdb";
-# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
-# pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
+pdbFileString = "/home/htodd/CVR/data/tutorial.pdb";
+# pdbFileString = "/home/htodd/CVR/data/drugIsInteresting.pdb";
 handle_read_draw_molecule_with_recentre(pdbFileString, 1)
 
-# mtzFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz"
-# make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
-mapFileString = "/home/htodd/CVR/data/drugIsInteresting.map";
-handle_read_ccp4_map( mapFileString, 0 ) #second arg is whether it's a difference map
+mtzFileString = "/home/htodd/CVR/data/tutorial.mtz"
+make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
+# mapFileString = "/home/htodd/CVR/data/drugIsInteresting.map";
+# handle_read_ccp4_map( mapFileString, 0 ) #second arg is whether it's a difference map
 
 def connect(self):
 	#could reset here?
@@ -21,9 +18,8 @@ def connect(self):
 	modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
 	self.write_message( modelMsg )
 
-	# mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorialMap.map'}
-	# mapMsg = {'command':"mapFilename",'mapFilename':'data/emd_3908.map'}
-	mapMsg = {'command':"mapFilename",'mapFilename':'data/drugIsInteresting.map'}
+	mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorial.map'}
+	# mapMsg = {'command':"mapFilename",'mapFilename':'data/drugIsInteresting.map'}
 	self.write_message( mapMsg )
 
 
