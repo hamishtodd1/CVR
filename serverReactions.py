@@ -1,17 +1,14 @@
 from coot import *
 import json
 
-# pdbFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/tutorial-modern.pdb";
-# pdbFileString = "/home/htodd/CVR/data/6eoj.pdb";
-pdbFileString = "/home/htodd/CVR/data/drugIsInteresting.pdb";
-# pdbFileString = "/home/htodd/CVR/data/iain/3f5m_final.pdb"
-# pdbFileString = "/home/htodd/CVR/data/1mru.pdb"
+pdbFileString = "/home/htodd/CVR/data/tutorial.pdb";
+# pdbFileString = "/home/htodd/CVR/data/drugIsInteresting.pdb";
 handle_read_draw_molecule_with_recentre(pdbFileString, 1)
 
-# mtzFileString = "/home/htodd/autobuild/Linux-localhost.localdomain-pre-release-gtk2-python/share/coot/data/rnasa-1.8-all_refmac1.mtz"
-# make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
-mapFileString = "/home/htodd/CVR/data/drugIsInteresting.map";
-handle_read_ccp4_map( mapFileString, 0 ) #second arg is whether it's a difference map
+mtzFileString = "/home/htodd/CVR/data/tutorial.mtz"
+make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
+# mapFileString = "/home/htodd/CVR/data/drugIsInteresting.map";
+# handle_read_ccp4_map( mapFileString, 0 ) #second arg is whether it's a difference map
 
 def connect(self):
 	#could reset here?
@@ -106,7 +103,6 @@ def command(self, msgContainer):
 		accept_regularizement()
 
 	elif msg["command"] == "forceRestraint":
-		print("happenning")
 		atomSpec = [msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"]]
 		drag_intermediate_atom_py(atomSpec,msg["newPosition"])
 
@@ -150,3 +146,11 @@ def sendIntermediateRepresentation(self):
 		self.write_message(returnMsg)
 	else:
 		print("but not sending it")
+
+def getMetrics(imol):
+	residueSpecs = all_residues(imol)
+	residueCorrelations = map_to_model_correlation_per_residue_py(imol, residueSpecs, 1, imol_refinement_map())
+	geometryDistortions = residues_distortions_py(imol, residueSpecs)
+	rotamerScores = all_molecule_rotamer_score_py()
+	ramachandranScores = all_molecule_ramachandran_score_py()
+	return (rs, geometryDistortions, rotamerScores, ramachandranScores)
