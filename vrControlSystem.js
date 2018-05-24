@@ -24,14 +24,7 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 	
 	var vrInputSystem = {};
 
-	var riftControllerKeys = {
-		thumbstickButton:0,
-		grippingTop: 1,
-		grippingSide:2,
-		button1: 3,
-		button2: 4
-	}
-	var viveControllerKeys = {
+	var controllerKeys = {
 		thumbstickButton:0,
 		grippingTop: 1,
 		grippingSide:2,
@@ -106,7 +99,7 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 			}
 		}
 
-		for( var propt in riftControllerKeys )
+		for( var propt in controllerKeys )
 		{
 			controllers[ i ][propt] = false;
 			controllers[ i ][propt+"Old"] = false;
@@ -144,7 +137,6 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 				continue;
 			}
 			var affectedControllerIndex = -1;
-			var keys = null;
 			if (gamepads[k].id === "OpenVR Gamepad" )
 			{
 				if(gamepads[k].index )
@@ -155,17 +147,25 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 				{
 					affectedControllerIndex = LEFT_CONTROLLER_INDEX;
 				}
-				keys = viveControllerKeys;
 			}
 			else if (gamepads[k].id === "Oculus Touch (Right)")
 			{
 				affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
-				keys = riftControllerKeys;
 			}
 			else if (gamepads[k].id === "Oculus Touch (Left)")
 			{
 				affectedControllerIndex = LEFT_CONTROLLER_INDEX;
-				keys = riftControllerKeys;
+			}
+			else if (gamepads[k].id === "Spatial Controller (Spatial Interaction Source)")
+			{
+				if( gamepads[k].hand === "right" )
+				{
+					affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
+				}
+				else
+				{
+					affectedControllerIndex = LEFT_CONTROLLER_INDEX;
+				}
 			}
 			else
 			{
@@ -187,13 +187,13 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 			// console.log(controllers[affectedControllerIndex].deltaPosition,controllers[ affectedControllerIndex ].position,controllers[ affectedControllerIndex ].oldPosition)
 			controllers[affectedControllerIndex].deltaQuaternion.copy(controllers[affectedControllerIndex].oldQuaternion).inverse().multiply(controllers[affectedControllerIndex].quaternion);
 
-			for( var propt in riftControllerKeys )
+			for( var propt in controllerKeys )
 			{
 				controllers[ affectedControllerIndex ][propt+"Old"] = controllers[ affectedControllerIndex ][propt];
-				controllers[ affectedControllerIndex ][propt] = gamepads[k].buttons[riftControllerKeys[propt]].pressed;
+				controllers[ affectedControllerIndex ][propt] = gamepads[k].buttons[controllerKeys[propt]].pressed;
 			}
 
-			//gamepads[k].buttons[riftControllerKeys.grippingTop].value;
+			//gamepads[k].buttons[controllerKeys.grippingTop].value;
 
 			// controllers[ affectedControllerIndex ].controllerModel.material.color.r = controllers[ affectedControllerIndex ].button1?1:0;
 			// controllers[ affectedControllerIndex ].controllerModel.material.color.g = controllers[ affectedControllerIndex ].button2?1:0;

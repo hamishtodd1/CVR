@@ -8,7 +8,7 @@
 
 	Does putting the mesh in memory take much more time than calculating it? Probably not but do check
 
-	So you have a worker that constantly:
+	So you have a worker that constantly, in a separate thread:
 		Calculates new contour chunks
 		Adds them to the scene
 		Removes 
@@ -20,6 +20,15 @@
 
 function Map(arrayBuffer, isDiffMap, visiBox, isolevel)
 {
+	var w = new Worker("cubeMarchWorker.js");
+	w.onmessage = function(event) {  
+		console.log("worker returned " + event.data);
+	}
+	w.postMessage(new Uint32Array([1,1,2]));
+
+
+	//------------
+
 	var colors = {
 		map_den: 0x4372D2,
 		map_pos: 0x298029,
@@ -56,7 +65,8 @@ function Map(arrayBuffer, isDiffMap, visiBox, isolevel)
 		{
 			if( map.children[i] !== unitCellMesh )
 			{
-				removeAndDispose(map.children[i]);
+				map.children[i].geometry.dispose();
+				map.children[i].material.dispose();
 			}
 		}
 
@@ -68,11 +78,11 @@ function Map(arrayBuffer, isDiffMap, visiBox, isolevel)
 				isolevelMultiplier = -1
 			}
 
-			var isomesh = data.isomesh_in_block( 
+			var isomesh = isomeshInBlock( data,
 				isolevelMultiplier * isolevel,
 				colors[types[i]],
 				visiBox.planes,
-				style );
+				"wireframe" );
 			map.add( isomesh );
 		}
 	}
@@ -80,38 +90,20 @@ function Map(arrayBuffer, isDiffMap, visiBox, isolevel)
 	map.addToIsolevel = function(addition)
 	{
 		isolevel += addition;
+		//TODO better way to check
 		if(map.children.length === 0)
 		{
-			return;
+			console.log("this map should not exist if there's nothing to refresh. Deal with it if there's a crash")
 		}
 		refreshMeshesFromBlock();
 	}
 
-	function removeAndDispose(obj)
 	{
-		obj.parent.remove(obj);
-		if (obj.geometry) { obj.geometry.dispose(); }
-		if (obj.material)
-		{
-			if (obj.material.uniforms && obj.material.uniforms.map) 
-			{
-				obj.material.uniforms.map.value.dispose();
-			}
-			obj.material.dispose();
-		}
-		for (var i = 0, list = obj.children; i < list.length; i += 1)
-		{
-			var o = list[i];
-
-			removeAndDispose(o);
-		}
-	}
-
-	{
-		var unitCellMesh = data.unit_cell.getMesh();
-		unitCellMesh.visible = false;
+		var unitCellMesh = getUnitCellMesh( data.unit_cell.orth );
+		// unitCellMesh.visible = false;
 		map.add(unitCellMesh);
-		//could be good to make it so that it is movable
+		unitCellMesh.scale.multiplyScalar(0.2)
+		//TOD make it movable?
 		map.toggleUnitCellVisibility = function()
 		{
 			unitCellMesh.visible = !unitCellMesh.visible;
@@ -120,3 +112,106 @@ function Map(arrayBuffer, isDiffMap, visiBox, isolevel)
 
 	return map;
 }
+
+function getUnitCellMesh(orthogonalMatrix)
+{
+	var CUBE_EDGES = [	[0, 0, 0], [1, 0, 0],
+						[0, 0, 0], [0, 1, 0],
+						[0, 0, 0], [0, 0, 1],
+						[1, 0, 0], [1, 1, 0],
+						[1, 0, 0], [1, 0, 1],
+						[0, 1, 0], [1, 1, 0],
+						[0, 1, 0], [0, 1, 1],
+						[0, 0, 1], [1, 0, 1],
+						[0, 0, 1], [0, 1, 1],
+						[1, 0, 1], [1, 1, 1],
+						[1, 1, 0], [1, 1, 1],
+						[0, 1, 1], [1, 1, 1] ];
+	var vertices = CUBE_EDGES.map(function (a)
+	{
+		return {
+			xyz: [  orthogonalMatrix[0] * a[0]  + orthogonalMatrix[1] * a[1]  + orthogonalMatrix[2] * a[2],
+				  /*orthogonalMatrix[3] * a[0]*/+ orthogonalMatrix[4] * a[1]  + orthogonalMatrix[5] * a[2],
+				  /*orthogonalMatrix[6] * a[0]  + orthogonalMatrix[7] * a[1]*/+ orthogonalMatrix[8] * a[2]]
+		};
+	});
+
+	var geometry = new THREE.BufferGeometry();
+	var pos = new Float32Array(vertices.length * 3);
+	if (vertices && vertices[0].xyz)
+	{
+		for (var i = 0; i < vertices.length; i++)
+		{
+			var xyz /*:Num3*/ = vertices[i].xyz;
+			pos[3*i] = xyz[0];
+			pos[3*i+1] = xyz[1];
+			pos[3*i+2] = xyz[2];
+		}
+	}
+	else
+	{
+		for (var i = 0; i < vertices.length; i++)
+		{
+			var v /*:Vector3*/ = vertices[i];
+			pos[3*i] = v.x;
+			pos[3*i+1] = v.y;
+			pos[3*i+2] = v.z;
+		}
+	}
+	geometry.addAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+	var colors = new Float32Array([ 1,0,0,1,0.66667,0,0,1,0,0.66667,1,0,0,0,1,0,0.666667,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 ]);
+	geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+	return new THREE.LineSegments( geometry, new THREE.LineBasicMaterial({vertexColors: THREE.VertexColors, linewidth:1}) );
+}
+
+function isomeshInBlock(elMap, sigma, color, clippingPlanes, method)
+{
+	var abs_level = sigma * elMap.stats.rms + elMap.stats.mean;
+
+	if(method === "solid")
+	{
+		var geo = solidMarchingCubes(elMap.block._size[0],elMap.block._size[1],elMap.block._size[2],
+			elMap.block._values, elMap.block._points, abs_level);
+		var isomesh = new THREE.Group().add(
+			new THREE.Mesh( geo,
+				new THREE.MeshPhongMaterial({
+					color: color, //less white or bluer. Back should be less blue because nitrogen
+					clippingPlanes: clippingPlanes,
+					transparent:true,
+					opacity:0.36
+				})),
+			new THREE.Mesh( geo,
+				new THREE.MeshPhongMaterial({
+					color: color,
+					clippingPlanes: clippingPlanes,
+					side:THREE.BackSide
+				})),
+			new THREE.Mesh( geo, //could use a slightly fattened squarish to improve
+				new THREE.MeshPhongMaterial({
+					color: 0xFFFFFF,
+					clippingPlanes: clippingPlanes,
+					wireframe:true
+				}))
+			)
+	}
+	else
+	{
+		var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+			color: color,
+			linewidth: 1.25,
+			clippingPlanes: clippingPlanes
+		}));
+		var geometricPrimitives = marchingCubes(elMap.block._size[0],elMap.block._size[1],elMap.block._size[2],
+			elMap.block._values, elMap.block._points, abs_level, method);
+		
+		isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
+		isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
+
+		// isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array([0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8]), 3));
+		// isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
+	}
+
+	return isomesh;
+};

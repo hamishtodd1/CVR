@@ -27,6 +27,7 @@ TODO before newbattle, July 1st
 	Get stuff from Diego
 	
 TODO at some point
+	easy: "hand distances"
 	Get monomer with web speech
 	Selection of rotamers
 	"Add alt conformer"
@@ -39,6 +40,7 @@ TODO at some point
 	bug with some residues highlighting many residues?
 	NMR data should totally be in there, a set of springs
 	Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
+	ambient occlusion maps for all?
 
 Maya
 	Admin
@@ -111,30 +113,32 @@ Maya
 	
 	initSurroundings(true);
 	initScaleStick();
-	initStats(visiBox.position);
 	// initMenus();
 	// initSpecatorRepresentation();
 	
 	function initPartTwo(modelDataString)
 	{
 		// makeModelFromCootString( modelDataString, visiBox.planes );
+		// initStats(visiBox.position);
 
 		var thingsToSpaceOut = [];
 
 		var visiblePlace = visiBox.position.clone()
 		// assemblage.worldToLocal(visiblePlace)
-		thingsToSpaceOut.push( 
-			// initPointer(),
-			// initAtomLabeller(),
+		thingsToSpaceOut.push(
+			//coot specific
 			// initMutator(),
 			// initAtomDeleter(),
-			// initEnvironmentDistance(),
 			// initResidueDeleter(),
+			// initEnvironmentDistance(),
 			// initAutoRotamer(),
 			// initRefiner(),
+
+			// initPointer(),
+			// initAtomLabeller(),
 			// initRigidBodyMover(),
 			// initProteinPainter(),
-			initNucleicAcidPainter()
+			// initNucleicAcidPainter()
 		);
 		// initMonomerReceiver()
 

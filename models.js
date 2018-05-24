@@ -227,6 +227,14 @@ function initModelCreationSystem( visiBoxPlanes)
 		}
 
 		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
+		model.carbonAlphaPositions = [];
+		for(var i = 0, il = model.atoms.length; i < il; i++)
+		{
+			if(model.atoms[i].name === " CA ")
+			{
+				model.carbonAlphaPositions[model.atoms[i].resNo] = model.atoms[i].position;
+			}
+		}
 		
 		model.imol = model.atoms[0].imol;
 		assemblage.add(model);
@@ -258,21 +266,23 @@ function initModelCreationSystem( visiBoxPlanes)
 
 	makeMoleculeMesh = function( atoms, clip, bondDataFromCoot )
 	{
-		var molecule = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
+		var moleculeMesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
 			vertexColors: THREE.VertexColors
 		} ) );
-		molecule.atoms = atoms;
+		moleculeMesh.atoms = atoms;
 
 		if(clip)
 		{
-			molecule.material.clippingPlanes = visiBoxPlanes;
+			moleculeMesh.material.clippingPlanes = visiBoxPlanes;
 		}
 
-		var bufferGeometry = molecule.geometry;
+		var bufferGeometry = moleculeMesh.geometry;
 
 		var atomColors = Array(10);
 		for(var i = 0; i < atomColors.length; i++)
+		{
 			atomColors[i] = new THREE.Color( 0.2,0.2,0.2 );
+		}
 		atomColors[0].setRGB(72/255,193/255,103/255); //carbon
 		atomColors[1].setRGB(0.8,0.8,0.2); //sulphur
 		atomColors[2].setRGB(0.8,0.2,0.2); //oxygen
@@ -360,6 +370,7 @@ function initModelCreationSystem( visiBoxPlanes)
 		}
 
 		var numberOfAtoms = atoms.length;
+
 		//Speedup opportunity: you only need as many colors as there are atoms and bonds, not as many as there are triangles.
 		//we are assuming fixed length for all these arrays and that is it
 		bufferGeometry.addAttribute( 'position',new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
@@ -375,7 +386,7 @@ function initModelCreationSystem( visiBoxPlanes)
 			this.array[ index*3+2 ] = c;
 		}
 		
-		molecule.colorAtom = function( atom, newColor )
+		moleculeMesh.colorAtom = function( atom, newColor )
 		{
 			if(!newColor)
 			{
@@ -411,7 +422,7 @@ function initModelCreationSystem( visiBoxPlanes)
 			}
 		}
 
-		molecule.setAtomRepresentationPosition = function( atom, newPosition )
+		moleculeMesh.setAtomRepresentationPosition = function( atom, newPosition )
 		{
 			if(newPosition)
 			{
@@ -519,8 +530,8 @@ function initModelCreationSystem( visiBoxPlanes)
 				}
 			}
 
-			molecule.colorAtom(atom);
-			molecule.setAtomRepresentationPosition(atom)
+			moleculeMesh.colorAtom(atom);
+			moleculeMesh.setAtomRepresentationPosition(atom)
 		}
 
 		// var traceGeometry = new THREE.TubeBufferGeometry(
@@ -528,7 +539,7 @@ function initModelCreationSystem( visiBoxPlanes)
 		// 		carbonAlphas.length*8, 0.1, 16 );
 		// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
 
-		return molecule;
+		return moleculeMesh;
 	}
 
 	var highlightColor = new THREE.Color(1,1,1);
