@@ -28,7 +28,7 @@
 //hmm maybe your hands should be the planes, when you're not holding anything?
 //it's a very simple shader to make it spherical
 
-function initVisiBox(initialScale, maps)
+function initVisiBox(initialScale)
 {
 	var visiBox = new THREE.Object3D();
 	
@@ -65,15 +65,6 @@ function initVisiBox(initialScale, maps)
 		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF});
 		visiBox.updateMatrix();
 
-		assemblage.ordinaryParent = scene;
-		assemblage.onLetGo = function()
-		{
-			for(var i = 0; i < maps.length; i++)
-			{
-				maps[i].extractAndRepresentBlock();
-			}
-		}
-		
 		function putOnCubeCorner(i, position)
 		{
 			position.setScalar(0.5);

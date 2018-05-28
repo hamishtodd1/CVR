@@ -49,7 +49,6 @@ Maya
 	http://www.wildlifeinformation.co.uk/about_volunteering.php
 */
 
-
 (function init()
 {
 	// if(!WEBVR.checkAvailability())
@@ -70,31 +69,24 @@ Maya
 		// var vrButton = WEBVR.createButton( renderer );
 		// document.body.appendChild( vrButton );
 	}
+	var ourVrEffect = new THREE.VREffect( renderer );
+	var loopCallString = getStandardFunctionCallString(loop);
+	function render()
 	{
-		var ourVrEffect = new THREE.VREffect( renderer );
-		var loopCallString = getStandardFunctionCallString(loop);
-		function render()
+		eval(loopCallString);
+		ourVrEffect.requestAnimationFrame( function()
 		{
-			eval(loopCallString);
-			ourVrEffect.requestAnimationFrame( function()
-			{
-				//a reasonable indicator is ourVREffect.isPresenting
-				ourVrEffect.render( scene, camera );
-				render();
-			} );
-		}
+			//a reasonable indicator is ourVREffect.isPresenting
+			ourVrEffect.render( scene, camera );
+			render();
+		} );
 	}
-	controllers = Array(2);
-	var vrInputSystem = initVrInputSystem(controllers, renderer,ourVrEffect);
+	var vrInputSystem = initVrInputSystem(renderer,ourVrEffect);
 
 	var maps = [];
 	var atoms = null; //because fixed length
 	
 	assemblage.scale.setScalar( 0.036 ); //0.045, 0.028 is nice, 0.01 fits on screen
-	getAngstrom = function()
-	{
-		return assemblage.scale.x;
-	}
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
 	assemblage.position.y = -0.11;
 	scene.add(assemblage);
@@ -152,7 +144,8 @@ Maya
 	}
 
 	initSocket();
-	models = initModelCreationSystem(visiBox.planes);
+	initModelCreationSystem(visiBox.planes);
+	initMapCreationSystem(visiBox)
 
 	socket.commandReactions["model"] = function(msg)
 	{
@@ -187,9 +180,7 @@ Maya
 		{
 			if (req.readyState === 4)
 			{
-				var newMap = Map( req.response, false, visiBox );
-				maps.push(newMap);
-				assemblage.add(newMap)
+				Map( req.response, false);
 			}
 		};
 		req.send(null);

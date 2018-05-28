@@ -1,3 +1,5 @@
+'use strict';
+
 //-----Mathematical
 var TAU = Math.PI * 2;
 var HS3 = Math.sqrt(3)/2;
@@ -23,9 +25,11 @@ var camera = new THREE.PerspectiveCamera( 70, //can be changed by VR effect
 		0.1, 700);
 var scene = new THREE.Scene().add(camera);
 
-var TEST_SPHERE = new THREE.Mesh(new THREE.EfficientSphereGeometry(0.1), new THREE.MeshBasicMaterial({color:0xFF0000}));
+var controllers = Array(2);
+var models = [];
+var maps = [];
 
-var assemblage = new THREE.Group();
+var TEST_SPHERE = new THREE.Mesh(new THREE.EfficientSphereGeometry(0.1), new THREE.MeshBasicMaterial({color:0xFF0000}));
 
 var frameCount = 0;
 
@@ -37,3 +41,9 @@ var holdables = [];
 var socket = null;
 
 var ourPDBLoader = new THREE.PDBLoader();
+
+function getAngstrom()
+{
+	return assemblage.scale.x;
+}
+var assemblage = new THREE.Group();

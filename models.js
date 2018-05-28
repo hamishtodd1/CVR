@@ -142,8 +142,6 @@ function changeBondBetweenAtomsToDouble(bondData, atomA, atomB)
 
 function initModelCreationSystem( visiBoxPlanes)
 {
-	var models = [];
-
 	var cylinderSides = 15;
 
 	getModelWithImol = function(imol)
@@ -743,6 +741,4 @@ function initModelCreationSystem( visiBoxPlanes)
 			model.geometry.attributes.position.needsUpdate = true;
 		}
 	}
-
-	return models;
 }
