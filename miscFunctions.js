@@ -299,13 +299,13 @@ function randomPerpVector(ourVector){
 	return perpVector;
 }
 
-function removeAndDispose(obj)
+function removeAndRecursivelyDispose(obj)
 {
 	obj.parent.remove(obj);
 	if (obj.geometry) { obj.geometry.dispose(); }
 	if (obj.material) { obj.material.dispose(); }
 	for(var i = 0; i < obj.children.length; i++)
 	{
-		removeAndDispose(obj.children[i])
+		removeAndRecursivelyDispose(obj.children[i])
 	}
 }

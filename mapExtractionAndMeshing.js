@@ -1,22 +1,67 @@
 'use strict';
 
-function getBlockGeometricPrimitives(
-	data,
-	blockRadius, blockCenter,sigma,
-	color, chickenWire
-	)
+var umData = [];
+var typeColors = {
+	map_den: 0x4372D2,
+	map_pos: 0x298029,
+	map_neg: 0x8B2E2E,
+}
+
+onmessage = function(event)
 {
-	data.extract_block( blockRadius, blockCenter );
-	var absoluteIsolevel = sigma * data.stats.rms + data.stats.mean;
-	var mcFunction = chickenWire ? wireframeMarchingCubes : solidMarchingCubes;
+	if(umData[ event.data.mapIndex ] === undefined)
+	{
+		var umDatum = umData[ event.data.mapIndex ] = new UmDatum();
+		umDatum.from_ccp4(event.data.arrayBuffer); //pdbe and dsn9 exist
 
-	var geometricPrimitives = mcFunction(
-		data.block._size[0],data.block._size[1],data.block._size[2],
-		data.block._values, data.block._points, absoluteIsolevel);
+		if(event.data.isDiffMap)
+		{
+			umDatum.displayTypes = ['map_pos', 'map_neg'];
+		}
+		else
+		{
+			umDatum.displayTypes = ['map_den'];
+		}
 
-	geometricPrimitives.chickenWire = chickenWire;
-	geometricPrimitives.color = color;
-	return geometricPrimitives;
+		umDatum.postMessageConcerningSelf({ orthogonalMatrix:	umDatum.unit_cell.orth });
+	}
+	
+	if(event.data.center)
+	{
+		var umDatum = umData[event.data.mapIndex];
+		var mcFunction = event.data.chickenWire ? wireframeMarchingCubes : solidMarchingCubes;
+
+		umDatum.extract_block( event.data.center, event.data.radius );
+
+		for (var i = 0; i < umDatum.displayTypes.length; i++)
+		{
+			var sigma = umDatum.displayTypes[i] === 'map_neg'? -event.data.isolevel : event.data.isolevel;
+			var absoluteIsolevel = sigma * umDatum.stats.rms + umDatum.stats.mean;
+			var geometricPrimitives = mcFunction(
+											umDatum.block._size[0],umDatum.block._size[1],umDatum.block._size[2],
+											umDatum.block._values, umDatum.block._points, absoluteIsolevel);
+
+			umDatum.postMessageConcerningSelf({
+				color:				 	typeColors[umDatum.displayTypes[i]],
+				geometricPrimitives: 	geometricPrimitives,
+				isolevel:				event.data.isolevel,
+				center:					event.data.center
+			});
+		}
+	}
+}
+
+var UmDatum = function()
+{
+	this.unit_cell = null;
+	this.grid = null;
+	this.stats = { mean: 0.0, rms: 1.0 };
+	this.block = new Block();
+};
+UmDatum.prototype.postMessageConcerningSelf = function(msg)
+{
+	msg.mapIndex = umData.indexOf(this);
+	postMessage(msg);
 }
 
 function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
@@ -1529,23 +1574,13 @@ var edgeIndex = [[0,1], [1,2], [2,3], [3,0], [4,5], [5,6],
  * Modified by Hamish Todd
  */
 
-var umData;
-function initUglyMol()
-{
 
-umData = function umData()
-{
-	this.unit_cell = null;
-	this.grid = null;
-	this.stats = { mean: 0.0, rms: 1.0 };
-	this.block = new Block();
-};
+UmDatum.prototype.unit = 'e/\u212B\u00B3';
 
-umData.prototype.unit = 'e/\u212B\u00B3';
 
 // Extract a block of density for calculating an isosurface using the
 // separate marching cubes implementation.
-umData.prototype.extract_block = function extract_block (radius/*:number*/, center /*:vector3*/)
+UmDatum.prototype.extract_block = function extract_block ( center /*:vector3*/, radius/*:number*/)
 {
 	if (this.grid == null || this.unit_cell == null) { return; }
 
@@ -1570,13 +1605,17 @@ umData.prototype.extract_block = function extract_block (radius/*:number*/, cent
 	for (var j = grid_min[1]; j <= grid_max[1]; j++) {
 	for (var k = grid_min[2]; k <= grid_max[2]; k++) {
 		var frac = grid.grid2frac(i, j, k);
+		
 		var orth = multiply( frac, unit_cell.orth );
 		points.push(orth);
+
 		var map_value = grid.get_grid_value(i, j, k);
 		values.push(map_value);
 	}
 	}
 	}
+	console.log(grid_min,grid_max)
+	console.log(values.length)
 
 	var size = [grid_max[0] - grid_min[0] + 1,
 				grid_max[1] - grid_min[1] + 1,
@@ -1596,7 +1635,7 @@ umData.prototype.extract_block = function extract_block (radius/*:number*/, cent
 
 // http://www.ccp4.ac.uk/html/maplib.html#description
 // eslint-disable-next-line complexity
-umData.prototype.from_ccp4 = function from_ccp4 (buf /*:ArrayBuffer*/)
+UmDatum.prototype.from_ccp4 = function from_ccp4 (buf /*:ArrayBuffer*/)
 {
 	var expand_symmetry = true;
 
@@ -1708,7 +1747,7 @@ umData.prototype.from_ccp4 = function from_ccp4 (buf /*:ArrayBuffer*/)
 // DSN6 MAP FORMAT
 // http://www.uoxray.uoregon.edu/tnt/manual/node104.html
 // Density values are stored as bytes.
-umData.prototype.from_dsn6 = function from_dsn6 (buf /*: ArrayBuffer*/) {
+UmDatum.prototype.from_dsn6 = function from_dsn6 (buf /*: ArrayBuffer*/) {
 	//console.log('buf type: ' + Object.prototype.toString.call(buf));
 	var u8data = new Uint8Array(buf);
 	var iview = new Int16Array(u8data.buffer);
@@ -1918,6 +1957,4 @@ function parse_symop(symop) {
 		mat.push(row);
 	}
 	return mat;
-}
-
 }

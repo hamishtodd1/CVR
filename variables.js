@@ -1,5 +1,10 @@
 'use strict';
 
+if( !window.Worker || !navigator.getVRDisplays)
+{
+	console.error("Missing dependency. Get chromium")
+}
+
 //-----Mathematical
 var TAU = Math.PI * 2;
 var HS3 = Math.sqrt(3)/2;

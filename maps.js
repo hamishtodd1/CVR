@@ -25,156 +25,223 @@
 	Well actually all normals EXCEPT red difference map normals need to be reversed and backside needs to be removed
 */
 
-var Map;
+var starProcessingMapData;
 function initMapCreationSystem(visiBox)
 {
-	var typeColors = {
-		map_den: 0x4372D2,
-		map_pos: 0x298029,
-		map_neg: 0x8B2E2E,
+	var worker = new Worker("mapExtractionAndMeshing.js");
+	worker.onmessage = function(event)
+	{
+		maps[ event.data.mapIndex ].receiveMessageConcerningSelf( event.data );
 	}
 
-	initUglyMol();
-	var w = new Worker("cubeMarchWorker.js");
-	w.onmessage = function(event) {  
-		console.log("worker returned " + event.data);
+	{
+		var individualMeshRadius = 3; //probably not thinking about this the right way
+		var totalMeshingRadius = 10;
+		var placesToPutMeshes = [];
+		for(var i = 0; i < totalMeshingRadius; i++)
+		{
+			for(var j = 0; j < totalMeshingRadius; j++)
+			{
+				for(var k = 0; k < totalMeshingRadius; k++)
+				{
+					var possiblePlace = new THREE.Vector3(i-totalMeshingRadius/2.0,j-totalMeshingRadius/2.0,k-totalMeshingRadius/2.0);
+					possiblePlace.multiplyScalar(individualMeshRadius);
+					if(possiblePlace.length() < totalMeshingRadius)
+					{
+						placesToPutMeshes.push(possiblePlace);
+					}
+				}
+			}
+		}
+		placesToPutMeshes.sort(function (vec1,vec2)
+	    {
+			return vec1.lengthSq() - vec2.lengthSq();
+		});
 	}
-	w.postMessage(new Uint32Array([1,1,2]));
 
-	Map = function(arrayBuffer, isDiffMap, isolevel)
+	Map = function(arrayBuffer, isDiffMap)
 	{
 		var map = new THREE.Group();
 		maps.push(map);
 		assemblage.add(map);
-		
-		//happens in the other thread
-		var data = new umData();
-		data.from_ccp4(arrayBuffer); //pdbe and dsn9 exist
 
-		//on first message from the other thread
-		{
-			thingsToBeUpdated.push(map);
-			var unitCellMesh = UnitCellMesh( data.unit_cell.orth );
-			map.add(unitCellMesh);
-			// unitCellMesh.visible = false;
-			//TODO make it movable? Move it to visibox?
-		}
+		var isolevel = isDiffMap ? 3.0:0.03;//1.5
 
-		var types = isDiffMap ? ['map_pos', 'map_neg'] : ['map_den'];
-		if( isolevel === undefined )
-		{
-			isolevel = isDiffMap ? 3.0 : 1.5; //units of rmsd
-		}
-
-		map.addToIsolevel = function(addition)
-		{
-			for (var i = 0; i < map.children.length; i++)
-			{
-				if( map.children[i] !== unitCellMesh )
-				{
-					removeAndDispose(map.children[i]);
-				}
-			}
-			isolevel += addition;
-		}
-
+		var gotten = false;
 		map.update = function()
 		{
-			for(var i = 0; i < this.children.length; i++)
+			if(!isDiffMap)
 			{
-				if(this.children[i] === unitCellMesh) continue;
-
-				if(true) //here's where you put checks for the 27-odd meshes we need. Manhattan distance!
+				for(var i = 0; i < controllers.length; i++)
 				{
-					return;
+					if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 )
+					{
+						isolevel += 0.022 * controllers[i].thumbStickAxes[1];
+						gotten = false;
+					}
 				}
 			}
+			/*
+				"recognizing if and where it needs to be done" system:
+					may want to get rid of one that might already be there
+					will be a bit of a nightmare because of the unNormaled rim thing
+					look at all the ones that currently exist, taking their distance from the center, fill in the closest gap
+					there may be multiple coming in per frame?
 
-			var blockCenter = visiBox.position.clone()
+				The "radius" you give to uglymol seems to be interpreted totally fucking randomly
+
+				you have an array of the things and they remember their centers
+
+				So we partition space up into radius-sized, er, cubes. Some region around the center must be full of cubes
+
+				here we're
+
+				Well look you want the visibox... and then some
+				w*h*l chunks of "radius" r
+
+				so radius 1 
+				-> 1x2x2 boxes for some reason
+				-> unNormaled rim, +2 to each = 3x5x5
+				-> not boxes but points, +1 to each
+				=4x6x6 = 144?
+			*/
+
+			// for(var i = 0; i < this.children.length; i++)
+			// {
+			// 	if(this.children[i] === this.unitCellMesh) continue;
+
+			// 	var block = this.children[i];
+			// 	if(block.isolevel !== isolevel)
+			// 	{
+			// 		//need to send off for another
+			// 	}
+
+			// 	//if your manhattan distance to the center is above something
+			// 	//take the manhattan vector from your center to the ball's center,
+			// 	//and add that x2
+			// 	//octahedron...
+			// }
+			if(gotten) return;
+			else gotten = true;
+
+			var center = visiBox.position.clone()
 			assemblage.updateMatrixWorld();
-			assemblage.worldToLocal( blockCenter );
+			assemblage.worldToLocal( center );
 
-			var blockRadius = 2 + Math.ceil(Math.min( visiBox.corners[0].position.x * visiBox.scale.x, visiBox.corners[0].position.y * visiBox.scale.y, visiBox.corners[0].position.z * visiBox.scale.z) / getAngstrom());
-			blockRadius = 3;
+			var radius = 2 + Math.ceil(Math.min( visiBox.corners[0].position.x * visiBox.scale.x, visiBox.corners[0].position.y * visiBox.scale.y, visiBox.corners[0].position.z * visiBox.scale.z) / getAngstrom());
+			radius = 2; //may have to be tiny to avoid jerkiness
 
-			for (var i = 0; i < types.length; i++)
-			{
-				var sigma = types[i] !== 'map_neg'? isolevel:-isolevel; //disp from mean in rmsd
-
-				var geometricPrimitives = getBlockGeometricPrimitives(
-					data,
-					blockRadius, blockCenter,
-					sigma, typeColors[types[i]], false );
-
-				onGeometricPrimitivesReception(geometricPrimitives)
-				
-				//next you want to parallelize. The "recognizing if and where it needs to be done" system comes after.
-				//may want to get rid of one that might already be there
-				//will be a bit of a nightmare because of the unNormaled rim thing
-			}
+			this.postMessageConcerningSelf({
+				center:			center,
+				radius:			radius,
+				isolevel:		isolevel,
+				chickenWire:	false
+			});
 		}
 
-		function onGeometricPrimitivesReception(geometricPrimitives)
+		map.postMessageConcerningSelf = function(msg)
 		{
-			if( geometricPrimitives.chickenWire === false)
-			{
-				var geo = new THREE.Geometry();
-				geo.vertices = Array(geometricPrimitives.count);
-				var normals = Array(geometricPrimitives.count);
-				for ( var i = 0; i < geometricPrimitives.count; i ++ )
-				{
-					geo.vertices[i] = new THREE.Vector3().fromArray( geometricPrimitives.positionArray, i * 3 );
-					normals[i] = new THREE.Vector3().fromArray( geometricPrimitives.normalArray, i * 3 );
-				}
-				//suuuuurely this is a bit slow and can be turned into buffergeometry? Not hard. If it's still chugging do that.
-				geo.faces = Array(geometricPrimitives.count / 3);
-				for ( var i = 0, il = geo.faces.length; i < il; i ++ )
-				{
-					var a = i * 3;
-					var b = a + 1;
-					var c = a + 2;
-
-					geo.faces[i] = new THREE.Face3( a, b, c, [ normals[ a ], normals[ b ], normals[ c ] ] );
-				}
-				
-				var wireframe = new THREE.Mesh( geo, //could use a slightly fattened squarish to improve
-					new THREE.MeshPhongMaterial({
-						color: 0xFFFFFF,
-						clippingPlanes: visiBox.planes,
-						wireframe:true
-					}));
-				var transparent = new THREE.Mesh( geo,
-					new THREE.MeshPhongMaterial({
-						color: geometricPrimitives.color, //less white or bluer. Back should be less blue because nitrogen
-						clippingPlanes: visiBox.planes,
-						transparent:true,
-						opacity:0.36
-					}));
-				var back = new THREE.Mesh( geo,
-					new THREE.MeshPhongMaterial({
-						color: geometricPrimitives.color,
-						clippingPlanes: visiBox.planes,
-						side:THREE.BackSide
-					}));
-				
-				var cubicIsomesh = new THREE.Group().add(wireframe,transparent,back)
-			}
-			else
-			{
-				var cubicIsomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-					color: geometricPrimitives.color,
-					linewidth: 1.25,
-					clippingPlanes: visiBox.planes
-				}));
-				cubicIsomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
-				cubicIsomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
-			}
-			
-			map.add( cubicIsomesh );
-			console.log("one done")
+			msg.mapIndex = maps.indexOf(this);
+			worker.postMessage(msg);
 		}
+		map.postMessageConcerningSelf({arrayBuffer:arrayBuffer,isDiffMap:isDiffMap});
 
-		return map
+		map.receiveMessageConcerningSelf = function(msg)
+		{
+			if(msg.orthogonalMatrix)
+			{
+				this.unitCellMesh = UnitCellMesh( msg.orthogonalMatrix );
+				this.add(this.unitCellMesh);
+				this.unitCellMesh.visible = false;
+				//TODO make it movable? Move it to visibox?
+
+				thingsToBeUpdated.push(this);
+			}
+
+			if( msg.geometricPrimitives )
+			{
+				var newMesh = geometricPrimitivesToMesh(msg.geometricPrimitives, msg.color);
+				newMesh.isolevel = msg.isolevel;
+				newMesh.center = msg.center;
+				
+				map.children.forEach(function(mesh)
+				{
+					if(mesh !== map.unitCellMesh)
+					{
+						if( mesh.center.x === newMesh.center.x && mesh.center.y === newMesh.center.y && mesh.center.z === newMesh.center.z )
+						{
+							removeAndRecursivelyDispose(mesh);
+						}
+					}
+				});
+				
+				map.add( newMesh );
+
+				//and then don't want to receive another one this frame really
+			}
+		}
+	}
+
+	function geometricPrimitivesToMesh(geometricPrimitives, color)
+	{
+		if( geometricPrimitives.normalArray )
+		{
+			//suuuuurely this is a bit slow and can be turned into buffergeometry? Not hard. If it's still chugging do that.
+
+			var geo = new THREE.Geometry();
+			geo.vertices = Array(geometricPrimitives.count);
+			var normals = Array(geometricPrimitives.count);
+			for ( var i = 0; i < geometricPrimitives.count; i ++ )
+			{
+				geo.vertices[i] = new THREE.Vector3().fromArray( geometricPrimitives.positionArray, i * 3 );
+				normals[i] = new THREE.Vector3().fromArray( geometricPrimitives.normalArray, i * 3 );
+			}
+			geo.faces = Array(geometricPrimitives.count / 3);
+			for ( var i = 0, il = geo.faces.length; i < il; i ++ )
+			{
+				var a = i * 3;
+				var b = a + 1;
+				var c = a + 2;
+
+				geo.faces[i] = new THREE.Face3( a, b, c, [ normals[ a ], normals[ b ], normals[ c ] ] );
+			}
+
+			var b = new THREE.BufferGeometry().fromGeometry(geo)
+			console.log(b.attributes.position.array.length)
+			
+			var wireframe = new THREE.Mesh( geo, //could use a slightly fattened squarish to improve
+				new THREE.MeshPhongMaterial({
+					color: 0xFFFFFF,
+					clippingPlanes: visiBox.planes,
+					wireframe:true
+				}));
+			var transparent = new THREE.Mesh( geo,
+				new THREE.MeshPhongMaterial({
+					color: color, //less white or bluer. Back should be less blue because nitrogen
+					clippingPlanes: visiBox.planes,
+					transparent:true,
+					opacity:0.36
+				}));
+			var back = new THREE.Mesh( geo,
+				new THREE.MeshPhongMaterial({
+					color: color,
+					clippingPlanes: visiBox.planes,
+					side:THREE.BackSide
+				}));
+			
+			var isomesh = new THREE.Group().add(wireframe,transparent,back)
+		}
+		else
+		{
+			var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+				color: color,
+				linewidth: 1.25,
+				clippingPlanes: visiBox.planes
+			}));
+			isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
+			isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
+		}
+		return isomesh;
 	}
 
 	function UnitCellMesh(orthogonalMatrix)
@@ -206,7 +273,7 @@ function initMapCreationSystem(visiBox)
 		{
 			for (var i = 0; i < vertices.length; i++)
 			{
-				var xyz /*:Num3*/ = vertices[i].xyz;
+				var xyz = vertices[i].xyz;
 				pos[3*i] = xyz[0];
 				pos[3*i+1] = xyz[1];
 				pos[3*i+2] = xyz[2];
@@ -216,7 +283,7 @@ function initMapCreationSystem(visiBox)
 		{
 			for (var i = 0; i < vertices.length; i++)
 			{
-				var v /*:Vector3*/ = vertices[i];
+				var v = vertices[i];
 				pos[3*i] = v.x;
 				pos[3*i+1] = v.y;
 				pos[3*i+2] = v.z;

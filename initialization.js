@@ -1,3 +1,4 @@
+'use strict';
 /*
 TODO before newbattle, July 1st
 	You want a "reset server" button before you make them interact again
