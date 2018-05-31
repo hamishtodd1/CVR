@@ -29,24 +29,34 @@ onmessage = function(event)
 	if(event.data.center)
 	{
 		var umDatum = umData[event.data.mapIndex];
-		var mcFunction = event.data.chickenWire ? wireframeMarchingCubes : solidMarchingCubes;
-
-		umDatum.extract_block( event.data.center, event.data.radius );
 
 		for (var i = 0; i < umDatum.displayTypes.length; i++)
 		{
-			var sigma = umDatum.displayTypes[i] === 'map_neg'? -event.data.isolevel : event.data.isolevel;
-			var absoluteIsolevel = sigma * umDatum.stats.rms + umDatum.stats.mean;
-			var geometricPrimitives = mcFunction(
-											umDatum.block._size[0],umDatum.block._size[1],umDatum.block._size[2],
-											umDatum.block._values, umDatum.block._points, absoluteIsolevel);
-
-			umDatum.postMessageConcerningSelf({
+			var msg = {
 				color:				 	typeColors[umDatum.displayTypes[i]],
-				geometricPrimitives: 	geometricPrimitives,
 				isolevel:				event.data.isolevel,
 				center:					event.data.center
-			});
+			}
+
+			var sigma = umDatum.displayTypes[i] === 'map_neg'? -event.data.isolevel : event.data.isolevel;
+			var absoluteIsolevel = sigma * umDatum.stats.rms + umDatum.stats.mean;
+
+			umDatum.extract_block( event.data.center, event.data.blockRadius );
+			msg.wireframeGeometricPrimitives = wireframeMarchingCubes(
+				umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
+				umDatum.block._values,	umDatum.block._points,	absoluteIsolevel );
+			
+			if( !event.data.chickenWire )
+			{
+				var nonWireframeIsolevel = (sigma+0.028) * umDatum.stats.rms + umDatum.stats.mean;
+
+				umDatum.extract_block( event.data.center, event.data.blockRadius + 1 ); //normals
+				msg.nonWireframeGeometricPrimitives = solidMarchingCubes(
+					umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
+					umDatum.block._values,	umDatum.block._points,	nonWireframeIsolevel );
+			}
+
+			umDatum.postMessageConcerningSelf(msg);
 		}
 	}
 }
@@ -72,11 +82,12 @@ function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 	}
 
 	//TODO formerly 12 was frikkin 3
-	//threejsMC seemed confident they wouldn't be overflowed. They were.
+	//setting to 9 because it should be divisible by 9
+	//threejsMC seemed confident they wouldn't be overflowed. They were. Come here if the surface is somehow cut off
 	//maybe it was clever about how it divided stuff up?
-	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * 12 );
-	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * 12 );
-	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * 12 );
+	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * 9 );
+	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * 9 );
+	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * 9 );
 	solidMcScope.count = 0;
 	solidMcScope.values = values;
 
@@ -1580,7 +1591,7 @@ UmDatum.prototype.unit = 'e/\u212B\u00B3';
 
 // Extract a block of density for calculating an isosurface using the
 // separate marching cubes implementation.
-UmDatum.prototype.extract_block = function extract_block ( center /*:vector3*/, radius/*:number*/)
+UmDatum.prototype.extract_block = function extract_block ( center /*:vector3*/, gridRadius/*:number*/, absoluteRadius)
 {
 	if (this.grid == null || this.unit_cell == null) { return; }
 
@@ -1592,12 +1603,23 @@ UmDatum.prototype.extract_block = function extract_block ( center /*:vector3*/, 
 	var grid = this.grid;
 	var unit_cell = this.unit_cell;
 
-	var r = [radius / unit_cell.parameters[0], //scale
-			 radius / unit_cell.parameters[1],
-			 radius / unit_cell.parameters[2]];
-	var fc = multiply([center.x,center.y,center.z], unit_cell.frac);
-	var grid_min = grid.frac2grid([fc[0] - r[0], fc[1] - r[1], fc[2] - r[2]]);
-	var grid_max = grid.frac2grid([fc[0] + r[0], fc[1] + r[1], fc[2] + r[2]]);
+	if( absoluteRadius !== undefined )
+	{
+		var r = [radius / unit_cell.parameters[0],
+				 radius / unit_cell.parameters[1],
+				 radius / unit_cell.parameters[2]];
+		var fc = multiply([center.x,center.y,center.z], unit_cell.frac);
+		var grid_min = grid.frac2grid([fc[0] - r[0], fc[1] - r[1], fc[2] - r[2]]);
+		var grid_max = grid.frac2grid([fc[0] + r[0], fc[1] + r[1], fc[2] + r[2]]);
+	}
+	else
+	{
+		var fc = multiply([center.x,center.y,center.z], unit_cell.frac);
+		var gridCenter = grid.frac2grid([fc[0], fc[1], fc[2]]);
+
+		var grid_min = [ gridCenter[0] - gridRadius, gridCenter[1] - gridRadius, gridCenter[2] - gridRadius];
+		var grid_max = [ gridCenter[0] + gridRadius, gridCenter[1] + gridRadius, gridCenter[2] + gridRadius];
+	}
 	
 	var points = [];
 	var values = [];
@@ -1614,8 +1636,6 @@ UmDatum.prototype.extract_block = function extract_block ( center /*:vector3*/, 
 	}
 	}
 	}
-	console.log(grid_min,grid_max)
-	console.log(values.length)
 
 	var size = [grid_max[0] - grid_min[0] + 1,
 				grid_max[1] - grid_min[1] + 1,

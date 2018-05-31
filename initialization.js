@@ -42,6 +42,7 @@ TODO at some point
 	NMR data should totally be in there, a set of springs
 	Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
 	ambient occlusion maps for all?
+	Copy and paste 3D blocks of atoms
 
 Maya
 	Admin

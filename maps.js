@@ -34,26 +34,22 @@ function initMapCreationSystem(visiBox)
 		maps[ event.data.mapIndex ].receiveMessageConcerningSelf( event.data );
 	}
 
+	var numMeshesBeingWorkedOn = 0;
+	var blockRadius = 4;
+
 	{
-		var individualMeshRadius = 3; //probably not thinking about this the right way
-		var totalMeshingRadius = 10;
-		var placesToPutMeshes = [];
-		for(var i = 0; i < totalMeshingRadius; i++)
+		var offsets = [];
+		for(var i = -1; i <= 1; i++)
 		{
-			for(var j = 0; j < totalMeshingRadius; j++)
+			for(var j = -1; j <= 1; j++)
 			{
-				for(var k = 0; k < totalMeshingRadius; k++)
+				for(var k = -1; k <= 1; k++)
 				{
-					var possiblePlace = new THREE.Vector3(i-totalMeshingRadius/2.0,j-totalMeshingRadius/2.0,k-totalMeshingRadius/2.0);
-					possiblePlace.multiplyScalar(individualMeshRadius);
-					if(possiblePlace.length() < totalMeshingRadius)
-					{
-						placesToPutMeshes.push(possiblePlace);
-					}
+					offsets.push(new THREE.Vector3(i,j,k).multiplyScalar(blockRadius));
 				}
 			}
 		}
-		placesToPutMeshes.sort(function (vec1,vec2)
+		offsets.sort(function (vec1,vec2)
 	    {
 			return vec1.lengthSq() - vec2.lengthSq();
 		});
@@ -65,86 +61,68 @@ function initMapCreationSystem(visiBox)
 		maps.push(map);
 		assemblage.add(map);
 
-		var isolevel = isDiffMap ? 3.0:0.03;//1.5
+		var isolevel = isDiffMap ? 3.0:1.5
 
 		var gotten = false;
 		map.update = function()
 		{
-			if(!isDiffMap)
-			{
-				for(var i = 0; i < controllers.length; i++)
-				{
-					if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 )
-					{
-						isolevel += 0.022 * controllers[i].thumbStickAxes[1];
-						gotten = false;
-					}
-				}
-			}
 			/*
-				"recognizing if and where it needs to be done" system:
-					may want to get rid of one that might already be there
-					will be a bit of a nightmare because of the unNormaled rim thing
-					look at all the ones that currently exist, taking their distance from the center, fill in the closest gap
-					there may be multiple coming in per frame?
-
-				The "radius" you give to uglymol seems to be interpreted totally fucking randomly
-
-				you have an array of the things and they remember their centers
-
-				So we partition space up into radius-sized, er, cubes. Some region around the center must be full of cubes
-
-				here we're
-
-				Well look you want the visibox... and then some
-				w*h*l chunks of "radius" r
-
-				so radius 1 
-				-> 1x2x2 boxes for some reason
-				-> unNormaled rim, +2 to each = 3x5x5
-				-> not boxes but points, +1 to each
-				=4x6x6 = 144?
+				Each frame, decide on a value point that is the center
+				Snap that to grid points the size of our 27 things (yeah not ideal but hey)
 			*/
 
-			// for(var i = 0; i < this.children.length; i++)
-			// {
-			// 	if(this.children[i] === this.unitCellMesh) continue;
-
-			// 	var block = this.children[i];
-			// 	if(block.isolevel !== isolevel)
-			// 	{
-			// 		//need to send off for another
-			// 	}
-
-			// 	//if your manhattan distance to the center is above something
-			// 	//take the manhattan vector from your center to the ball's center,
-			// 	//and add that x2
-			// 	//octahedron...
-			// }
-			if(gotten) return;
-			else gotten = true;
-
-			var center = visiBox.position.clone()
+			var centralPointSnappedToBlockSize = visiBox.position.clone();
 			assemblage.updateMatrixWorld();
-			assemblage.worldToLocal( center );
+			assemblage.worldToLocal( centralPointSnappedToBlockSize );
+			//now to snap to, erm...
 
-			var radius = 2 + Math.ceil(Math.min( visiBox.corners[0].position.x * visiBox.scale.x, visiBox.corners[0].position.y * visiBox.scale.y, visiBox.corners[0].position.z * visiBox.scale.z) / getAngstrom());
-			radius = 2; //may have to be tiny to avoid jerkiness
+			centralPointSnappedToBlockSize.set(0,0,0); //for now!
 
-			this.postMessageConcerningSelf({
-				center:			center,
-				radius:			radius,
-				isolevel:		isolevel,
-				chickenWire:	false
-			});
+			for(var i = 0, il = 2; i < il && numMeshesBeingWorkedOn < 2; i++)
+			{
+				var pointToCheckFor = centralPointSnappedToBlockSize.clone().add(offsets[i]);
+				var meshInPlace = false;
+				for(var j = 0; j < this.children.length; j++)
+				{
+					var block = this.children[j];
+					if( block === this.unitCellMesh) continue;
+
+					if( pointToCheckFor.equals(block.center))
+					{
+						if( block.isolevel === isolevel )
+						{
+							meshInPlace = true;
+
+							// if( offset[i].equals(zeroVector) && !isDiffMap ) //you have seen current isolevel
+							// {
+							// 	for(var i = 0; i < controllers.length; i++)
+							// 	{
+							// 		if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 )
+							// 		{
+							// 			isolevel += 0.06 * controllers[i].thumbStickAxes[1];
+							// 			//TODO this is limited by "framerate"
+							// 			meshInPlace = false;
+							// 		}
+							// 	}
+							// }
+						}
+						break;
+					}
+				}
+				if(!meshInPlace)
+				{
+					this.postMessageConcerningSelf({
+						isolevel:isolevel,
+						blockRadius:blockRadius,
+						chickenWire:false,
+						center:pointToCheckFor
+					});
+
+					numMeshesBeingWorkedOn++;
+					//hopefully you can't send off for the same one twice because of numMeshesBeingWorkedON
+				}
+			}
 		}
-
-		map.postMessageConcerningSelf = function(msg)
-		{
-			msg.mapIndex = maps.indexOf(this);
-			worker.postMessage(msg);
-		}
-		map.postMessageConcerningSelf({arrayBuffer:arrayBuffer,isDiffMap:isDiffMap});
 
 		map.receiveMessageConcerningSelf = function(msg)
 		{
@@ -153,94 +131,114 @@ function initMapCreationSystem(visiBox)
 				this.unitCellMesh = UnitCellMesh( msg.orthogonalMatrix );
 				this.add(this.unitCellMesh);
 				this.unitCellMesh.visible = false;
-				//TODO make it movable? Move it to visibox?
+				//TODO make it movable? Keep it centered in visibox?
 
 				thingsToBeUpdated.push(this);
 			}
 
-			if( msg.geometricPrimitives )
+			if( msg.isolevel )
 			{
-				var newMesh = geometricPrimitivesToMesh(msg.geometricPrimitives, msg.color);
-				newMesh.isolevel = msg.isolevel;
-				newMesh.center = msg.center;
-				
-				map.children.forEach(function(mesh)
+				console.log("yo")
+				numMeshesBeingWorkedOn--;
+				if(msg.isolevel === isolevel)
 				{
-					if(mesh !== map.unitCellMesh)
+					var newBlock = geometricPrimitivesToMesh(msg);
+					newBlock.isolevel = msg.isolevel;
+					newBlock.center = msg.center;
+					this.add( newBlock );
+					console.log(newBlock.isolevel,newBlock.center)
+					
+					var blockThatIsFurthestFromCenter = null;
+					var furthestDistSq = -1;
+					var centralPointSnappedToBlockSize = new THREE.Vector3(); //something involving visiBox.position
+					for(var i = 0; i < this.children.length; i++)
 					{
-						if( mesh.center.x === newMesh.center.x && mesh.center.y === newMesh.center.y && mesh.center.z === newMesh.center.z )
+						var block = this.children[i];
+						if( block === this.unitCellMesh || block === newBlock) continue;
+						
+						if( block.center.x === newBlock.center.x && block.center.y === newBlock.center.y && block.center.z === newBlock.center.z )
 						{
-							removeAndRecursivelyDispose(mesh);
+							removeAndRecursivelyDispose(block);
+							return;
+						}
+
+						if( centralPointSnappedToBlockSize.distanceToSquared(block.center) > furthestDistSq )
+						{
+							blockThatIsFurthestFromCenter = block;
+							furthestDistSq = centralPointSnappedToBlockSize.distanceToSquared(block.center);
 						}
 					}
-				});
-				
-				map.add( newMesh );
 
-				//and then don't want to receive another one this frame really
+					if( this.children.length > 27 && blockThatIsFurthestFromCenter)
+					{
+						removeAndRecursivelyDispose(blockThatIsFurthestFromCenter);
+					}
+				}
 			}
 		}
+
+		map.postMessageConcerningSelf = function(msg)
+		{
+			msg.mapIndex = maps.indexOf(this);
+			worker.postMessage(msg);
+		}
+
+		map.postMessageConcerningSelf({arrayBuffer:arrayBuffer,isDiffMap:isDiffMap});
 	}
 
-	function geometricPrimitivesToMesh(geometricPrimitives, color)
+	function geometricPrimitivesToMesh(msg)
 	{
-		if( geometricPrimitives.normalArray )
+		if( !msg.nonWireframeGeometricPrimitives )
 		{
-			//suuuuurely this is a bit slow and can be turned into buffergeometry? Not hard. If it's still chugging do that.
-
-			var geo = new THREE.Geometry();
-			geo.vertices = Array(geometricPrimitives.count);
-			var normals = Array(geometricPrimitives.count);
-			for ( var i = 0; i < geometricPrimitives.count; i ++ )
-			{
-				geo.vertices[i] = new THREE.Vector3().fromArray( geometricPrimitives.positionArray, i * 3 );
-				normals[i] = new THREE.Vector3().fromArray( geometricPrimitives.normalArray, i * 3 );
-			}
-			geo.faces = Array(geometricPrimitives.count / 3);
-			for ( var i = 0, il = geo.faces.length; i < il; i ++ )
-			{
-				var a = i * 3;
-				var b = a + 1;
-				var c = a + 2;
-
-				geo.faces[i] = new THREE.Face3( a, b, c, [ normals[ a ], normals[ b ], normals[ c ] ] );
-			}
-
-			var b = new THREE.BufferGeometry().fromGeometry(geo)
-			console.log(b.attributes.position.array.length)
+			return wireframeIsomeshFromGeometricPrimitives(msg.wireframeGeometricPrimitives)
+		}
+		else
+		{
+			var geo = new THREE.BufferGeometry();
+			geo.addAttribute( 'position',	new THREE.BufferAttribute( msg.nonWireframeGeometricPrimitives.positionArray, 3 ) );
+			geo.addAttribute( 'normal',		new THREE.BufferAttribute( msg.nonWireframeGeometricPrimitives.normalArray, 3 ) );
 			
-			var wireframe = new THREE.Mesh( geo, //could use a slightly fattened squarish to improve
-				new THREE.MeshPhongMaterial({
-					color: 0xFFFFFF,
-					clippingPlanes: visiBox.planes,
-					wireframe:true
-				}));
 			var transparent = new THREE.Mesh( geo,
 				new THREE.MeshPhongMaterial({
-					color: color, //less white or bluer. Back should be less blue because nitrogen
+					color: msg.color, //less white or bluer. Back should be less blue because nitrogen
 					clippingPlanes: visiBox.planes,
 					transparent:true,
 					opacity:0.36
 				}));
 			var back = new THREE.Mesh( geo,
 				new THREE.MeshPhongMaterial({
-					color: color,
+					color: msg.color,
 					clippingPlanes: visiBox.planes,
 					side:THREE.BackSide
 				}));
+
+			if(msg.wireframeGeometricPrimitives)
+			{
+				//super high quality
+				var wireframe = wireframeIsomeshFromGeometricPrimitives(msg.wireframeGeometricPrimitives);
+			}
+			else
+			{
+				var wireframe = new THREE.LineSegments( new THREE.WireframeGeometry( geo ),
+					new THREE.LineBasicMaterial({
+						clippingPlanes: visiBox.planes
+					}));
+			}
 			
-			var isomesh = new THREE.Group().add(wireframe,transparent,back)
+			return new THREE.Group().add(wireframe,transparent,back)
 		}
-		else
-		{
-			var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
-				color: color,
+	}
+
+	function wireframeIsomeshFromGeometricPrimitives(geometricPrimitives)
+	{
+		var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(),
+			new THREE.LineBasicMaterial({
+				color: 0xFFFFFF,
 				linewidth: 1.25,
 				clippingPlanes: visiBox.planes
 			}));
-			isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
-			isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
-		}
+		isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
+		isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
 		return isomesh;
 	}
 
