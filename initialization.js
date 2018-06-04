@@ -1,33 +1,31 @@
 'use strict';
 /*
 TODO before newbattle, July 1st
+	Fix the atom deletion problems
 	You want a "reset server" button before you make them interact again
-	Painter works as "add terminal residue"
-	Refinement
-		Grabbing two ends of a chain defines it as refinement area
-	probe dots?
-	Recontouring should be clever
-	Octree selection?
-	Ramachandran diagrams, hard spheres
-	"Carbon alpha mode", often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
-	Abstract target: do the whole coot tutorial, and the EM one too
-	Little video of environment distances for drug discoverers - 4zzn
-	Extended video showing all features for "beta"
-	Force restraints
-	Mutate
-	Transfer map
-	Spectation, or at least "Save"
-	Get some data from Paul
-	Test monomer tool
+	Do the whole coot tutorial, and the EM one too
+		Painter works as "add terminal residue"
+		Refinement
+			Grabbing two ends of a chain defines it as refinement area
+			Force restraints
+		Mutate / everything else sitting there in script
+		Spectation, or at least "Save"
+		Transfer the damn map. Need to be able to open them too...
+	Release
+		Little video of environment distances for drug discoverers - 4zzn
+		Extended video showing all features for "beta"
+		Send to Oculus
+	Urgh, irreg
 
-	Go to Oculus
-	Get new shampoo
-	Maryam Mirzakhani
-	Dogs
 	Book Bridges travel
 	Get stuff from Diego
 	
 TODO at some point
+	Ramachandran diagrams, hard spheres
+	probe dots
+	Octree selection
+	Test monomer tool
+	"Carbon alpha mode", often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
 	easy: "hand distances"
 	Get monomer with web speech
 	Selection of rotamers
@@ -51,6 +49,7 @@ Maya
 	http://www.wildlifeinformation.co.uk/about_volunteering.php
 */
 
+
 (function init()
 {
 	// if(!WEBVR.checkAvailability())
@@ -58,6 +57,8 @@ Maya
 	// 	console.error("No webvr!")
 	// 	return;
 	// }
+
+	
 
 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );

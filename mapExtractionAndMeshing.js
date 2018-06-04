@@ -1,20 +1,39 @@
 'use strict';
 
 var umData = [];
+
 var typeColors = {
 	map_den: 0x4372D2,
 	map_pos: 0x298029,
 	map_neg: 0x8B2E2E,
 }
+ 
+var centerOffsets = [];
+var blockRadius = 4;
+for(var i = -1; i <= 1; i++) {
+for(var j = -1; j <= 1; j++) {
+for(var k = -1; k <= 1; k++) {
+	centerOffsets.push([ i*blockRadius*2, j*blockRadius*2, k*blockRadius*2]);
+}
+}
+}
+// centerOffsets = [[0,0,0]];
+centerOffsets.sort(function (vec1,vec2)
+{
+	return vecLengthSq(vec1) - vecLengthSq(vec2);
+});
+var centerOnGridsToBeSent = [];
 
 onmessage = function(event)
 {
-	if(umData[ event.data.mapIndex ] === undefined)
-	{
-		var umDatum = umData[ event.data.mapIndex ] = new UmDatum();
-		umDatum.from_ccp4(event.data.arrayBuffer); //pdbe and dsn9 exist
+	var msg = event.data;
 
-		if(event.data.isDiffMap)
+	if(umData[ msg.mapIndex ] === undefined)
+	{
+		var umDatum = umData[ msg.mapIndex ] = new UmDatum();
+		umDatum.from_ccp4(msg.arrayBuffer); //pdbe and dsn9 exist
+
+		if(msg.isDiffMap)
 		{
 			umDatum.displayTypes = ['map_pos', 'map_neg'];
 		}
@@ -23,42 +42,111 @@ onmessage = function(event)
 			umDatum.displayTypes = ['map_den'];
 		}
 
+		umDatum.userCenterOnGrid = [Infinity,Infinity,Infinity];
+		umDatum.isolevel = Infinity;
+		umDatum.chickenWire = null;
+
 		umDatum.postMessageConcerningSelf({ orthogonalMatrix:	umDatum.unit_cell.orth });
 	}
-	
-	if(event.data.center)
-	{
-		var umDatum = umData[event.data.mapIndex];
 
-		for (var i = 0; i < umDatum.displayTypes.length; i++)
+	if(msg.userCenterOffGrid)
+	{
+		var umDatum = umData[msg.mapIndex];
+
+		var possiblyNewUserCenterOnGrid = umDatum.getPointOnGrid(msg.userCenterOffGrid);
+		for(var i = 0; i < 3; i++)
+		{
+			possiblyNewUserCenterOnGrid[i] = blockRadius * Math.round( possiblyNewUserCenterOnGrid[i] / (blockRadius * 2) );
+			//urgh, don't know about the wrapping effect; maybe you want to make sure they get closer to 0?
+		}
+
+		if(	umDatum.isolevel !== msg.isolevel ||
+			umDatum.chickenWire !== msg.chickenWire ||
+			!vecsEqual( umDatum.userCenterOnGrid, possiblyNewUserCenterOnGrid ) )
+		{
+			copyVec(umDatum.userCenterOnGrid,possiblyNewUserCenterOnGrid);
+			umDatum.isolevel = msg.isolevel;
+			umDatum.chickenWire = msg.chickenWire;
+
+			centerOnGridsToBeSent.length = 0;
+
+			centerOffsets.forEach( function(centerOffset)
+			{
+				var possiblyUnneededCenterOnGridToBeSent = sumOfVecs( umDatum.userCenterOnGrid, centerOffset );
+				var needed = false;
+
+				for(var i = 0, il = msg.currentCenterOnGrids; i < il; i++)
+				{
+					if( vecsEqual( msg.currentCenterOnGrids[i], possiblyUnneededCenterOnGridToBeSent ) )
+					{
+						needed = true;
+						break;
+					}
+				}
+				if(!needed)
+				{
+					centerOnGridsToBeSent.push(possiblyUnneededCenterOnGridToBeSent);
+				}
+			});
+		}
+
+		if( centerOnGridsToBeSent.length !== 0 )
 		{
 			var msg = {
-				color:				 	typeColors[umDatum.displayTypes[i]],
-				isolevel:				event.data.isolevel,
-				center:					event.data.center
+				userCenterOnGrid:	umDatum.userCenterOnGrid,
+				centerOnGrid: 		centerOnGridsToBeSent[0]
 			}
-
-			var sigma = umDatum.displayTypes[i] === 'map_neg'? -event.data.isolevel : event.data.isolevel;
-			var absoluteIsolevel = sigma * umDatum.stats.rms + umDatum.stats.mean;
-
-			umDatum.extract_block( event.data.center, event.data.blockRadius );
-			msg.wireframeGeometricPrimitives = wireframeMarchingCubes(
-				umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
-				umDatum.block._values,	umDatum.block._points,	absoluteIsolevel );
 			
-			if( !event.data.chickenWire )
+			for(var i = 0; i < umDatum.displayTypes.length; i++)
 			{
-				var nonWireframeIsolevel = (sigma+0.028) * umDatum.stats.rms + umDatum.stats.mean;
+				msg.color = typeColors[umDatum.displayTypes[i]];
 
-				umDatum.extract_block( event.data.center, event.data.blockRadius + 1 ); //normals
-				msg.nonWireframeGeometricPrimitives = solidMarchingCubes(
+				msg.relativeIsolevel = umDatum.displayTypes[i] === 'map_neg'? -umDatum.isolevel : umDatum.isolevel;
+				var absoluteIsolevel = msg.relativeIsolevel * umDatum.stats.rms + umDatum.stats.mean;
+
+				umDatum.extract_block( msg.centerOnGrid );
+				msg.wireframeGeometricPrimitives = wireframeMarchingCubes(
 					umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
-					umDatum.block._values,	umDatum.block._points,	nonWireframeIsolevel );
-			}
+					umDatum.block._values,	umDatum.block._points,	absoluteIsolevel );
+				
+				if( !umDatum.chickenWire )
+				{
+					var nonWireframeAbsoluteIsolevel = (msg.relativeIsolevel+0.028) * umDatum.stats.rms + umDatum.stats.mean;
 
-			umDatum.postMessageConcerningSelf(msg);
+					umDatum.extract_block( msg.centerOnGrid, true );
+					msg.nonWireframeGeometricPrimitives = solidMarchingCubes(
+						umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
+						umDatum.block._values,	umDatum.block._points,	nonWireframeAbsoluteIsolevel );
+				}
+
+				umDatum.postMessageConcerningSelf(msg);
+				centerOnGridsToBeSent.splice(0,1);
+			}
 		}
 	}
+}
+
+function vecLengthSq(vec)
+{
+	return vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2];
+}
+function vecsEqual(v1,v2)
+{
+	return v1[0] === v2[0] && v1[1] === v2[1] && v1[2] === v2[2];
+}
+function sumOfVecs(v1,v2)
+{
+	return [
+		v1[0] + v2[0],
+		v1[1] + v2[1],
+		v1[2] + v2[2]
+	];
+}
+function copyVec(to,from)
+{
+	to[0] = from[0];
+	to[1] = from[1];
+	to[2] = from[2];
 }
 
 var UmDatum = function()
@@ -73,6 +161,63 @@ UmDatum.prototype.postMessageConcerningSelf = function(msg)
 	msg.mapIndex = umData.indexOf(this);
 	postMessage(msg);
 }
+
+UmDatum.prototype.getPointOnGrid = function(point)
+{
+	var fc = multiply([point[0],point[1],point[2]], this.unit_cell.frac);
+	return this.grid.frac2grid([fc[0], fc[1], fc[2]]);
+}
+
+// Extract a block of density for calculating an isosurface using the
+// separate marching cubes implementation.
+UmDatum.prototype.extract_block = function extract_block ( centerOnGrid, extraForNormals )
+{
+	if (this.grid == null || this.unit_cell == null) { return; }
+
+	/*
+		frac2grid and grid2frac is just multiplying and dividing by dims
+		So those dimensions are probably the resolution, the distance between measurements
+		.orth and .frac are matrices
+	*/
+	var grid = this.grid;
+	var unit_cell = this.unit_cell;
+
+	var extractedRadius = extraForNormals === undefined ? blockRadius:blockRadius+1
+	var grid_min = [ centerOnGrid[0] - extractedRadius, centerOnGrid[1] - extractedRadius, centerOnGrid[2] - extractedRadius];
+	var grid_max = [ centerOnGrid[0] + extractedRadius, centerOnGrid[1] + extractedRadius, centerOnGrid[2] + extractedRadius];
+	
+	//could easily have array lengths...
+	var points = [];
+	var values = [];
+	for (var i = grid_min[0]; i <= grid_max[0]; i++) {
+	for (var j = grid_min[1]; j <= grid_max[1]; j++) {
+	for (var k = grid_min[2]; k <= grid_max[2]; k++) {
+		var frac = grid.grid2frac(i, j, k);
+		
+		var orth = multiply( frac, unit_cell.orth );
+		points.push(orth);
+
+		var map_value = grid.get_grid_value(i, j, k);
+		values.push(map_value);
+	}
+	}
+	}
+
+	var size = [grid_max[0] - grid_min[0] + 1,
+				grid_max[1] - grid_min[1] + 1,
+				grid_max[2] - grid_min[2] + 1];
+	if (size[0] <= 0 || size[1] <= 0 || size[2] <= 0) {
+		throw Error('Grid dimensions are zero along at least one edge');
+	}
+	var len = size[0] * size[1] * size[2];
+	if (values.length !== len || points.length !== len) {
+		throw Error('isosurface: array size mismatch');
+	}
+
+	this.block._points = points;
+	this.block._values = values;
+	this.block._size = size;
+};
 
 function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 {
@@ -1589,69 +1734,7 @@ var edgeIndex = [[0,1], [1,2], [2,3], [3,0], [4,5], [5,6],
 UmDatum.prototype.unit = 'e/\u212B\u00B3';
 
 
-// Extract a block of density for calculating an isosurface using the
-// separate marching cubes implementation.
-UmDatum.prototype.extract_block = function extract_block ( center /*:vector3*/, gridRadius/*:number*/, absoluteRadius)
-{
-	if (this.grid == null || this.unit_cell == null) { return; }
 
-	/*
-		frac2grid and grid2frac is just multiplying and dividing by dims
-		So those dimensions are probably the resolution, the distance between measurements
-		.orth and .frac are matrices
-	*/
-	var grid = this.grid;
-	var unit_cell = this.unit_cell;
-
-	if( absoluteRadius !== undefined )
-	{
-		var r = [radius / unit_cell.parameters[0],
-				 radius / unit_cell.parameters[1],
-				 radius / unit_cell.parameters[2]];
-		var fc = multiply([center.x,center.y,center.z], unit_cell.frac);
-		var grid_min = grid.frac2grid([fc[0] - r[0], fc[1] - r[1], fc[2] - r[2]]);
-		var grid_max = grid.frac2grid([fc[0] + r[0], fc[1] + r[1], fc[2] + r[2]]);
-	}
-	else
-	{
-		var fc = multiply([center.x,center.y,center.z], unit_cell.frac);
-		var gridCenter = grid.frac2grid([fc[0], fc[1], fc[2]]);
-
-		var grid_min = [ gridCenter[0] - gridRadius, gridCenter[1] - gridRadius, gridCenter[2] - gridRadius];
-		var grid_max = [ gridCenter[0] + gridRadius, gridCenter[1] + gridRadius, gridCenter[2] + gridRadius];
-	}
-	
-	var points = [];
-	var values = [];
-	for (var i = grid_min[0]; i <= grid_max[0]; i++) {
-	for (var j = grid_min[1]; j <= grid_max[1]; j++) {
-	for (var k = grid_min[2]; k <= grid_max[2]; k++) {
-		var frac = grid.grid2frac(i, j, k);
-		
-		var orth = multiply( frac, unit_cell.orth );
-		points.push(orth);
-
-		var map_value = grid.get_grid_value(i, j, k);
-		values.push(map_value);
-	}
-	}
-	}
-
-	var size = [grid_max[0] - grid_min[0] + 1,
-				grid_max[1] - grid_min[1] + 1,
-				grid_max[2] - grid_min[2] + 1];
-	if (size[0] <= 0 || size[1] <= 0 || size[2] <= 0) {
-		throw Error('Grid dimensions are zero along at least one edge');
-	}
-	var len = size[0] * size[1] * size[2];
-	if (values.length !== len || points.length !== len) {
-		throw Error('isosurface: array size mismatch');
-	}
-
-	this.block._points = points;
-	this.block._values = values;
-	this.block._size = size;
-};
 
 // http://www.ccp4.ac.uk/html/maplib.html#description
 // eslint-disable-next-line complexity
@@ -1860,7 +1943,7 @@ var UnitCell = function UnitCell(a /*:number*/, b /*:number*/, c /*:number*/,
 	// Cartesian X_3 axis."
 	//
 	// Zeros in the matrices below are kept to make matrix multiplication
-	// faster: they make extract_block() 2x (!) faster on V8 4.5.103,
+	// faster: they make Extract_block() 2x (!) faster on V8 4.5.103,
 	// no difference on FF 50.
 	/* eslint-disable no-multi-spaces, comma-spacing */
 	this.orth = [a, b * cos_gamma,c * cos_beta,

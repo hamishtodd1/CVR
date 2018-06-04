@@ -1,28 +1,11 @@
 'use strict';
 /*
-	Could use a single web worker for contouring and loading file in, interactivity remains.
 	there is a "cubicles" thing in uglymol's molecules that was good for searching
-	TODO turn into proper object so you don't have to repeat the functions
-
-	May need both uglymol and threejs marching cubes systems for different styles
-	Except maybe solid is objectively better in VR?
-
-	Does putting the mesh in memory take much more time than calculating it? Probably not but do check
-
-	So you have a worker that constantly, in a separate thread:
-		Extracts blocks
-		Calculates new contour chunks
-		Adds them to the scene
-		Removes 
-		Unless there's nothing to be done
-		Break it up into chunks. When you move it, they don't all have to go
-
-	if you increase contour level it all has to go
-
-	threejs web worker https://threejs.org/examples/webgl_loader_obj2_run_director.html
 
 	bug: red difference map normals need to be reversed. 
 	Well actually all normals EXCEPT red difference map normals need to be reversed and backside needs to be removed
+
+	It's irritating to have them pop in and out. Would it make a difference to have a single frame where they all get visibility set at once?
 */
 
 var starProcessingMapData;
@@ -34,146 +17,114 @@ function initMapCreationSystem(visiBox)
 		maps[ event.data.mapIndex ].receiveMessageConcerningSelf( event.data );
 	}
 
-	var numMeshesBeingWorkedOn = 0;
-	var blockRadius = 4;
-
-	{
-		var offsets = [];
-		for(var i = -1; i <= 1; i++)
-		{
-			for(var j = -1; j <= 1; j++)
-			{
-				for(var k = -1; k <= 1; k++)
-				{
-					offsets.push(new THREE.Vector3(i,j,k).multiplyScalar(blockRadius));
-				}
-			}
-		}
-		offsets.sort(function (vec1,vec2)
-	    {
-			return vec1.lengthSq() - vec2.lengthSq();
-		});
-	}
-
 	Map = function(arrayBuffer, isDiffMap)
 	{
+		// isDiffMap = true
 		var map = new THREE.Group();
 		maps.push(map);
 		assemblage.add(map);
 
-		var isolevel = isDiffMap ? 3.0:1.5
+		var isolevel = isDiffMap ? 3.0 : 1.5
 
-		var gotten = false;
+		var latestUserCenterOnGrid = null;
+
 		map.update = function()
 		{
-			/*
-				Each frame, decide on a value point that is the center
-				Snap that to grid points the size of our 27 things (yeah not ideal but hey)
-			*/
-
-			var centralPointSnappedToBlockSize = visiBox.position.clone();
-			assemblage.updateMatrixWorld();
-			assemblage.worldToLocal( centralPointSnappedToBlockSize );
-			//now to snap to, erm...
-
-			centralPointSnappedToBlockSize.set(0,0,0); //for now!
-
-			for(var i = 0, il = 2; i < il && numMeshesBeingWorkedOn < 2; i++)
+			if( (!isDiffMap && map.children.length > 28) || (isDiffMap && map.children.length > 55) )
 			{
-				var pointToCheckFor = centralPointSnappedToBlockSize.clone().add(offsets[i]);
-				var meshInPlace = false;
-				for(var j = 0; j < this.children.length; j++)
+				map.children.sort(function(a,b)
 				{
-					var block = this.children[j];
-					if( block === this.unitCellMesh) continue;
-
-					if( pointToCheckFor.equals(block.center))
+					if(a === map.unitCellMesh)
 					{
-						if( block.isolevel === isolevel )
-						{
-							meshInPlace = true;
-
-							// if( offset[i].equals(zeroVector) && !isDiffMap ) //you have seen current isolevel
-							// {
-							// 	for(var i = 0; i < controllers.length; i++)
-							// 	{
-							// 		if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 )
-							// 		{
-							// 			isolevel += 0.06 * controllers[i].thumbStickAxes[1];
-							// 			//TODO this is limited by "framerate"
-							// 			meshInPlace = false;
-							// 		}
-							// 	}
-							// }
-						}
-						break;
+						return -1
 					}
-				}
-				if(!meshInPlace)
-				{
-					this.postMessageConcerningSelf({
-						isolevel:isolevel,
-						blockRadius:blockRadius,
-						chickenWire:false,
-						center:pointToCheckFor
-					});
+					if(b === map.unitCellMesh)
+					{
+						return 1
+					}
 
-					numMeshesBeingWorkedOn++;
-					//hopefully you can't send off for the same one twice because of numMeshesBeingWorkedON
+					if( isolevelIsAcceptable(a) && !isolevelIsAcceptable(b) )
+					{
+						return -1;
+					}
+					if( !isolevelIsAcceptable(a) && isolevelIsAcceptable(b) )
+					{
+						return 1;
+					}
+
+					var aDistanceToCenter = manhattanDistanceArrays(latestUserCenterOnGrid,a.centerOnGrid);
+					var bDistanceToCenter = manhattanDistanceArrays(latestUserCenterOnGrid,b.centerOnGrid);
+
+					if( isolevelIsAcceptable(a) && isolevelIsAcceptable(b) )
+					{
+						return aDistanceToCenter - bDistanceToCenter;
+					}
+					else
+					{
+						return bDistanceToCenter - aDistanceToCenter;
+					}
+				});
+				//check and think about diffMap for negative isolevel shit
+
+				removeAndRecursivelyDispose(map.children[map.children.length-1]);
+			}
+
+			var msg = {
+				isolevel,
+				userCenterOffGrid: visiBox.centerInAssemblageSpace().toArray(),
+				chickenWire: false,
+				currentCenterOnGrids: []
+			};
+
+			var numWithCorrectIsolevel = 0;
+			for(var i = 0, il = this.children.length; i < il; i++)
+			{
+				var block = this.children[i];
+				if(block === this.unitCellMesh) continue;
+				msg.currentCenterOnGrids.push(block.centerOnGrid);
+				
+				if( isolevelIsAcceptable(block) && !isDiffMap )
+				{
+					numWithCorrectIsolevel++;
 				}
 			}
+
+			if(numWithCorrectIsolevel >= 1)
+			{
+				for(var j = 0; j < 2; j++)
+				{
+					if( Math.abs( controllers[j].thumbStickAxes[1] ) > 0.1 )
+					{
+						isolevel += 0.06 * controllers[j].thumbStickAxes[1];
+						msg.currentCenterOnGrids.length = 0; //do same if chickenwire changed
+					}
+				}
+			}
+
+			this.postMessageConcerningSelf(msg);
 		}
 
 		map.receiveMessageConcerningSelf = function(msg)
 		{
-			if(msg.orthogonalMatrix)
+			if( msg.wireframeGeometricPrimitives )
 			{
-				this.unitCellMesh = UnitCellMesh( msg.orthogonalMatrix );
-				this.add(this.unitCellMesh);
-				this.unitCellMesh.visible = false;
-				//TODO make it movable? Keep it centered in visibox?
+				var newBlock = geometricPrimitivesToMesh(msg.color,msg.wireframeGeometricPrimitives,msg.nonWireframeGeometricPrimitives);
+				newBlock.isolevel = msg.relativeIsolevel;
+				newBlock.centerOnGrid = msg.centerOnGrid;
+				console.log(msg.centerOnGrid)
+				map.add( newBlock );
 
-				thingsToBeUpdated.push(this);
+				latestUserCenterOnGrid = msg.userCenterOnGrid
 			}
 
-			if( msg.isolevel )
+			if(msg.orthogonalMatrix)
 			{
-				console.log("yo")
-				numMeshesBeingWorkedOn--;
-				if(msg.isolevel === isolevel)
-				{
-					var newBlock = geometricPrimitivesToMesh(msg);
-					newBlock.isolevel = msg.isolevel;
-					newBlock.center = msg.center;
-					this.add( newBlock );
-					console.log(newBlock.isolevel,newBlock.center)
-					
-					var blockThatIsFurthestFromCenter = null;
-					var furthestDistSq = -1;
-					var centralPointSnappedToBlockSize = new THREE.Vector3(); //something involving visiBox.position
-					for(var i = 0; i < this.children.length; i++)
-					{
-						var block = this.children[i];
-						if( block === this.unitCellMesh || block === newBlock) continue;
-						
-						if( block.center.x === newBlock.center.x && block.center.y === newBlock.center.y && block.center.z === newBlock.center.z )
-						{
-							removeAndRecursivelyDispose(block);
-							return;
-						}
+				map.unitCellMesh = UnitCellMesh( msg.orthogonalMatrix );
+				map.add(map.unitCellMesh);
+				map.unitCellMesh.visible = false;
+				//TODO make it movable? Keep it centered in visibox?
 
-						if( centralPointSnappedToBlockSize.distanceToSquared(block.center) > furthestDistSq )
-						{
-							blockThatIsFurthestFromCenter = block;
-							furthestDistSq = centralPointSnappedToBlockSize.distanceToSquared(block.center);
-						}
-					}
-
-					if( this.children.length > 27 && blockThatIsFurthestFromCenter)
-					{
-						removeAndRecursivelyDispose(blockThatIsFurthestFromCenter);
-					}
-				}
+				thingsToBeUpdated.push(map);
 			}
 		}
 
@@ -183,39 +134,49 @@ function initMapCreationSystem(visiBox)
 			worker.postMessage(msg);
 		}
 
+		function isolevelIsAcceptable(block)
+		{
+			return block.isolevel === isolevel || block.isolevel === -isolevel;
+		}
+
 		map.postMessageConcerningSelf({arrayBuffer:arrayBuffer,isDiffMap:isDiffMap});
 	}
 
-	function geometricPrimitivesToMesh(msg)
+	function manhattanDistanceArrays(a,b)
 	{
-		if( !msg.nonWireframeGeometricPrimitives )
+		return Math.abs(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+	}
+
+	function geometricPrimitivesToMesh(color, wireframeGeometricPrimitives, nonWireframeGeometricPrimitives)
+	{
+		if( nonWireframeGeometricPrimitives === undefined )
 		{
-			return wireframeIsomeshFromGeometricPrimitives(msg.wireframeGeometricPrimitives)
+			return wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives)
 		}
 		else
 		{
 			var geo = new THREE.BufferGeometry();
-			geo.addAttribute( 'position',	new THREE.BufferAttribute( msg.nonWireframeGeometricPrimitives.positionArray, 3 ) );
-			geo.addAttribute( 'normal',		new THREE.BufferAttribute( msg.nonWireframeGeometricPrimitives.normalArray, 3 ) );
+			geo.addAttribute( 'position',	new THREE.BufferAttribute( nonWireframeGeometricPrimitives.positionArray, 3 ) );
+			geo.addAttribute( 'normal',		new THREE.BufferAttribute( nonWireframeGeometricPrimitives.normalArray, 3 ) );
 			
 			var transparent = new THREE.Mesh( geo,
 				new THREE.MeshPhongMaterial({
-					color: msg.color, //less white or bluer. Back should be less blue because nitrogen
+					color: color, //less white or bluer. Back should be less blue because nitrogen
 					clippingPlanes: visiBox.planes,
 					transparent:true,
 					opacity:0.36
 				}));
 			var back = new THREE.Mesh( geo,
 				new THREE.MeshPhongMaterial({
-					color: msg.color,
+					color: color,
 					clippingPlanes: visiBox.planes,
 					side:THREE.BackSide
 				}));
 
-			if(msg.wireframeGeometricPrimitives)
+			if(wireframeGeometricPrimitives)
 			{
 				//super high quality
-				var wireframe = wireframeIsomeshFromGeometricPrimitives(msg.wireframeGeometricPrimitives);
+				var wireframe = wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives);
 			}
 			else
 			{

@@ -31,6 +31,14 @@
 function initVisiBox(initialScale)
 {
 	var visiBox = new THREE.Object3D();
+
+	visiBox.centerInAssemblageSpace = function()
+	{
+		var center = this.position.clone();
+		assemblage.updateMatrixWorld();
+		assemblage.worldToLocal( center );
+		return center;
+	}
 	
 	thingsToBeUpdated.push(visiBox)
 	
