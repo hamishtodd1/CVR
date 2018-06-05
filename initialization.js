@@ -58,8 +58,6 @@ Maya
 	// 	return;
 	// }
 
-	
-
 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
@@ -81,7 +79,9 @@ Maya
 		{
 			//a reasonable indicator is ourVREffect.isPresenting
 			ourVrEffect.render( scene, camera );
-			render();
+
+			var pauseLength = 0
+			setTimeout(render,pauseLength);
 		} );
 	}
 	var vrInputSystem = initVrInputSystem(renderer,ourVrEffect);
@@ -89,7 +89,7 @@ Maya
 	var maps = [];
 	var atoms = null; //because fixed length
 	
-	assemblage.scale.setScalar( 0.036 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( 0.008 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	assemblage.position.z = -FOCALPOINT_DISTANCE;
 	assemblage.position.y = -0.11;
 	scene.add(assemblage);

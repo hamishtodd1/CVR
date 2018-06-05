@@ -8,8 +8,9 @@ var typeColors = {
 	map_neg: 0x8B2E2E,
 }
  
+var blockRadius = 7; //needs to be ok whether small or big
+
 var centerOffsets = [];
-var blockRadius = 4;
 for(var i = -1; i <= 1; i++) {
 for(var j = -1; j <= 1; j++) {
 for(var k = -1; k <= 1; k++) {
@@ -90,12 +91,15 @@ onmessage = function(event)
 			});
 		}
 
-		if( centerOnGridsToBeSent.length !== 0 )
+		var msg = {userCenterOnGrid: umDatum.userCenterOnGrid}
+		if( centerOnGridsToBeSent.length === 0 )
 		{
-			var msg = {
-				userCenterOnGrid:	umDatum.userCenterOnGrid,
-				centerOnGrid: 		centerOnGridsToBeSent[0]
-			}
+			umDatum.postMessageConcerningSelf(msg)
+		}
+		else
+		{
+			msg.centerOnGrid = centerOnGridsToBeSent[0]
+			centerOnGridsToBeSent.splice(0,1);
 			
 			for(var i = 0; i < umDatum.displayTypes.length; i++)
 			{
@@ -111,7 +115,7 @@ onmessage = function(event)
 				
 				if( !umDatum.chickenWire )
 				{
-					var nonWireframeAbsoluteIsolevel = (msg.relativeIsolevel+0.028) * umDatum.stats.rms + umDatum.stats.mean;
+					var nonWireframeAbsoluteIsolevel = (msg.relativeIsolevel+0.08) * umDatum.stats.rms + umDatum.stats.mean;
 
 					umDatum.extract_block( msg.centerOnGrid, true );
 					msg.nonWireframeGeometricPrimitives = solidMarchingCubes(
@@ -119,8 +123,10 @@ onmessage = function(event)
 						umDatum.block._values,	umDatum.block._points,	nonWireframeAbsoluteIsolevel );
 				}
 
-				umDatum.postMessageConcerningSelf(msg);
-				centerOnGridsToBeSent.splice(0,1);
+				var pauseLength = 0; // want to be able to mess with this!
+				setTimeout(function(){
+					umDatum.postMessageConcerningSelf(msg);
+				},pauseLength);
 			}
 		}
 	}

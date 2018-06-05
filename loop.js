@@ -25,6 +25,7 @@ function loop( maps, models, controllers, vrInputSystem, visiBox )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;
+
 	
 	vrInputSystem.update();
 	
