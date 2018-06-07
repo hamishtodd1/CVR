@@ -1,51 +1,28 @@
-function initSurroundings( loadFloor )
+'use strict';
+
+function initSurroundings( renderer, loadFloor )
 {
-	scene.fog = new THREE.Fog( 0xffffff, 1, 600 );
-	scene.fog.color.setHSL( 0.6, 0, 1 );
-	
-	// LIGHTS
-
-	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-	hemiLight.color.setHSL( 0.6, 1, 0.6 );
-	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
-	hemiLight.position.set( 0, 500, 0 );
-	scene.add( hemiLight );
-
-	dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-	dirLight.color.setHSL( 0.1, 1, 0.95 );
-	dirLight.position.set( -1, 1.75, 1 );
-	dirLight.position.multiplyScalar( 50 );
-	scene.add( dirLight );
-
-	dirLight.castShadow = true;
-
-	dirLight.shadow.mapSize.width = 2048;
-	dirLight.shadow.mapSize.height = 2048;
-
-	var d = 50;
-
-	dirLight.shadow.camera.left = -d;
-	dirLight.shadow.camera.right = d;
-	dirLight.shadow.camera.top = d;
-	dirLight.shadow.camera.bottom = -d;
-
-	dirLight.shadow.camera.far = 3500;
-	dirLight.shadow.bias = -0.0001;
-
 	var floorY = -1;
 
-	var wallHeight = 1.5;
-	var wallMaterial = new THREE.MeshStandardMaterial({color:0xBBBBBB, side:THREE.DoubleSide});
-	var walls = Array(3);
-	for(var i = 0; i < walls.length; i++)
-	{
-		walls[i] = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_RADIUS*2,wallHeight), wallMaterial);
-		walls[i].rotation.y = (i+1) * TAU/4;
-		walls[i].position.x = ROOM_RADIUS;
-		walls[i].position.y = floorY + wallHeight / 2;
-		walls[i].position.applyAxisAngle(yVector,i*TAU/4);
-		scene.add(walls[i])
-	}
+	var horizontal = 0.77 * TAU;
+	var curvyBackground = new THREE.Mesh( new THREE.SphereBufferGeometry( ROOM_RADIUS, 32,10,
+			-TAU/4-horizontal/2, horizontal,
+			TAU / 4, TAU / 8),
+		new THREE.MeshStandardMaterial({
+			color:0x6BFFCF,
+			side:THREE.BackSide
+		})
+	);
+	curvyBackground.geometry.applyMatrix(new THREE.Matrix4().makeScale(1,1.55,0.8))
+	scene.add( curvyBackground);
+	//want it to be adjustable really, have some more little balls
+
+
+	//could put crazy seldom-used things behind, or on top and underneath
+	//should be that things move each other out of the way
+	//could have a list of the buttons somewhere and you drag things in to make them do stuff woo
+	//people want to know the time and their connection speed
+	//
 	
 	var OurTextureLoader = new THREE.TextureLoader();
 	OurTextureLoader.crossOrigin = true;
@@ -56,7 +33,6 @@ function initSurroundings( loadFloor )
 			function(texture)
 			{
 				texture.magFilter = THREE.NearestFilter;
-//				texture.minFilter = THREE.LinearMipMapLinearFilter;
 
 				var floorMat = new THREE.MeshPhongMaterial({ map: texture }); 
 				
@@ -67,19 +43,36 @@ function initSurroundings( loadFloor )
 				floorTile.position.y = floorY;
 				floorTile.rotation.x = -TAU / 4;
 				scene.add(floorTile);
-
-				// var wallHeight = 2;
-				// var walls = new THREE.Mesh(
-				// 	new THREE.CylinderBufferGeometry(2,2,2,64,1,true), 
-				// 	wallMaterial );
-				// walls.position.y = floorTile.position.y + wallHeight / 2;
-				// scene.add(walls);
 			},
 			function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
 		);
 	}
 
-	// SKYDOME
+	//-----------------lights
+	/*
+		Could attach one to people's heads?
+	*/
+	// scene.add( new THREE.PointLight( 0xFFFFFF, 1, 0.36 ) ); //this one's us!
+
+	var ambientLight = new THREE.AmbientLight( 0xffffff, 0.7 );
+	// ambientLight.color.setHSL( 0.6, 1, 0.6 );
+	scene.add( ambientLight );
+
+	var spotLight = new THREE.SpotLight(0xFFFFFF,1,99,0.36,0,1);
+	// spotLight.color.setHSL( 0.1, 1, 0.95 );
+	// spotLight.position.set( -1, 1.75, 1 );
+	spotLight.target = controllers[0]
+	spotLight.position.multiplyScalar( 0.1 );
+	scene.add( spotLight );
+	
+	var helperSphere = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshPhongMaterial({color:0xFF0000}));
+	helperSphere.geometry.computeBoundingSphere();
+	spotLight.boundingSphere = helperSphere.geometry.boundingSphere;
+	spotLight.ordinaryParent = scene;
+	spotLight.add(helperSphere);
+	holdables.push(spotLight)
+
+	//------------Sky
 
 	var vertexShader = document.getElementById( 'vertexShader' ).textContent;
 	var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
@@ -89,17 +82,44 @@ function initSurroundings( loadFloor )
 		offset:		 { type: "f", value: 33 },
 		exponent:	 { type: "f", value: 0.6 }
 	};
-	uniforms.topColor.value.copy( hemiLight.color );
+	uniforms.topColor.value.copy( new THREE.Color().setHSL( 0.6, 1, 0.6 ) );
 
-	scene.fog.color.copy( uniforms.bottomColor.value );
-
-	var skyGeo = new THREE.SphereGeometry( 600, 32, 15 );
-	var skyMat = new THREE.ShaderMaterial( { 
-		vertexShader: vertexShader, 
-		fragmentShader: fragmentShader, 
-		uniforms: uniforms, 
-		side: THREE.BackSide } );
-
-	var sky = new THREE.Mesh( skyGeo, skyMat );
+	var sky = new THREE.Mesh( 
+		new THREE.SphereGeometry( 600, 32, 15 ),
+		new THREE.ShaderMaterial( { 
+			vertexShader: vertexShader, 
+			fragmentShader: fragmentShader, 
+			uniforms: uniforms, 
+			side: THREE.BackSide
+		})
+	);
 	scene.add( sky );
+
+	var shadowsPresent = false;
+	if(shadowsPresent)
+	{
+		curvyBackground.receiveShadow = true;
+		controllers[0].castShadow = true;
+		controllers[1].castShadow = true;
+		
+		renderer.shadowMap.enabled = true;
+		renderer.shadowMap.type = THREE.BasicShadowMap;
+
+		spotLight.castShadow = true;
+		spotLight.shadowCameraVisible  = true;
+		spotLight.shadowDarkness = 0.5;
+
+		spotLight.shadow.mapSize.width = 2048;
+		spotLight.shadow.mapSize.height = 2048;
+
+		var dimension = 50;
+
+		spotLight.shadow.camera.left = -dimension;
+		spotLight.shadow.camera.right = dimension;
+		spotLight.shadow.camera.top = dimension;
+		spotLight.shadow.camera.bottom = -dimension;
+
+		spotLight.shadow.camera.far = 3500;
+		spotLight.shadow.bias = -0.0001;
+	}
 }

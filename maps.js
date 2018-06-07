@@ -1,47 +1,9 @@
 'use strict';
 /*
-	there is a "cubicles" thing in uglymol's molecules that was good for searching
-
-	bug: red difference map normals need to be reversed. 
-	Well actually all normals EXCEPT red difference map normals need to be reversed and backside needs to be removed
-
-	It's irritating to have them pop in and out
-		Would it make a difference to have a single frame where they all get visibility set at once?
-
-	The chunks have to be small because framerate
-	isolevel
-		all chunk except the changing one disappear
-	Movement
-
-	would be nice to have the opacity drop off away from the center
-
-	You only want to get one per frame. You're only asking for one per frame but fuck that
-	Ok, 
-
-	could have a flag in the message to say that you want to receive something
-
-	Don't want to add, or remove, more than one per frame.
-	Don't want a "buffer" of isolevels
-		So you can't send isolevel until you
-
-	Us: request, with list of current correct-isolevel centers
-	[any number of frames pass]
-	Worker: Send most central needed block
-	Us: receive
-		hide bad isolevel blocks
-		allow frame to complete,
-	Us:
-		Check for isolevel change 
-		request, with list of current correct-isolevel centers and isolevel 
-
-	Each frame:
-		If bad blocks exist, remove one
-		Check if we should make a request
-
-	All the while, be sending updates about isolevel and userCenterOffGrid?
-	Won't necessarily get them as fast as possible but whatever
-
-	How is it possible to see a flash while scrolling?
+	TODO
+		there is a "cubicles" thing in uglymol's molecules that was good for searching?
+		would be nice to have the opacity drop off away from the center. https://threejs.org/docs/#api/materials/MeshBasicMaterial.alphaMap	
+		When you have multiple maps, urgh, only want them one at a time too
 */
 
 var starProcessingMapData;
@@ -55,23 +17,19 @@ function initMapCreationSystem(visiBox)
 
 	Map = function(arrayBuffer, isDiffMap)
 	{
-		// isDiffMap = true
+		// isDiffMap = true;
 		var map = new THREE.Group();
 		maps.push(map);
 		assemblage.add(map);
 
-		var isolevel = isDiffMap ? 3.0 : 1.5;
+		var isolevel = isDiffMap ? 1.7 : 1.5;
 		var latestUserCenterOnGrid = null;
 		var waitingOnResponse = false;
-
-		// var someSphere = new THREE.Mesh(new THREE.SphereGeometry(4), new THREE.MeshPhongMaterial({color:0xFF0000}));
-		// assemblage.add(someSphere);
-		// someSphere.position.copy(visiBox.centerInAssemblageSpace())
+		var mostRecentBlockIsolevel = Infinity; //we care because there might be some recent arrivals whose isolevel is better than most recent
 
 		map.update = function()
 		{
-			var bestIsolevel = getBestIsolevel();
-			removeABadBlockIfOneExists(bestIsolevel);
+			removeABadBlockIfOneExists();
 
 			if( !waitingOnResponse )
 			{
@@ -86,7 +44,7 @@ function initMapCreationSystem(visiBox)
 				{
 					if(map.children[i] === map.unitCellMesh) continue;
 
-					if( map.children[i].isolevel === bestIsolevel )
+					if( map.children[i].isolevel === isolevel )
 					{
 						msg.currentCenterOnGrids.push(map.children[i].centerOnGrid);
 					}
@@ -96,8 +54,8 @@ function initMapCreationSystem(visiBox)
 				{
 					if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 )
 					{
-						isolevel += 0.06 * controllers[i].thumbStickAxes[1];
-						msg.currentCenterOnGrids = 0;
+						isolevel += 0.06 * controllers[i].thumbStickAxes[1] * controllers[i].thumbStickAxes[1] * controllers[i].thumbStickAxes[1];
+						msg.currentCenterOnGrids.length = 0;
 					}
 				}
 
@@ -115,18 +73,22 @@ function initMapCreationSystem(visiBox)
 				latestUserCenterOnGrid = msg.userCenterOnGrid;
 			}
 
-			if( msg.color )
+			if( msg.centerOnGrid )
 			{
-				var newBlock = geometricPrimitivesToMesh(msg.color,msg.wireframeGeometricPrimitives,msg.nonWireframeGeometricPrimitives);
-				newBlock.isolevel = msg.relativeIsolevel;
-				newBlock.centerOnGrid = msg.centerOnGrid;
-				map.add( newBlock );
+				for(var i = 0; i < msg.meshData.length; i++)
+				{
+					var meshDatum = msg.meshData[i];
+					var newBlock = geometricPrimitivesToMesh(meshDatum.color,meshDatum.wireframeGeometricPrimitives,meshDatum.nonWireframeGeometricPrimitives, meshDatum.relativeIsolevel);
+					newBlock.isolevel = meshDatum.relativeIsolevel;
+					newBlock.centerOnGrid = msg.centerOnGrid;
+					map.add( newBlock );
+				}
 
-				var numVisible = 0;
+				mostRecentBlockIsolevel = msg.meshData[0].relativeIsolevel;
 				for(var i = 0; i < map.children.length; i++)
 				{
 					if(map.children[i] === map.unitCellMesh) continue;
-					map.children[i].visible = map.children[i].isolevel === newBlock.isolevel; //NOT necessarily the best! but it is the latest! Round-off errors, urgh
+					map.children[i].visible = Math.abs(map.children[i].isolevel) === Math.abs(mostRecentBlockIsolevel);
 				}
 			}
 
@@ -141,24 +103,21 @@ function initMapCreationSystem(visiBox)
 			}
 		}
 
-		function getBestIsolevel()
+		function getBlockCenterOffset(block)
 		{
-			var bestIsolevel = Infinity;
-
-			for(var i = 0; i < map.children.length; i++)
+			var offset = Array(3);
+			for(var i = 0; i < 3; i++)
 			{
-				if(map.children[i] === map.unitCellMesh) continue;
-
-				if( Math.abs( map.children[i].isolevel - isolevel ) < Math.abs( bestIsolevel - isolevel ) )
-				{
-					bestIsolevel = map.children[i].isolevel;
-				}
+				offset[i] = block.centerOnGrid[i]-latestUserCenterOnGrid[i]
 			}
-
-			return bestIsolevel;
+			return offset;
+		}
+		function getArrayVectorLengthSq(array)
+		{
+			return array[0]*array[0] + array[1]*array[1] + array[2]*array[2];
 		}
 
-		function removeABadBlockIfOneExists(bestIsolevel)
+		function removeABadBlockIfOneExists()
 		{
 			var blocks = [];
 			map.children.forEach( function(child)
@@ -175,26 +134,49 @@ function initMapCreationSystem(visiBox)
 
 			blocks.sort(function(a,b)
 			{
-				if( a.isolevel === bestIsolevel && b.isolevel !== bestIsolevel )
+				var aHasGoodIsolevel = Math.abs( a.isolevel ) === Math.abs( mostRecentBlockIsolevel )
+				var bHasGoodIsolevel = Math.abs( b.isolevel ) === Math.abs( mostRecentBlockIsolevel )
+				if( aHasGoodIsolevel && !bHasGoodIsolevel )
 				{
 					return -1;
 				}
-				if( a.isolevel !== bestIsolevel && b.isolevel === bestIsolevel )
+				if( !aHasGoodIsolevel && bHasGoodIsolevel )
 				{
 					return 1;
 				}
 
-				var aDistanceToCenter = manhattanDistanceArrays(latestUserCenterOnGrid,a.centerOnGrid);
-				var bDistanceToCenter = manhattanDistanceArrays(latestUserCenterOnGrid,b.centerOnGrid);
+				var aCenterOffset = getBlockCenterOffset(a);
+				var bCenterOffset = getBlockCenterOffset(b);
 
-				return aDistanceToCenter - bDistanceToCenter;
+				var lengthDifference = getArrayVectorLengthSq( aCenterOffset ) - getArrayVectorLengthSq( bCenterOffset );
+				if( lengthDifference !== 0 )
+				{
+					return lengthDifference;
+				}
+				else
+				{
+					for(var i = 0; i < 3; i++)
+					{
+						if( aCenterOffset[i] < bCenterOffset[i] )
+						{
+							return -1;
+						}
+						else if( aCenterOffset[i] > bCenterOffset[i] )
+						{
+							return 1;
+						}
+					}
+					return 0;
+				}
 			});
 
-			if( ( blocks[blocks.length-1].isolevel !== bestIsolevel ) ||
+			if( ( Math.abs( blocks[blocks.length-1].isolevel ) !== Math.abs( mostRecentBlockIsolevel ) ) ||
 				(!isDiffMap && blocks.length > 27) ||
-				(isDiffMap && blocks.length > 54) )
+				( isDiffMap && blocks.length > 27 * 2) )
 			{
-				removeAndRecursivelyDispose(blocks.pop());
+				var blockToBeRemoved = blocks.pop();
+				
+				removeAndRecursivelyDispose(blockToBeRemoved);
 			}
 		}
 
@@ -204,71 +186,63 @@ function initMapCreationSystem(visiBox)
 			worker.postMessage(msg);
 		}
 
-		function isolevelIsAcceptable(block)
+		function geometricPrimitivesToMesh(color, wireframeGeometricPrimitives, nonWireframeGeometricPrimitives, relativeIsolevel)
 		{
-			return block.isolevel === isolevel || block.isolevel === -isolevel;
+			if( nonWireframeGeometricPrimitives === undefined )
+			{
+				return wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives,color)
+			}
+			else
+			{
+				var geo = new THREE.BufferGeometry();
+				geo.addAttribute( 'position',	new THREE.BufferAttribute( nonWireframeGeometricPrimitives.positionArray, 3 ) );
+				geo.addAttribute( 'normal',		new THREE.BufferAttribute( nonWireframeGeometricPrimitives.normalArray, 3 ) );
+				
+				var transparent = new THREE.Mesh( geo,
+					new THREE.MeshPhongMaterial({
+						color: color, //less white or bluer. Back should be less blue because nitrogen
+						clippingPlanes: visiBox.planes,
+						transparent:true,
+						opacity:0.36
+					}));
+				var back = new THREE.Mesh( geo,
+					new THREE.MeshPhongMaterial({
+						color: color,
+						clippingPlanes: visiBox.planes,
+						side: isDiffMap && relativeIsolevel < 0 ? THREE.FrontSide : THREE.BackSide //probably?
+					}));
+
+				if(wireframeGeometricPrimitives !== undefined)
+				{
+					//super high quality
+					var wireframe = wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives,color);
+				}
+				else
+				{
+					var wireframe = new THREE.LineSegments( new THREE.WireframeGeometry( geo ),
+						new THREE.LineBasicMaterial({
+							clippingPlanes: visiBox.planes
+						}));
+				}
+
+				return new THREE.Group().add(wireframe,transparent,back)
+			}
 		}
 
 		map.postMessageConcerningSelf({arrayBuffer:arrayBuffer,isDiffMap:isDiffMap});
 		waitingOnResponse = true;
 	}
 
-	function manhattanDistanceArrays(a,b)
-	{
-		return Math.abs(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
-	}
-
-	function geometricPrimitivesToMesh(color, wireframeGeometricPrimitives, nonWireframeGeometricPrimitives)
-	{
-		if( nonWireframeGeometricPrimitives === undefined )
-		{
-			return wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives)
-		}
-		else
-		{
-			var geo = new THREE.BufferGeometry();
-			geo.addAttribute( 'position',	new THREE.BufferAttribute( nonWireframeGeometricPrimitives.positionArray, 3 ) );
-			geo.addAttribute( 'normal',		new THREE.BufferAttribute( nonWireframeGeometricPrimitives.normalArray, 3 ) );
-			
-			var transparent = new THREE.Mesh( geo,
-				new THREE.MeshPhongMaterial({
-					color: color, //less white or bluer. Back should be less blue because nitrogen
-					clippingPlanes: visiBox.planes,
-					transparent:true,
-					opacity:0.36
-				}));
-			var back = new THREE.Mesh( geo,
-				new THREE.MeshPhongMaterial({
-					color: color,
-					clippingPlanes: visiBox.planes,
-					side:THREE.BackSide
-				}));
-
-			if(wireframeGeometricPrimitives)
-			{
-				//super high quality
-				var wireframe = wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives);
-			}
-			else
-			{
-				var wireframe = new THREE.LineSegments( new THREE.WireframeGeometry( geo ),
-					new THREE.LineBasicMaterial({
-						clippingPlanes: visiBox.planes
-					}));
-			}
-
-			return new THREE.Group().add(wireframe,transparent,back)
-		}
-	}
-
-	function wireframeIsomeshFromGeometricPrimitives(geometricPrimitives)
+	var white = new THREE.Color(0xFFFFFF)
+	function wireframeIsomeshFromGeometricPrimitives(geometricPrimitives,color)
 	{
 		var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(),
 			new THREE.LineBasicMaterial({
-				color: 0xFFFFFF,
+				color: color,
 				linewidth: 1.25,
 				clippingPlanes: visiBox.planes
 			}));
+		isomesh.material.color.lerp(white,0.5)
 		isomesh.geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(geometricPrimitives.vertices), 3));
 		isomesh.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(geometricPrimitives.segments), 1));
 		return isomesh;

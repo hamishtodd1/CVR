@@ -181,7 +181,7 @@ function initBarcharts(visiBoxPosition)
 function Graph(data)
 {
 	var graph = new THREE.Group;
-	graph.position.z = -FOCALPOINT_DISTANCE
+	graph.position.z = -0.36
 	// graph.scale.setScalar(0.1)
 	var background = new THREE.Mesh(THREE.OriginCorneredPlaneGeometry(), new THREE.MeshBasicMaterial());
 	background.position.z = -0.0001

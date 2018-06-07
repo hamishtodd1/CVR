@@ -70,7 +70,7 @@ function initVrInputSystem(renderer,ourVrEffect)
 			function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );
 	}
 	
-	var controllerMaterial = new THREE.MeshLambertMaterial({color:0x444444});
+	var controllerMaterial = new THREE.MeshPhongMaterial({color:0x444444});
 	var laserRadius = 0.001;
 	for(var i = 0; i < 2; i++)
 	{

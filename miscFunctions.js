@@ -41,6 +41,20 @@ function checkForNewGlobals()
 }
 //also nice would be "check for unused variables"
 
+function logExtremes(array,indexToInspect)
+{
+	var lowest = Infinity;
+	var highest = -Infinity;
+	for(var i = 0; i < array.length; i++)
+	{
+		if(array[i][indexToInspect] < lowest)
+			lowest = array[i][indexToInspect];
+		if(array[i][indexToInspect] > highest)
+			highest = array[i][indexToInspect];
+	}
+	console.log(lowest,highest)
+}
+
 function clamp(value, min, max)
 {
 	if(value < min)

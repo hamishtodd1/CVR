@@ -8,7 +8,7 @@ var typeColors = {
 	map_neg: 0x8B2E2E,
 }
  
-var blockRadius = 7; //needs to be ok whether small or big
+var blockRadius = 7;
 
 var centerOffsets = [];
 for(var i = -1; i <= 1; i++) {
@@ -18,12 +18,25 @@ for(var k = -1; k <= 1; k++) {
 }
 }
 }
-// centerOffsets = [[0,0,0]];
 centerOffsets.sort(function (vec1,vec2)
 {
 	return vecLengthSq(vec1) - vecLengthSq(vec2);
 });
 var centerOnGridsToBeSent = [];
+
+function logExtremes(array,indexToInspect)
+{
+	var lowest = Infinity;
+	var highest = -Infinity;
+	for(var i = 0; i < array.length; i++)
+	{
+		if(array[i][indexToInspect] < lowest)
+			lowest = array[i][indexToInspect];
+		if(array[i][indexToInspect] > highest)
+			highest = array[i][indexToInspect];
+	}
+	console.log(lowest,highest)
+}
 
 onmessage = function(event)
 {
@@ -57,8 +70,8 @@ onmessage = function(event)
 		var possiblyNewUserCenterOnGrid = umDatum.getPointOnGrid(msg.userCenterOffGrid);
 		for(var i = 0; i < 3; i++)
 		{
-			possiblyNewUserCenterOnGrid[i] = blockRadius * Math.round( possiblyNewUserCenterOnGrid[i] / (blockRadius * 2) );
-			//urgh, don't know about the wrapping effect; maybe you want to make sure they get closer to 0?
+			possiblyNewUserCenterOnGrid[i] = blockRadius*2 * Math.round( possiblyNewUserCenterOnGrid[i] / (blockRadius*2) );
+			//urgh, don't know about the wrapping effect; maybe you want to make sure they get closer to 0? Seems fine
 		}
 
 		if(	umDatum.isolevel !== msg.isolevel ||
@@ -74,19 +87,19 @@ onmessage = function(event)
 			centerOffsets.forEach( function(centerOffset)
 			{
 				var possiblyUnneededCenterOnGridToBeSent = sumOfVecs( umDatum.userCenterOnGrid, centerOffset );
-				var needed = false;
+				var needed = true;
 
-				for(var i = 0, il = msg.currentCenterOnGrids; i < il; i++)
+				for(var i = 0, il = msg.currentCenterOnGrids.length; i < il; i++)
 				{
 					if( vecsEqual( msg.currentCenterOnGrids[i], possiblyUnneededCenterOnGridToBeSent ) )
 					{
-						needed = true;
+						needed = false;
 						break;
 					}
 				}
-				if(!needed)
+				if( needed )
 				{
-					centerOnGridsToBeSent.push(possiblyUnneededCenterOnGridToBeSent);
+					centerOnGridsToBeSent.push( possiblyUnneededCenterOnGridToBeSent );
 				}
 			});
 		}
@@ -100,34 +113,36 @@ onmessage = function(event)
 		{
 			msg.centerOnGrid = centerOnGridsToBeSent[0]
 			centerOnGridsToBeSent.splice(0,1);
+
+			msg.meshData = Array( umDatum.displayTypes.length );
 			
 			for(var i = 0; i < umDatum.displayTypes.length; i++)
 			{
-				msg.color = typeColors[umDatum.displayTypes[i]];
+				var meshDatum = msg.meshData[i] = {};
 
-				msg.relativeIsolevel = umDatum.displayTypes[i] === 'map_neg'? -umDatum.isolevel : umDatum.isolevel;
-				var absoluteIsolevel = msg.relativeIsolevel * umDatum.stats.rms + umDatum.stats.mean;
+				meshDatum.color = typeColors[umDatum.displayTypes[i]];
+
+				meshDatum.relativeIsolevel = umDatum.displayTypes[i] === 'map_neg'? -umDatum.isolevel : umDatum.isolevel;
+				var absoluteIsolevel = meshDatum.relativeIsolevel * umDatum.stats.rms + umDatum.stats.mean;
 
 				umDatum.extract_block( msg.centerOnGrid );
-				msg.wireframeGeometricPrimitives = wireframeMarchingCubes(
+				meshDatum.wireframeGeometricPrimitives = wireframeMarchingCubes(
 					umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
 					umDatum.block._values,	umDatum.block._points,	absoluteIsolevel );
 				
 				if( !umDatum.chickenWire )
 				{
-					var nonWireframeAbsoluteIsolevel = (msg.relativeIsolevel+0.08) * umDatum.stats.rms + umDatum.stats.mean;
+					var additionForEncompassment = umDatum.displayTypes[i] === 'map_neg' ? -0.02 : 0.08;
+					var nonWireframeAbsoluteIsolevel = ( meshDatum.relativeIsolevel + additionForEncompassment ) * umDatum.stats.rms + umDatum.stats.mean;
 
 					umDatum.extract_block( msg.centerOnGrid, true );
-					msg.nonWireframeGeometricPrimitives = solidMarchingCubes(
+					meshDatum.nonWireframeGeometricPrimitives = solidMarchingCubes(
 						umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
 						umDatum.block._values,	umDatum.block._points,	nonWireframeAbsoluteIsolevel );
 				}
-
-				var pauseLength = 0; // want to be able to mess with this!
-				setTimeout(function(){
-					umDatum.postMessageConcerningSelf(msg);
-				},pauseLength);
 			}
+
+			umDatum.postMessageConcerningSelf(msg);
 		}
 	}
 }
@@ -172,6 +187,11 @@ UmDatum.prototype.getPointOnGrid = function(point)
 {
 	var fc = multiply([point[0],point[1],point[2]], this.unit_cell.frac);
 	return this.grid.frac2grid([fc[0], fc[1], fc[2]]);
+}
+UmDatum.prototype.getPointOffGrid = function(ijk)
+{
+	var frac = this.grid.grid2frac(ijk[0],ijk[1],ijk[2]);
+	return multiply( frac, this.unit_cell.orth );
 }
 
 // Extract a block of density for calculating an isosurface using the

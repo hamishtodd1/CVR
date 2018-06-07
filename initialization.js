@@ -1,6 +1,7 @@
 'use strict';
 /*
 TODO before newbattle, July 1st
+	Can load a map, can load a molecule
 	Fix the atom deletion problems
 	You want a "reset server" button before you make them interact again
 	Do the whole coot tutorial, and the EM one too
@@ -16,8 +17,11 @@ TODO before newbattle, July 1st
 		Extended video showing all features for "beta"
 		Send to Oculus
 	Urgh, irreg
+	Try on chrome canary
 
 	Book Bridges travel
+	7Osme pass
+	Poland travel
 	Get stuff from Diego
 	
 TODO at some point
@@ -89,16 +93,11 @@ Maya
 	var maps = [];
 	var atoms = null; //because fixed length
 	
-	assemblage.scale.setScalar( 0.008 ); //0.045, 0.028 is nice, 0.01 fits on screen
-	assemblage.position.z = -FOCALPOINT_DISTANCE;
-	assemblage.position.y = -0.11;
+	var visiBox = initVisiBox();
+	assemblage.position.copy(visiBox.position)
+	assemblage.scale.setScalar( 0.028 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	camera.position.y = assemblage.position.y; //affects until you go into VR
 	scene.add(assemblage);
-
-	var visiBox = initVisiBox(0.45, maps);
-	visiBox.position.copy(assemblage.position)
-	scene.add(visiBox)
-
-	scene.add( new THREE.PointLight( 0xFFFFFF, 1, FOCALPOINT_DISTANCE ) );
 	
 	window.addEventListener( 'resize', function(){ //doesn't work if in VR
 	    renderer.setSize( window.innerWidth, window.innerHeight );
@@ -106,7 +105,7 @@ Maya
 	    camera.updateProjectionMatrix();
 	}, false );
 	
-	initSurroundings(true);
+	initSurroundings(renderer,true);
 	initScaleStick();
 	// initMenus();
 	// initSpecatorRepresentation();
