@@ -1,6 +1,6 @@
 'use strict';
 
-var umData = [];
+var mapMirrors = []; //if a map gets spliced out you're in trouble.
 
 var typeColors = {
 	map_den: 0x4372D2,
@@ -8,7 +8,7 @@ var typeColors = {
 	map_neg: 0x8B2E2E,
 }
  
-var blockRadius = 7;
+const blockRadius = 7;
 
 var centerOffsets = [];
 for(var i = -1; i <= 1; i++) {
@@ -42,51 +42,51 @@ onmessage = function(event)
 {
 	var msg = event.data;
 
-	if(umData[ msg.mapIndex ] === undefined)
+	if(mapMirrors[ msg.mapIndex ] === undefined)
 	{
-		var umDatum = umData[ msg.mapIndex ] = new UmDatum();
-		umDatum.from_ccp4(msg.arrayBuffer); //pdbe and dsn9 exist
+		var mapMirror = mapMirrors[ msg.mapIndex ] = new MapMirror();
+		mapMirror.from_ccp4(msg.arrayBuffer); //pdbe and dsn9 exist
 
 		if(msg.isDiffMap)
 		{
-			umDatum.displayTypes = ['map_pos', 'map_neg'];
+			mapMirror.displayTypes = ['map_pos', 'map_neg'];
 		}
 		else
 		{
-			umDatum.displayTypes = ['map_den'];
+			mapMirror.displayTypes = ['map_den'];
 		}
 
-		umDatum.userCenterOnGrid = [Infinity,Infinity,Infinity];
-		umDatum.isolevel = Infinity;
-		umDatum.chickenWire = null;
+		mapMirror.userCenterOnGrid = [Infinity,Infinity,Infinity];
+		mapMirror.isolevel = Infinity;
+		mapMirror.chickenWire = null;
 
-		umDatum.postMessageConcerningSelf({ orthogonalMatrix:	umDatum.unit_cell.orth });
+		mapMirror.postMessageConcerningSelf({ orthogonalMatrix:	mapMirror.unit_cell.orth });
 	}
 
 	if(msg.userCenterOffGrid)
 	{
-		var umDatum = umData[msg.mapIndex];
+		var mapMirror = mapMirrors[msg.mapIndex];
 
-		var possiblyNewUserCenterOnGrid = umDatum.getPointOnGrid(msg.userCenterOffGrid);
+		var possiblyNewUserCenterOnGrid = mapMirror.getPointOnGrid(msg.userCenterOffGrid);
 		for(var i = 0; i < 3; i++)
 		{
 			possiblyNewUserCenterOnGrid[i] = blockRadius*2 * Math.round( possiblyNewUserCenterOnGrid[i] / (blockRadius*2) );
 			//urgh, don't know about the wrapping effect; maybe you want to make sure they get closer to 0? Seems fine
 		}
 
-		if(	umDatum.isolevel !== msg.isolevel ||
-			umDatum.chickenWire !== msg.chickenWire ||
-			!vecsEqual( umDatum.userCenterOnGrid, possiblyNewUserCenterOnGrid ) )
+		if(	mapMirror.isolevel !== msg.isolevel ||
+			mapMirror.chickenWire !== msg.chickenWire ||
+			!vecsEqual( mapMirror.userCenterOnGrid, possiblyNewUserCenterOnGrid ) )
 		{
-			copyVec(umDatum.userCenterOnGrid,possiblyNewUserCenterOnGrid);
-			umDatum.isolevel = msg.isolevel;
-			umDatum.chickenWire = msg.chickenWire;
+			copyVec(mapMirror.userCenterOnGrid,possiblyNewUserCenterOnGrid);
+			mapMirror.isolevel = msg.isolevel;
+			mapMirror.chickenWire = msg.chickenWire;
 
 			centerOnGridsToBeSent.length = 0;
 
 			centerOffsets.forEach( function(centerOffset)
 			{
-				var possiblyUnneededCenterOnGridToBeSent = sumOfVecs( umDatum.userCenterOnGrid, centerOffset );
+				var possiblyUnneededCenterOnGridToBeSent = sumOfVecs( mapMirror.userCenterOnGrid, centerOffset );
 				var needed = true;
 
 				for(var i = 0, il = msg.currentCenterOnGrids.length; i < il; i++)
@@ -104,45 +104,45 @@ onmessage = function(event)
 			});
 		}
 
-		var msg = {userCenterOnGrid: umDatum.userCenterOnGrid}
+		var msg = {userCenterOnGrid: mapMirror.userCenterOnGrid}
 		if( centerOnGridsToBeSent.length === 0 )
 		{
-			umDatum.postMessageConcerningSelf(msg)
+			mapMirror.postMessageConcerningSelf(msg)
 		}
 		else
 		{
 			msg.centerOnGrid = centerOnGridsToBeSent[0]
 			centerOnGridsToBeSent.splice(0,1);
 
-			msg.meshData = Array( umDatum.displayTypes.length );
+			msg.meshData = Array( mapMirror.displayTypes.length );
 			
-			for(var i = 0; i < umDatum.displayTypes.length; i++)
+			for(var i = 0; i < mapMirror.displayTypes.length; i++)
 			{
 				var meshDatum = msg.meshData[i] = {};
 
-				meshDatum.color = typeColors[umDatum.displayTypes[i]];
+				meshDatum.color = typeColors[mapMirror.displayTypes[i]];
 
-				meshDatum.relativeIsolevel = umDatum.displayTypes[i] === 'map_neg'? -umDatum.isolevel : umDatum.isolevel;
-				var absoluteIsolevel = meshDatum.relativeIsolevel * umDatum.stats.rms + umDatum.stats.mean;
+				meshDatum.relativeIsolevel = mapMirror.displayTypes[i] === 'map_neg'? -mapMirror.isolevel : mapMirror.isolevel;
+				var absoluteIsolevel = meshDatum.relativeIsolevel * mapMirror.stats.rms + mapMirror.stats.mean;
 
-				umDatum.extract_block( msg.centerOnGrid );
+				mapMirror.extract_block( msg.centerOnGrid );
 				meshDatum.wireframeGeometricPrimitives = wireframeMarchingCubes(
-					umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
-					umDatum.block._values,	umDatum.block._points,	absoluteIsolevel );
+					mapMirror.block._size[0],	mapMirror.block._size[1],	mapMirror.block._size[2],
+					mapMirror.block._values,	mapMirror.block._points,	absoluteIsolevel );
 				
-				if( !umDatum.chickenWire )
+				if( !mapMirror.chickenWire )
 				{
-					var additionForEncompassment = umDatum.displayTypes[i] === 'map_neg' ? -0.02 : 0.08;
-					var nonWireframeAbsoluteIsolevel = ( meshDatum.relativeIsolevel + additionForEncompassment ) * umDatum.stats.rms + umDatum.stats.mean;
+					var additionForEncompassment = mapMirror.displayTypes[i] === 'map_neg' ? -0.02 : 0.08;
+					var nonWireframeAbsoluteIsolevel = ( meshDatum.relativeIsolevel + additionForEncompassment ) * mapMirror.stats.rms + mapMirror.stats.mean;
 
-					umDatum.extract_block( msg.centerOnGrid, true );
+					mapMirror.extract_block( msg.centerOnGrid, true );
 					meshDatum.nonWireframeGeometricPrimitives = solidMarchingCubes(
-						umDatum.block._size[0],	umDatum.block._size[1],	umDatum.block._size[2],
-						umDatum.block._values,	umDatum.block._points,	nonWireframeAbsoluteIsolevel );
+						mapMirror.block._size[0],	mapMirror.block._size[1],	mapMirror.block._size[2],
+						mapMirror.block._values,	mapMirror.block._points,	nonWireframeAbsoluteIsolevel );
 				}
 			}
 
-			umDatum.postMessageConcerningSelf(msg);
+			mapMirror.postMessageConcerningSelf(msg);
 		}
 	}
 }
@@ -170,25 +170,25 @@ function copyVec(to,from)
 	to[2] = from[2];
 }
 
-var UmDatum = function()
+var MapMirror = function()
 {
 	this.unit_cell = null;
 	this.grid = null;
 	this.stats = { mean: 0.0, rms: 1.0 };
 	this.block = new Block();
 };
-UmDatum.prototype.postMessageConcerningSelf = function(msg)
+MapMirror.prototype.postMessageConcerningSelf = function(msg)
 {
-	msg.mapIndex = umData.indexOf(this);
+	msg.mapIndex = mapMirrors.indexOf(this);
 	postMessage(msg);
 }
 
-UmDatum.prototype.getPointOnGrid = function(point)
+MapMirror.prototype.getPointOnGrid = function(point)
 {
 	var fc = multiply([point[0],point[1],point[2]], this.unit_cell.frac);
 	return this.grid.frac2grid([fc[0], fc[1], fc[2]]);
 }
-UmDatum.prototype.getPointOffGrid = function(ijk)
+MapMirror.prototype.getPointOffGrid = function(ijk)
 {
 	var frac = this.grid.grid2frac(ijk[0],ijk[1],ijk[2]);
 	return multiply( frac, this.unit_cell.orth );
@@ -196,7 +196,7 @@ UmDatum.prototype.getPointOffGrid = function(ijk)
 
 // Extract a block of density for calculating an isosurface using the
 // separate marching cubes implementation.
-UmDatum.prototype.extract_block = function extract_block ( centerOnGrid, extraForNormals )
+MapMirror.prototype.extract_block = function extract_block ( centerOnGrid, extraForNormals )
 {
 	if (this.grid == null || this.unit_cell == null) { return; }
 
@@ -1757,14 +1757,14 @@ var edgeIndex = [[0,1], [1,2], [2,3], [3,0], [4,5], [5,6],
  */
 
 
-UmDatum.prototype.unit = 'e/\u212B\u00B3';
+MapMirror.prototype.unit = 'e/\u212B\u00B3';
 
 
 
 
 // http://www.ccp4.ac.uk/html/maplib.html#description
 // eslint-disable-next-line complexity
-UmDatum.prototype.from_ccp4 = function from_ccp4 (buf /*:ArrayBuffer*/)
+MapMirror.prototype.from_ccp4 = function from_ccp4 (buf /*:ArrayBuffer*/)
 {
 	var expand_symmetry = true;
 
@@ -1876,7 +1876,7 @@ UmDatum.prototype.from_ccp4 = function from_ccp4 (buf /*:ArrayBuffer*/)
 // DSN6 MAP FORMAT
 // http://www.uoxray.uoregon.edu/tnt/manual/node104.html
 // Density values are stored as bytes.
-UmDatum.prototype.from_dsn6 = function from_dsn6 (buf /*: ArrayBuffer*/) {
+MapMirror.prototype.from_dsn6 = function from_dsn6 (buf /*: ArrayBuffer*/) {
 	//console.log('buf type: ' + Object.prototype.toString.call(buf));
 	var u8data = new Uint8Array(buf);
 	var iview = new Int16Array(u8data.buffer);

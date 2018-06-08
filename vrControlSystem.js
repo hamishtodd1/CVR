@@ -1,5 +1,3 @@
-//Left and right on stick = contour, up and down is for currently selected menu?
-
 function initVrInputSystem(renderer,ourVrEffect)
 {
 	var cameraRepositioner = new THREE.VRControls( camera );
@@ -192,6 +190,9 @@ function initVrInputSystem(renderer,ourVrEffect)
 				controllers[ affectedControllerIndex ][propt+"Old"] = controllers[ affectedControllerIndex ][propt];
 				controllers[ affectedControllerIndex ][propt] = gamepads[k].buttons[controllerKeys[propt]].pressed;
 			}
+			controllers[ affectedControllerIndex ]["grippingSide"] = gamepads[k].buttons[controllerKeys["grippingSide"]].value > 0.7;
+			// if(!logged)console.log(gamepads[k])
+			// 	logged = 1
 
 			//gamepads[k].buttons[controllerKeys.grippingTop].value;
 

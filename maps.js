@@ -2,7 +2,9 @@
 /*
 	TODO
 		there is a "cubicles" thing in uglymol's molecules that was good for searching?
-		would be nice to have the opacity drop off away from the center. https://threejs.org/docs/#api/materials/MeshBasicMaterial.alphaMap	
+		would be nice to have the opacity drop off away from the center
+			alpha https://threejs.org/docs/#api/materials/MeshBasicMaterial.alphaMap	https://threejs.org/docs/#api/textures/DataTexture
+			Probably won't work but could try having fog, and have it turned off for everything except these
 		When you have multiple maps, urgh, only want them one at a time too
 */
 

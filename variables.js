@@ -5,24 +5,22 @@ if( !window.Worker || !navigator.getVRDisplays)
 	console.error("Missing dependency. Get chromium")
 }
 
-//-----Mathematical
-var TAU = Math.PI * 2;
-var HS3 = Math.sqrt(3)/2;
+const TAU = Math.PI * 2;
+const HS3 = Math.sqrt(3)/2;
 var zVector = new THREE.Vector3(0,0,1); //also used as a placeholder normal
 var yVector = new THREE.Vector3(0,1,0);
 var xVector = new THREE.Vector3(1,0,0);
 var zeroVector = new THREE.Vector3();
 
-//-----Fundamental
+const RIGHT_CONTROLLER_INDEX = 0;
+const LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
+const ROOM_RADIUS = 0.8;
+const TETRAHEDRAL_ANGLE = 2 * Math.atan(Math.sqrt(2))
+
 var ourClock = new THREE.Clock( true ); //.getElapsedTime ()
 var frameDelta = 0;
 var logged = 0;
-var debugging = 0;
-
-var RIGHT_CONTROLLER_INDEX = 0;
-var LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
-var ROOM_RADIUS = 0.8;
-var TETRAHEDRAL_ANGLE = 2 * Math.atan(Math.sqrt(2))
+const debugging = 0;
 
 var camera = new THREE.PerspectiveCamera( 70, //can be changed by VR effect
 		window.innerWidth / window.innerHeight,
