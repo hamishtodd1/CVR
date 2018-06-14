@@ -14,7 +14,6 @@ var zeroVector = new THREE.Vector3();
 
 const RIGHT_CONTROLLER_INDEX = 0;
 const LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
-const ROOM_RADIUS = 0.8;
 const TETRAHEDRAL_ANGLE = 2 * Math.atan(Math.sqrt(2))
 
 var ourClock = new THREE.Clock( true ); //.getElapsedTime ()
@@ -31,7 +30,7 @@ var controllers = Array(2);
 var models = [];
 var maps = [];
 
-var TEST_SPHERE = new THREE.Mesh(new THREE.EfficientSphereGeometry(0.1), new THREE.MeshBasicMaterial({color:0xFF0000}));
+var TEST_SPHERE = new THREE.Mesh(new THREE.EfficientSphereGeometry(0.01), new THREE.MeshBasicMaterial({color:0xFF0000}));
 
 var frameCount = 0;
 

@@ -45,6 +45,7 @@ TODO at some point
 	Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
 	ambient occlusion maps for all?
 	Copy and paste 3D blocks of atoms
+	Desktop view? Urgh
 
 Maya
 	Admin
@@ -175,17 +176,17 @@ Maya
 	}
 	socket.commandReactions["mapFilename"] = function(msg)
 	{
-		var req = new XMLHttpRequest();
-		req.open('GET', msg.mapFilename, true);
-		req.responseType = 'arraybuffer';
-		req.onreadystatechange = function()
-		{
-			if (req.readyState === 4)
-			{
-				Map( req.response, false);
-			}
-		};
-		req.send(null);
+		// var req = new XMLHttpRequest();
+		// req.open('GET', msg.mapFilename, true);
+		// req.responseType = 'arraybuffer';
+		// req.onreadystatechange = function()
+		// {
+		// 	if (req.readyState === 4)
+		// 	{
+		// 		Map( req.response, false);
+		// 	}
+		// };
+		// req.send(null);
 	}
 	socket.onopen = function()
 	{

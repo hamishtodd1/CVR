@@ -2,41 +2,78 @@
 
 /*
 	could have it follow your head. Probably creates too much distracting movement
+
+	Words should be small. You read them a couple times and then you know where they are
+
+	Go on, have some fun with rectange packing :D
 */
 
 function initSurroundings( renderer, loadFloor )
 {
-	var horizontal = 0.77 * TAU;
-	var curvyBackground = new THREE.Mesh( new THREE.SphereBufferGeometry( ROOM_RADIUS, 32,10,
-			-TAU/4-horizontal/2, horizontal,
+	var aroundness = 0.77 * TAU;
+	var curvyBackground = new THREE.Mesh( new THREE.SphereBufferGeometry( 1, 32,10,
+			-TAU/4-aroundness/2, aroundness,
 			TAU / 4, TAU / 8),
 		new THREE.MeshPhongMaterial({
 			color:0x6BFFCF,
 			side:THREE.BackSide,
 			shininess:100,
 			specular:0xFFFFFF,
-			flatShading:true,
+			// flatShading:true,
 		})
 	);
 	curvyBackground.scale.set(1,1.55,0.8);
+	curvyBackground.scale.multiplyScalar(0.8)
 	scene.add( curvyBackground);
 	//want it to be adjustable really, have some more little balls
 
-	// var planeRadius = 0.1; //center to side
-	// var testPlane = new THREE.Mesh(new THREE.PlaneGeometry(planeRadius*2,0.01),new THREE.MeshBasicMaterial());
-	// var theta = 3/4*TAU;
-	// var scaledEllipseMinorRadius = curvyBackground.scale.z / planeRadius;
-	// var scaledEllipseMajorRadius = curvyBackground.scale.x / planeRadius;
-	// var centerR = -1 / ( Math.cos(theta) / sq(scaledEllipseMajorRadius) + Math.sin(theta) / sq(scaledEllipseMinorRadius) );
-	// testPlane.position.set( centerR*Math.cos(theta), 0, centerR*Math.sin(theta) ); //from lots of scribbling
-	// testPlane.rotation.y = 
-	//PROBLEM WAS THAT THE VECTOR FROM THE CENTER OF THE ELLIPSE IS NOT NECESSARILY ORTHOGONAL
+	//actually better if the top is the one with both corners on
+	//Alternatively, the bottom, and then you don't tilt them at all... eh...
+	//the next problem is to work out the 
 
-	//could put crazy seldom-used things behind, or on top and underneath
-	//should be that things move each other out of the way
-	//could have a list of the buttons somewhere and you drag things in to make them do stuff woo
-	//people want to know the time and their connection speed
-	//
+	var planeWidth = 0.2; //center to side
+	var testPlaneGeometry = new THREE.SphereBufferGeometry( 1, 1,1,
+			0, planeWidth,
+			0, planeWidth*0.2 );
+	var testPlane = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry( planeWidth, planeWidth / 3 ),new THREE.MeshBasicMaterial({color:0xFF0000}) );
+	testPlane.scale.copy(curvyBackground.scale);
+	testPlane.scale.multiplyScalar( 0.98 );
+	scene.add(testPlane)
+
+	thingsToBeUpdated.push(testPlane)
+	testPlane.update = function()
+	{
+		// this.position.y = Math.sin(frameCount / 100)
+
+		var xRadius = curvyBackground.scale.x;
+		var zRadius = curvyBackground.scale.z;
+
+		this.position.x = 0//0.15*Math.sin( frameCount / 50 ) //actually some function of y
+		this.position.z = -Math.sqrt( sq(zRadius) - sq(zRadius) * sq(this.position.x) / sq(xRadius) )
+
+		//we assume its position is bottom left, and has been projected onto the ellipse
+		var usefulConstant = sq(sq(planeWidth)) / sq(zRadius) / sq(xRadius);
+		var otherCorner = testPlane.position.clone();
+		otherCorner.x = usefulConstant * testPlane.position.x + Math.sqrt(usefulConstant+1) + testPlane.position.x;
+		otherCorner.x /= usefulConstant + 1;
+		console.log( otherCorner.x ) //should be essentially just planeWidth
+
+		otherCorner.z = Math.sqrt( sq(zRadius) + sq(zRadius) * sq(otherCorner.x) / sq(xRadius) );
+		if( Math.abs( otherCorner.distanceTo(testPlane.position) - planeWidth ) > 0.01 )
+		{
+			otherCorner.z *= -1;
+		}
+		
+		otherCorner.sub(testPlane.position).normalize();
+		testPlane.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors( 
+			new THREE.Vector3(1,0,0).applyQuaternion(testPlane.quaternion),
+			otherCorner ) );
+
+		//could put crazy seldom-used things behind, or on top and underneath
+		//should be that things move each other out of the way
+		//could have a list of the buttons somewhere and you drag things in to make them do stuff woo
+		//people want to know the time and their connection speed
+	}
 	
 	if(loadFloor)
 	{
@@ -104,7 +141,7 @@ function initSurroundings( renderer, loadFloor )
 	);
 	scene.add( sky );
 
-	var shadowsPresent = true;
+	var shadowsPresent = false;
 	if(shadowsPresent)
 	{
 		renderer.shadowMap.enabled = true;
