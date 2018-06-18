@@ -21,7 +21,6 @@ function initVisiBox()
 	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.5
 	visiBox.scale.x = visiBox.scale.y * 1.4
 	visiBox.scale.z = visiBox.scale.y * 0.9
-	console.log(visiBox.scale.z)
 
 	//when you're resizing
 	// var someSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhongMaterial({color:0xFF0000}));

@@ -19,6 +19,7 @@ TODO before newbattle, July 1st
 	Urgh, irreg
 	Try on chrome canary
 
+	Expenses
 	Book Bridges travel
 	7Osme pass
 	Poland travel
@@ -107,6 +108,7 @@ Maya
 	}, false );
 	
 	initSurroundings(renderer,true);
+	initPanel();
 	initScaleStick();
 	// initMenus();
 	// initSpecatorRepresentation();

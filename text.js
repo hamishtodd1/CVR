@@ -1,4 +1,4 @@
-function makeTextSign(text, twoSided)
+function makeTextSign(text, twoSided, materialOnly)
 {
 	if(twoSided == undefined)
 	{
@@ -28,6 +28,10 @@ function makeTextSign(text, twoSided)
 	context.fillStyle = textColor;
 	context.fillText(text, canvas.width / 2, canvas.height / 2);
 
+	if(materialOnly !== undefined)
+	{
+		return new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)});
+	}
 	if(twoSided)
 	{
 		var firstSign = new THREE.Mesh(
