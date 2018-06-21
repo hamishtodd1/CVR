@@ -21,12 +21,13 @@ function establishAttachment(child, intendedParent)
 	}
 }
 
-function loop( maps, models, controllers, vrInputSystem, visiBox )
+function loop( maps, models, controllers, visiBox )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;
 	
-	vrInputSystem.update();
+	updateVrInput();
+	updatePanelInput();
 	
 	for(var i = 0; i < controllers.length; i++)
 	{

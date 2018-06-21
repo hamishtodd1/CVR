@@ -1,3 +1,5 @@
+var updateVrInput;
+
 function initVrInputSystem(renderer,ourVrEffect)
 {
 	var cameraRepositioner = new THREE.VRControls( camera );
@@ -20,8 +22,6 @@ function initVrInputSystem(renderer,ourVrEffect)
 		}
 	}, false ); 
 	
-	var vrInputSystem = {};
-
 	var controllerKeys = {
 		thumbstickButton:0,
 		grippingTop: 1,
@@ -58,7 +58,7 @@ function initVrInputSystem(renderer,ourVrEffect)
 			function ( object ) 
 			{
 				controllers[  i ].controllerModel.geometry = object.children[0].geometry;
-				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xVector,TAU/8) );
+				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xVector,0.7) );
 				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeTranslation(
 					0.008 * ( i == LEFT_CONTROLLER_INDEX?-1:1),
 					0.041,
@@ -77,10 +77,11 @@ function initVrInputSystem(renderer,ourVrEffect)
 		{
 			controllers[ i ].laser = new THREE.Mesh(
 				new THREE.CylinderBufferGeometryUncentered( laserRadius, 2), 
-				new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) 
+				new THREE.MeshBasicMaterial({color:0xFF0000, transparent:true,opacity:0.14}) 
 			);
+			controllers[i].panelPointerPosition = new THREE.Vector2();
 			controllers[ i ].laser.rotation.x = -TAU/4
-			controllers[ i ].laser.visible = false;
+			// controllers[ i ].laser.visible = false;
 			controllers[ i ].add(controllers[ i ].laser);
 			var raycaster = new THREE.Raycaster();
 			controllers[ i ].intersectLaserWithObject = function(object3D)
@@ -117,7 +118,7 @@ function initVrInputSystem(renderer,ourVrEffect)
 		loadControllerModel(i);
 	}
 
-	vrInputSystem.update = function()
+	updateVrInput = function()
 	{
 		if(cameraRepositioner)
 		{
@@ -200,6 +201,4 @@ function initVrInputSystem(renderer,ourVrEffect)
 			// controllers[ affectedControllerIndex ].controllerModel.material.color.g = controllers[ affectedControllerIndex ].button2?1:0;
 		}
 	}
-	
-	return vrInputSystem;
 }

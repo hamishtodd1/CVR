@@ -57,7 +57,7 @@ function initSurroundings( renderer, loadFloor )
 	};
 	uniforms.topColor.value.copy( new THREE.Color().setHSL( 0.6, 1, 0.6 ) );
 
-	var sky = new THREE.Mesh( 
+	var skyDome = new THREE.Mesh( 
 		new THREE.SphereGeometry( camera.far*0.99, 32, 15 ),
 		new THREE.ShaderMaterial( { 
 			vertexShader: vertexShader, 
@@ -66,16 +66,20 @@ function initSurroundings( renderer, loadFloor )
 			side: THREE.BackSide
 		})
 	);
-	scene.add( sky );
+	scene.add( skyDome );
 
 	var shadowsPresent = false;
 	if(shadowsPresent)
 	{
+		// var shadowSurface = new THREE.Mesh(new THREE.SphereBufferGeometry( 1 ).applyMatrix(new THREE.Matrix4().makeScale(panelDimensions.x,panelDimensions.y,panelDimensions.z)), new THREE.MeshBasicMaterial({side:THREE.DoubleSide}) )
+		// scene.add(shadowSurface) // want to use it for intersection and for shadow. Necessary to be in scene for former?
+
 		renderer.shadowMap.enabled = true;
 		renderer.shadowMap.type = THREE.BasicShadowMap;
 
 		controllers[0].controllerModel.castShadow = true;
 		controllers[1].controllerModel.castShadow = true;
+		//the controller lasers too?
 		backPanel.receiveShadow = true;
 		floorTile.receiveShadow = true;
 
@@ -94,4 +98,6 @@ function initSurroundings( renderer, loadFloor )
 		ourLight.shadow.mapSize.height = 512;
 		ourLight.castShadow = true;
 	}
+
+	initPanel(skyDome);
 }

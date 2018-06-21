@@ -20,12 +20,18 @@ TODO before newbattle, July 1st
 	Try on chrome canary
 
 	Expenses
-	Book Bridges travel
+	Sweden travel
 	7Osme pass
 	Poland travel
 	Get stuff from Diego
 	
 TODO at some point
+	Place atom at pointer
+		Should replace ligand builder, "add oxt to residue"
+		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
+	Anisotropic atoms? There may be some interesting stuff here
+	"Skeletonization"?
+	Everything in "Measures"
 	Ramachandran diagrams, hard spheres
 	probe dots
 	Octree selection
@@ -47,6 +53,28 @@ TODO at some point
 	ambient occlusion maps for all?
 	Copy and paste 3D blocks of atoms
 	Desktop view? Urgh
+	NCS! It is a complex-to-look-at 3D thing! Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
+
+Games to get maybe
+	UI interest
+		redout / dirt, might have more ui stuff?	
+		Vanishing realms
+		sublevel zero
+		Elite dangerous?
+		hover junkers
+		Form
+
+	Fun
+		Superhypercube
+		thumper
+		form
+		violent stuff
+			superhot		
+			Sairento
+			Fallout 4
+
+	Both
+		Lone echo
 
 Maya
 	Admin
@@ -90,7 +118,7 @@ Maya
 			setTimeout(render,pauseLength);
 		} );
 	}
-	var vrInputSystem = initVrInputSystem(renderer,ourVrEffect);
+	initVrInputSystem(renderer,ourVrEffect)
 
 	var maps = [];
 	var atoms = null; //because fixed length
@@ -107,8 +135,7 @@ Maya
 	    camera.updateProjectionMatrix();
 	}, false );
 	
-	initSurroundings(renderer,true);
-	initPanel();
+	var fakePanel = initSurroundings(renderer,true);
 	initScaleStick();
 	// initMenus();
 	// initSpecatorRepresentation();

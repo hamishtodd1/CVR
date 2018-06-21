@@ -30,7 +30,7 @@ var controllers = Array(2);
 var models = [];
 var maps = [];
 
-var TEST_SPHERE = new THREE.Mesh(new THREE.EfficientSphereGeometry(0.01), new THREE.MeshBasicMaterial({color:0xFF0000}));
+var TEST_SPHERE = new THREE.Mesh(new THREE.EfficientSphereGeometry(0.01), new THREE.MeshBasicMaterial({color:0xFFFF00}));
 
 var frameCount = 0;
 

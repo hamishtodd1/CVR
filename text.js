@@ -1,4 +1,4 @@
-function makeTextSign(text, twoSided, materialOnly)
+function makeTextSign(text, twoSided, materialOnly, originCornered)
 {
 	if(twoSided == undefined)
 	{
@@ -8,36 +8,43 @@ function makeTextSign(text, twoSided, materialOnly)
 	var canvas = document.createElement("canvas");
 	var context = canvas.getContext("2d");
 
+	var font = "Trebuchet"
 	var backgroundMargin = 50;
 	var textSize = 100;
-	context.font = textSize + "pt Arial";
+	context.font = textSize + "pt " + font;
 	var textWidth = context.measureText(text).width;
 	canvas.width = textWidth + backgroundMargin;
 	canvas.height = textSize + backgroundMargin;
 
-	context = canvas.getContext("2d");
-	context.font = textSize + "pt Arial";
+	context.font = textSize + "pt " + font;
 	context.textAlign = "center";
 	context.textBaseline = "middle";
 	
-	var backGroundColor = "white"
+	var backGroundColor = "#3F3D3F"
 	context.fillStyle = backGroundColor;
 	context.fillRect(canvas.width / 2 - textWidth / 2 - backgroundMargin / 2, canvas.height / 2 - textSize / 2 - +backgroundMargin / 2, textWidth + backgroundMargin, textSize + backgroundMargin);
 	
-	var textColor = "black"
+	var textColor = "#D3D1D3"
 	context.fillStyle = textColor;
 	context.fillText(text, canvas.width / 2, canvas.height / 2);
 
-	if(materialOnly !== undefined)
+	if(materialOnly !== undefined && materialOnly === true)
 	{
 		return new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)});
 	}
+
+	if(originCornered===undefined|| originCornered === false)
+	{
+		var geo = new THREE.PlaneGeometry(canvas.width / canvas.height, 1)
+	}
+	else
+	{
+		var geo = new THREE.OriginCorneredPlaneGeometry(canvas.width / canvas.height, 1)
+	}
+	
 	if(twoSided)
 	{
-		var firstSign = new THREE.Mesh(
-			new THREE.PlaneBufferGeometry( canvas.width / canvas.height, 1 ), 
-			new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)})
-			);
+		var firstSign = new THREE.Mesh( geo, new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)}) );
 		var secondSign = firstSign.clone();
 		secondSign.rotation.y = TAU / 2;
 		var sign = new THREE.Group();
@@ -45,10 +52,7 @@ function makeTextSign(text, twoSided, materialOnly)
 	}
 	else
 	{
-		var sign = new THREE.Mesh(
-			new THREE.PlaneBufferGeometry( canvas.width / canvas.height, 1 ), 
-			new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)})
-			);
+		var sign = new THREE.Mesh( geo, new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)}) );
 	}
 
 	return sign;

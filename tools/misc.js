@@ -62,7 +62,7 @@ function initPointer()
 		new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) 
 	);
 	pointer.add(laser);
-	laser.visible = false;
+	// laser.visible = false;
 
 	var label = makeTextSign( "pointer" );
 	label.position.z = pointerRadius;
