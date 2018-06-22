@@ -99,5 +99,5 @@ function initSurroundings( renderer, loadFloor )
 		ourLight.castShadow = true;
 	}
 
-	initPanel(skyDome);
+	initPanel();
 }

@@ -166,8 +166,6 @@ Maya
 		);
 		// initMonomerReceiver()
 
-		//maybe these things could be on a desk? Easier to pick up?
-
 		var toolSpacing = 0.15;
 		for(var i = 0; i < thingsToSpaceOut.length; i++)
 		{
@@ -205,6 +203,7 @@ Maya
 	}
 	socket.commandReactions["mapFilename"] = function(msg)
 	{
+		//not just fileloader
 		// var req = new XMLHttpRequest();
 		// req.open('GET', msg.mapFilename, true);
 		// req.responseType = 'arraybuffer';
@@ -212,7 +211,8 @@ Maya
 		// {
 		// 	if (req.readyState === 4)
 		// 	{
-		// 		Map( req.response, false);
+		// 		console.log(req.response)
+		// 		// Map( req.response, false);
 		// 	}
 		// };
 		// req.send(null);

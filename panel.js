@@ -5,26 +5,19 @@
 		load tutorial model and data
 		display manager
 
-	could have it follow your head. Probably creates too much distracting movement
-
+	could have it follow your head. Probably creates too much distracting movement.
 	Words should be small. You read them a couple times and then you know where they are
-
-	Rectange packing?
-
 	You probably want to be able to dial up and down the name sizes
 	You probably still want things to be grouped... at least before the user moves them
 
 	want it to be adjustable really, have some more little balls
-
 	Yo look into minification
-
 	Probably all these boxes will have equal width. Ehhhh...
-
-	Some binary switches, some buttons
-
 	should be that things move each other out of the way. No, normal monitor rules.
-
 	Alternative idea... they're all extruded in this ellipsoidy way, like a bunch of pipes pointed directly at you
+	Might be good to smooth the movement on the panel
+
+	Look at the origami software http://www.amandaghassaei.com/projects/origami_simulator/
 
 	Buttons and switches to have
 		merge molecules
@@ -110,10 +103,10 @@
 		When you grab it all hidden things appear
 */
 
-var addMenu;
+var addMenuToPanel;
 var updatePanelInput;
 
-function initPanel(skyDome)
+function initPanel()
 {
 	function anglesToPanel(polar, azimuthal)
 	{
@@ -126,6 +119,55 @@ function initPanel(skyDome)
 	
 	var aroundness = 4.8;
 	var downness = 1.1;
+	function polarClipToAllowedArea(polar)
+	{
+		if(polar < Math.PI)
+		{
+			if( polar > aroundness/2 ) 
+			{
+				polar = aroundness / 2;
+			}
+		}
+		else 
+		{
+			if( polar < TAU - aroundness / 2 ) 
+			{
+				polar = TAU - aroundness / 2;
+			}
+		}
+		return polar;
+	}
+	function azimuthalClipToAllowedArea(azimuthal)
+	{
+		if( azimuthal < Math.PI ) 
+		{
+			azimuthal += TAU
+		}
+
+		if( azimuthal > TAU )
+		{
+			azimuthal = TAU
+		}
+		if( azimuthal < TAU - downness ) 
+		{
+			azimuthal = TAU - downness;
+		}
+		return azimuthal;
+	}
+	//possibly unnecessary. Possibly terrible, you may be perfectly able to pick up tools from behind it!
+	// var chuckOutWidth = TAU / 16;
+	// var chuckOutHeight = TAU / 20;
+	// if( menu.azimuthal + planeAngularHeight > TAU - chuckOutHeight )
+	// {
+	// 	if(menu.polar < chuckOutWidth / 2)
+	// 	{
+	// 		menu.polar = chuckOutWidth / 2;
+	// 	}
+	// 	else if(menu.polar + planeAngularWidth > TAU - chuckOutWidth / 2)
+	// 	{
+	// 		menu.polar = TAU - chuckOutWidth / 2 - planeAngularWidth;
+	// 	}
+	// }
 
 	var quadsWide = 2,quadsTall = 2;
 	var panel = new THREE.Mesh( new THREE.PlaneGeometry(aroundness,downness,32,10),
@@ -136,8 +178,8 @@ function initPanel(skyDome)
 			// flatShading:true,
 		})
 	);
-	panel.scale.set(0.8,1.24,0.64)
-	panel.scale.setScalar(0.8)
+	panel.scale.set(0.84,1.24,0.64)
+	panel.scale.setScalar(0.84)
 	var fakePanel = new THREE.Mesh( 
 		new THREE.SphereBufferGeometry(1),
 		new THREE.MeshBasicMaterial({ side:THREE.DoubleSide }) );
@@ -162,6 +204,12 @@ function initPanel(skyDome)
 				var fromSideWithYUpwards = new THREE.Vector2(intersection.dot(flattenedOnZPlane),intersection.y)
 				controllers[i].panelPointerPosition.y = fromSideWithYUpwards.angle()
 			}
+
+			//has a bug
+			// if( controllers[i].position.length() > panel.scale.x )
+			// {
+			// 	panel.scale.setScalar( controllers[i].position.length() )
+			// }
 		}
 	}
 
@@ -175,15 +223,9 @@ function initPanel(skyDome)
 	var onColor = new THREE.Color(0x00FF00)
 	var offColor = new THREE.Color(0xFF0000);
 
-	/*
-		var thingsInMenu = [
-			{string:"Title"},
-			{string:"    Switch", switchObject:fakePanel.material, switchProperty:"visible"},
-			{string:"    Button", buttonFunction:function(){console.log("hello!")}}
-		];
-		addMenu(thingsInMenu)
-	*/
-	addMenu = function(thingsInMenu)
+	// var audio = new Audio("data/piano/A0-1-48.wav");
+	// audio.play();
+	addMenuToPanel = function(thingsInMenu)
 	{
 		var lineAngularHeight = 0.05;
 
@@ -220,8 +262,13 @@ function initPanel(skyDome)
 		}
 
 		menu.matrixAutoUpdate = false;
-		menu.polar = 0;
-		menu.azimuthal = 0;
+		menu.azimuthal = TAU;
+		menu.polar = -TAU / 8 + panel.children.length * 0.2;
+		while(menu.polar > TAU / 8)
+		{
+			menu.polar -= TAU / 4
+			menu.azimuthal -= lineAngularHeight * 3
+		}
 		menu.parentController = null;
 		panel.add(menu)
 
@@ -282,32 +329,10 @@ function initPanel(skyDome)
 				}
 			}
 
-			if(menu.polar < Math.PI)
-			{
-				if( menu.polar + planeAngularWidth > aroundness/2 ) 
-				{
-					menu.polar = aroundness / 2 - planeAngularWidth;
-				}
-			}
-			else 
-			{
-				if( menu.polar < TAU - aroundness / 2 ) 
-				{
-					menu.polar = TAU - aroundness / 2;
-				}
-			}
-			if( menu.azimuthal < Math.PI ) 
-			{
-				menu.azimuthal += TAU
-			}
-			if( menu.azimuthal + planeAngularHeight > TAU )
-			{
-				menu.azimuthal = TAU - planeAngularHeight
-			}
-			if( menu.azimuthal < TAU - downness ) 
-			{
-				menu.azimuthal = TAU - downness;
-			}
+			menu.polar = polarClipToAllowedArea(menu.polar);
+			menu.polar = polarClipToAllowedArea(menu.polar + planeAngularWidth) - planeAngularWidth;
+			menu.azimuthal = azimuthalClipToAllowedArea(menu.azimuthal);
+			menu.azimuthal = azimuthalClipToAllowedArea(menu.azimuthal + planeAngularHeight) - planeAngularHeight;
 
 			//make it so you can't put stuff directly behind visibox
 			//some little balls on the panel at your intersections
@@ -321,15 +346,23 @@ function initPanel(skyDome)
 			var basisZ = new THREE.Vector3().crossVectors(bottom,side).normalize()
 			var basisX = bottom.clone().multiplyScalar(1 / menu.geometry.vertices[1].x)
 			var basisY = side.clone().multiplyScalar(1 / menu.geometry.vertices[1].y)
+			if( basisX.length() < basisY.length() )
+			{
+				basisY.setLength(basisX.length())
+			}
+			else
+			{
+				basisX.setLength(basisY.length())
+			}
 			menu.matrix.makeBasis(basisX,basisY,basisZ)
 			menu.matrix.setPosition(bl);
 		}
 	}
 
 	var thingsInMenu = [
-		{string:"Title"},
-		{string:"    Switch", switchObject:fakePanel.material, switchProperty:"visible"},
-		{string:"    Button", buttonFunction:function(){console.log("hello!")}}
+		{string:"Example menu"},
+		{string:"    Switch", switchObject:panel.material, switchProperty:"visible"},
+		{string:"    Button", buttonFunction:function(){panel.material.color.setRGB(Math.random(),Math.random(),Math.random())}}
 	];
-	addMenu(thingsInMenu)
+	addMenuToPanel(thingsInMenu)
 }
