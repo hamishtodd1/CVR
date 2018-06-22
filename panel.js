@@ -117,7 +117,7 @@ function initPanel()
 		return vec
 	}
 	
-	var aroundness = 4.8;
+	var aroundness = 4.1;
 	var downness = 1.1;
 	function polarClipToAllowedArea(polar)
 	{
@@ -154,74 +154,87 @@ function initPanel()
 		}
 		return azimuthal;
 	}
-	//possibly unnecessary. Possibly terrible, you may be perfectly able to pick up tools from behind it!
-	// var chuckOutWidth = TAU / 16;
-	// var chuckOutHeight = TAU / 20;
-	// if( menu.azimuthal + planeAngularHeight > TAU - chuckOutHeight )
-	// {
-	// 	if(menu.polar < chuckOutWidth / 2)
-	// 	{
-	// 		menu.polar = chuckOutWidth / 2;
-	// 	}
-	// 	else if(menu.polar + planeAngularWidth > TAU - chuckOutWidth / 2)
-	// 	{
-	// 		menu.polar = TAU - chuckOutWidth / 2 - planeAngularWidth;
-	// 	}
-	// }
 
 	var quadsWide = 2,quadsTall = 2;
-	var panel = new THREE.Mesh( new THREE.PlaneGeometry(aroundness,downness,32,10),
+	var panel = new THREE.Mesh( new THREE.PlaneGeometry(aroundness,downness,32,16),
 		new THREE.MeshPhongMaterial({
-			color:0x6BFFCF,
-			shininess:100,
-			specular:0xFFFFFF,
-			// flatShading:true,
+			color:0x666666,
+			// shininess:100,
+			// specular:0xFFFFFF,
+			flatShading:true,
 		})
 	);
+	for(var i = 0; i < panel.geometry.vertices.length; i++)
+	{
+		panel.geometry.vertices[i].y -= downness / 2;
+		panel.geometry.vertices[i].copy( anglesToPanel(panel.geometry.vertices[i].x,panel.geometry.vertices[i].y,0) )
+	}
 	panel.scale.set(0.84,1.24,0.64)
 	panel.scale.setScalar(0.84)
-	var fakePanel = new THREE.Mesh( 
-		new THREE.SphereBufferGeometry(1),
+	scene.add(panel)
+
+	var collisionPanel = new THREE.Mesh( 
+		new THREE.SphereGeometry(1, 64,64),
 		new THREE.MeshBasicMaterial({ side:THREE.DoubleSide }) );
-	fakePanel.material.visible = false;
-	fakePanel.scale.copy( panel.scale )
-	scene.add( fakePanel );
+	collisionPanel.material.visible = false;
+	collisionPanel.scale.copy( panel.scale )
+	scene.add( collisionPanel );
+
+	var cursorGeometry = new THREE.EfficientSphereGeometry(0.01);
+	var cursorMaterial = new THREE.MeshPhongMaterial({color:0xffd700,shininess:100});
+	var cursors = Array(2)
+	for(var i = 0; i < 2; i++)
+	{
+		cursors[i] = new THREE.Mesh(cursorGeometry,cursorMaterial)
+		cursors[i].polar = 0;
+		cursors[i].azimuthal = 0;
+		controllers[i].cursor = cursors[i]
+		panel.add(cursors[i])
+	}
 
 	updatePanelInput = function()
 	{
+		/*
+			Having your cursor exactly on the geometry, which is an approximation, is having your cake and eating it
+			Unless you have a signed distance field
+
+			The laser should end at the cursor
+		*/
+
 		for(var i = 0; i < controllers.length; i++)
 		{
-			var intersections = controllers[i].intersectLaserWithObject(fakePanel)
+			var intersections = controllers[i].intersectLaserWithObject(collisionPanel) //we want it intersected with a perfect bloody sphere
 			if( intersections.length )
 			{
 				var intersection = intersections[0].point
 				intersection.divide(panel.scale)
 
 				var fromBelowWithZToLeft = new THREE.Vector2(-intersection.z,intersection.x)
-				controllers[i].panelPointerPosition.x = fromBelowWithZToLeft.angle()
+				cursors[i].polar = fromBelowWithZToLeft.angle();
+				cursors[i].polar = polarClipToAllowedArea( cursors[i].polar );
 
 				var flattenedOnZPlane = intersection.clone().setComponent(1,0).normalize()
 				var fromSideWithYUpwards = new THREE.Vector2(intersection.dot(flattenedOnZPlane),intersection.y)
-				controllers[i].panelPointerPosition.y = fromSideWithYUpwards.angle()
+				cursors[i].azimuthal = fromSideWithYUpwards.angle()
+				cursors[i].azimuthal = azimuthalClipToAllowedArea( cursors[i].azimuthal );
+
+				cursors[i].position.copy( intersections[0].point )
+				// cursors[i].position.copy( anglesToPanel(cursors[i].polar,cursors[i].azimuthal) )
+
+				controllers[i].laser.scale.y = controllers[i].position.distanceTo( cursors[i].position.clone().applyMatrix4(panel.matrix) )
 			}
 
-			//has a bug
-			// if( controllers[i].position.length() > panel.scale.x )
-			// {
-			// 	panel.scale.setScalar( controllers[i].position.length() )
-			// }
+			if( controllers[i].position.length() > panel.scale.x )
+			{
+				panel.scale.setScalar( controllers[i].position.length() )
+			}
 		}
 	}
 
-	for(var i = 0; i < panel.geometry.vertices.length; i++)
-	{
-		panel.geometry.vertices[i].y -= downness / 2;
-		panel.geometry.vertices[i].copy( anglesToPanel(panel.geometry.vertices[i].x,panel.geometry.vertices[i].y,0) )
-	}
-	scene.add(panel)
-
 	var onColor = new THREE.Color(0x00FF00)
 	var offColor = new THREE.Color(0xFF0000);
+	var defaultColor = new THREE.Color(0xFFFFFF);
+	var highlightedColor = cursorMaterial.color
 
 	// var audio = new Audio("data/piano/A0-1-48.wav");
 	// audio.play();
@@ -244,7 +257,7 @@ function initPanel()
 		{
 			var height = thingsInMenu.length;
 			var width = widestSignWidth
-			var outlineThickness = 0.1;
+			var outlineThickness = 0.2;
 			var menu = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(width+outlineThickness*2,height+outlineThickness*2), new THREE.MeshBasicMaterial({color:0x000000}));
 			
 			for(var i = 0; i < textMeshes.length; i++)
@@ -270,7 +283,7 @@ function initPanel()
 			menu.azimuthal -= lineAngularHeight * 3
 		}
 		menu.parentController = null;
-		panel.add(menu)
+		collisionPanel.add(menu)
 
 		var planeAngularHeight = menu.geometry.vertices[1].y * lineAngularHeight;
 		var planeAngularWidth  = menu.geometry.vertices[1].x * lineAngularHeight;
@@ -280,28 +293,38 @@ function initPanel()
 		{
 			for(var i = 0; i < thingsInMenu.length; i++)
 			{
-				for(var j = 0; j < controllers.length; j++)
+				if( textMeshes[i].material.color.equals(highlightedColor) )
 				{
-					if( controllers[j].button1 && !controllers[j].button1Old )
+					if( thingsInMenu[i].switchObject )
 					{
-						if( controllers[j].intersectLaserWithObject( textMeshes[i] ).length !== 0 )
-						{
-							if( thingsInMenu[i].buttonFunction )
-							{
-								thingsInMenu[i].buttonFunction()
-							}
-							if( thingsInMenu[i].switchObject )
-							{
-								thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty] = !thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty];
-							}
-						}
+						textMeshes[i].material.color.copy( thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty] ? onColor : offColor)
+					}
+					else
+					{
+						textMeshes[i].material.color.copy( defaultColor )
 					}
 				}
 
-				if( thingsInMenu[i].switchObject )
+				if( thingsInMenu[i].buttonFunction || thingsInMenu[i].switchObject )
 				{
-					textMeshes[i].material.color.copy( thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty] ? onColor : offColor)
-					textMeshes[i].material.needsUpdate = true; // possibly unnecessary
+					for(var j = 0; j < controllers.length; j++)
+					{
+						if( controllers[j].intersectLaserWithObject( textMeshes[i] ).length !== 0 )
+						{
+							textMeshes[i].material.color.copy( highlightedColor )
+							if( controllers[j].button1 && !controllers[j].button1Old )
+							{
+								if( thingsInMenu[i].buttonFunction )
+								{
+									thingsInMenu[i].buttonFunction()
+								}
+								if( thingsInMenu[i].switchObject )
+								{
+									thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty] = !thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty];
+								}
+							}
+						}
+					}
 				}
 			}
 
@@ -320,8 +343,8 @@ function initPanel()
 			}
 			else
 			{
-				menu.polar = menu.parentController.panelPointerPosition.x;
-				menu.azimuthal = menu.parentController.panelPointerPosition.y;
+				menu.polar = menu.parentController.cursor.polar;
+				menu.azimuthal = menu.parentController.cursor.azimuthal;
 
 				if( !menu.parentController.grippingTop)
 				{
@@ -329,17 +352,14 @@ function initPanel()
 				}
 			}
 
-			menu.polar = polarClipToAllowedArea(menu.polar);
-			menu.polar = polarClipToAllowedArea(menu.polar + planeAngularWidth) - planeAngularWidth;
-			menu.azimuthal = azimuthalClipToAllowedArea(menu.azimuthal);
-			menu.azimuthal = azimuthalClipToAllowedArea(menu.azimuthal + planeAngularHeight) - planeAngularHeight;
+			menu.polar = polarClipToAllowedArea( menu.polar );
+			menu.polar = polarClipToAllowedArea( menu.polar + planeAngularWidth ) - planeAngularWidth;
+			menu.azimuthal = azimuthalClipToAllowedArea( menu.azimuthal );
+			menu.azimuthal = azimuthalClipToAllowedArea( menu.azimuthal + planeAngularHeight ) - planeAngularHeight;
 
-			//make it so you can't put stuff directly behind visibox
-			//some little balls on the panel at your intersections
-
-			var bl = anglesToPanel(menu.polar, menu.azimuthal).multiplyScalar(0.99)
-			var tl = anglesToPanel(menu.polar, menu.azimuthal + planeAngularHeight).multiplyScalar(0.99)
-			var br = anglesToPanel(menu.polar + planeAngularWidth, menu.azimuthal).multiplyScalar(0.99)
+			var bl = anglesToPanel(menu.polar, menu.azimuthal).multiplyScalar(0.996)
+			var tl = anglesToPanel(menu.polar, menu.azimuthal + planeAngularHeight).multiplyScalar(0.996)
+			var br = anglesToPanel(menu.polar + planeAngularWidth, menu.azimuthal).multiplyScalar(0.996)
 			
 			var bottom = br.clone().sub(bl)
 			var side = tl.clone().sub(bl)

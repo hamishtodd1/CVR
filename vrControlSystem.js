@@ -76,10 +76,9 @@ function initVrInputSystem(renderer,ourVrEffect)
 
 		{
 			controllers[ i ].laser = new THREE.Mesh(
-				new THREE.CylinderBufferGeometryUncentered( laserRadius, 2), 
+				new THREE.CylinderBufferGeometryUncentered( laserRadius, 1), 
 				new THREE.MeshBasicMaterial({color:0xFF0000, transparent:true,opacity:0.14}) 
 			);
-			controllers[i].panelPointerPosition = new THREE.Vector2();
 			controllers[ i ].laser.rotation.x = -TAU/4
 			// controllers[ i ].laser.visible = false;
 			controllers[ i ].add(controllers[ i ].laser);

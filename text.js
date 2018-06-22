@@ -22,7 +22,11 @@ function makeTextSign(text, twoSided, materialOnly, originCornered)
 	
 	var backGroundColor = "#3F3D3F"
 	context.fillStyle = backGroundColor;
-	context.fillRect(canvas.width / 2 - textWidth / 2 - backgroundMargin / 2, canvas.height / 2 - textSize / 2 - +backgroundMargin / 2, textWidth + backgroundMargin, textSize + backgroundMargin);
+	context.fillRect(
+		canvas.width / 2 - textWidth / 2 - backgroundMargin / 2, 
+		canvas.height / 2 - textSize / 2 - backgroundMargin / 2,
+		textWidth + backgroundMargin, 
+		textSize + backgroundMargin);
 	
 	var textColor = "#D3D1D3"
 	context.fillStyle = textColor;
