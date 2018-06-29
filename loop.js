@@ -27,7 +27,7 @@ function loop( maps, models, controllers, visiBox )
 	frameCount++;
 	
 	updateVrInput();
-	updatePanelInput();
+	updatePanel();
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
@@ -100,10 +100,9 @@ function loop( maps, models, controllers, visiBox )
 		establishAttachment(assemblage, scene);
 	}
 
-	for( var i = 0; i < thingsToBeUpdated.length; i++)
+	for( var i = 0; i < objectsToBeUpdated.length; i++)
 	{
-		// console.log(thingsToBeUpdated[i])
-		thingsToBeUpdated[i].update();
+		objectsToBeUpdated[i].update();
 	}
 	
 	// for(var i = 0; i < maps.length; i++)

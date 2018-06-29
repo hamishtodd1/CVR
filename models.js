@@ -99,7 +99,7 @@ Atom.prototype.setLabelVisibility = function(labelVisibility)
 
 		var model = getModelWithImol(this.imol);
 		model.add( this.label );
-		thingsToBeUpdated.push(this.label);
+		objectsToBeUpdated.push(this.label.update);
 	}
 	
 	if(this.label !== undefined)
@@ -169,7 +169,7 @@ function initModelCreationSystem( visiBoxPlanes)
 	var nSphereVertices = atomGeometry.vertices.length;
 	var nSphereFaces = atomGeometry.faces.length;
 
-	makeModelFromCootString = function( modelStringCoot, thingsToBeUpdated, visiBoxPlanes, callback )
+	makeModelFromCootString = function( modelStringCoot, visiBoxPlanes, callback )
 	{
 		//position, isHydrogen, spec, "residue"
 		var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
@@ -328,7 +328,7 @@ function initModelCreationSystem( visiBoxPlanes)
 				}
 			}
 
-			console.error(JSON.stringify(bondData))
+			// console.error(JSON.stringify(bondData))
 		}
 
 		var numberOfCylinders = 0;

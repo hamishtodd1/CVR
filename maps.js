@@ -24,7 +24,7 @@ function initMapCreationSystem(visiBox)
 		maps.push(map);
 		assemblage.add(map);
 
-		var isolevel = isDiffMap ? 1.7 : 1.5;
+		var isolevel = isDiffMap ? 3.0 : 1.5;
 		var latestUserCenterOnGrid = null;
 		var waitingOnResponse = false;
 		var mostRecentBlockIsolevel = Infinity; //we care because there might be some recent arrivals whose isolevel is better than most recent
@@ -101,7 +101,7 @@ function initMapCreationSystem(visiBox)
 				map.unitCellMesh.visible = false;
 				//TODO make it movable? Keep it centered in visibox?
 
-				thingsToBeUpdated.push(map);
+				objectsToBeUpdated.push(map);
 			}
 		}
 

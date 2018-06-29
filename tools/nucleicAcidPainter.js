@@ -228,7 +228,7 @@ function initNucleicAcidPainter()
 		return newGroup;
 	}
 
-	thingsToBeUpdated.push(nucleicAcidPainter)
+	objectsToBeUpdated.push(nucleicAcidPainter)
 	nucleicAcidPainter.ordinaryParent = scene;
 	nucleicAcidPainter.update = function()
 	{

@@ -167,7 +167,7 @@ function initProteinPainter()
 
 	var activeSideChainAndHydrogen = null;
 
-	thingsToBeUpdated.push(proteinPainter)
+	objectsToBeUpdated.push(proteinPainter)
 	proteinPainter.ordinaryParent = scene;
 	proteinPainter.update = function()
 	{

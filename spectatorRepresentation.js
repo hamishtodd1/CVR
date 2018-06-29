@@ -30,7 +30,7 @@ function initSpecatorRepresentation()
 	pointer.add( new THREE.Mesh( new THREE.CylinderBufferGeometryUncentered(0.0005, 3), new THREE.MeshBasicMaterial({transparent:true,opacity:0.2}) ) );
 	head.add(pointer)
 
-	thingsToBeUpdated.push(head)
+	objectsToBeUpdated.push(head)
 	var pointsOnMouseRay = [new THREE.Vector3(),new THREE.Vector3(1,1,0)];
 	head.update = function()
 	{

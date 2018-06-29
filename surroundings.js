@@ -1,49 +1,24 @@
 'use strict';
 
-function initSurroundings( renderer, loadFloor )
+function initSurroundings( renderer )
 {
-	if(loadFloor)
-	{
-		var ourTextureLoader = new THREE.TextureLoader();
-		ourTextureLoader.crossOrigin = true;
-		var floorDimension = 8;				
-		var floorTile = new THREE.Mesh( new THREE.PlaneBufferGeometry( floorDimension, floorDimension ), new THREE.MeshLambertMaterial());
-		floorTile.position.y = -1.2;
-		floorTile.rotation.x = -TAU / 4;
-		scene.add(floorTile);
-		ourTextureLoader.load(
-			"data/textures/Floor4.png",
-			function(texture)
-			{
-				texture.magFilter = THREE.NearestFilter;
-				floorTile.material.map = texture;
-			},
-			function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
-		);
-	}
-
-	//-----------------lights
-	/*
-		Could attach one to people's heads? Hands?
-	*/
-
-	var ambientLight = new THREE.AmbientLight( 0xffffff, 0.7 );
-	// ambientLight.color.setHSL( 0.6, 1, 0.6 );
-	scene.add( ambientLight );
-
-	var ourLight = new THREE.PointLight(0xFFFFFF,1,99,0.36,0,1);
-	// ourLight.color.setHSL( 0.1, 1, 0.95 );
-	// ourLight.position.set( -1, 1.75, 1 );
-	ourLight.target = controllers[0]
-	ourLight.position.multiplyScalar( 0.1 );
-	scene.add( ourLight );
-	
-	var helperSphere = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshPhongMaterial({color:0xFF0000}));
-	helperSphere.geometry.computeBoundingSphere();
-	ourLight.boundingSphere = helperSphere.geometry.boundingSphere;
-	ourLight.ordinaryParent = scene;
-	ourLight.add(helperSphere);
-	holdables.push(ourLight)
+	//floor
+	var ourTextureLoader = new THREE.TextureLoader();
+	ourTextureLoader.crossOrigin = true;
+	var floorDimension = 8;				
+	var floorTile = new THREE.Mesh( new THREE.PlaneBufferGeometry( floorDimension, floorDimension ), new THREE.MeshLambertMaterial());
+	floorTile.position.y = -1.2;
+	floorTile.rotation.x = -TAU / 4;
+	scene.add(floorTile);
+	ourTextureLoader.load(
+		"data/textures/Floor4.png",
+		function(texture)
+		{
+			texture.magFilter = THREE.NearestFilter;
+			floorTile.material.map = texture;
+		},
+		function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
+	);
 
 	//------------Sky
 
@@ -68,11 +43,35 @@ function initSurroundings( renderer, loadFloor )
 	);
 	scene.add( skyDome );
 
+	//-----------------lights
+	/*
+		Could attach one to people's heads? Hands?
+	*/
+
+	var ambientLight = new THREE.AmbientLight( 0xffffff, 0.7 );
+	// ambientLight.color.setHSL( 0.6, 1, 0.6 );
+	scene.add( ambientLight );
+
+	var ourLight = new THREE.PointLight(0xFFFFFF,1,99,0.36,0,1);
+	// ourLight.color.setHSL( 0.1, 1, 0.95 );
+	// ourLight.position.set( -1, 1.75, 1 );
+	ourLight.target = controllers[0]
+	ourLight.position.multiplyScalar( 0.1 );
+	scene.add( ourLight );
+	
+	var helperSphere = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshPhongMaterial({color:0xFF0000}));
+	helperSphere.geometry.computeBoundingSphere();
+	ourLight.boundingSphere = helperSphere.geometry.boundingSphere;
+	ourLight.ordinaryParent = scene;
+	ourLight.add(helperSphere);
+	holdables.push(ourLight)
+
 	var shadowsPresent = false;
 	if(shadowsPresent)
 	{
 		// var shadowSurface = new THREE.Mesh(new THREE.SphereBufferGeometry( 1 ).applyMatrix(new THREE.Matrix4().makeScale(panelDimensions.x,panelDimensions.y,panelDimensions.z)), new THREE.MeshBasicMaterial({side:THREE.DoubleSide}) )
 		// scene.add(shadowSurface) // want to use it for intersection and for shadow. Necessary to be in scene for former?
+		//there's an argument for having the shadow of the panel on the floor
 
 		renderer.shadowMap.enabled = true;
 		renderer.shadowMap.type = THREE.BasicShadowMap;

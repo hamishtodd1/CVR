@@ -22,6 +22,7 @@ centerOffsets.sort(function (vec1,vec2)
 {
 	return vecLengthSq(vec1) - vecLengthSq(vec2);
 });
+// centerOffsets = [[0,0,0]]
 var centerOnGridsToBeSent = [];
 
 function logExtremes(array,indexToInspect)
@@ -31,9 +32,13 @@ function logExtremes(array,indexToInspect)
 	for(var i = 0; i < array.length; i++)
 	{
 		if(array[i][indexToInspect] < lowest)
+		{
 			lowest = array[i][indexToInspect];
+		}
 		if(array[i][indexToInspect] > highest)
+		{
 			highest = array[i][indexToInspect];
+		}
 	}
 	console.log(lowest,highest)
 }
@@ -135,7 +140,7 @@ onmessage = function(event)
 					var additionForEncompassment = mapMirror.displayTypes[i] === 'map_neg' ? -0.02 : 0.08;
 					var nonWireframeAbsoluteIsolevel = ( meshDatum.relativeIsolevel + additionForEncompassment ) * mapMirror.stats.rms + mapMirror.stats.mean;
 
-					mapMirror.extract_block( msg.centerOnGrid, true );
+					mapMirror.extract_block( msg.centerOnGrid,true );
 					meshDatum.nonWireframeGeometricPrimitives = solidMarchingCubes(
 						mapMirror.block._size[0],	mapMirror.block._size[1],	mapMirror.block._size[2],
 						mapMirror.block._values,	mapMirror.block._points,	nonWireframeAbsoluteIsolevel );
@@ -144,6 +149,142 @@ onmessage = function(event)
 
 			mapMirror.postMessageConcerningSelf(msg);
 		}
+	}
+}
+
+function wireframeMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
+{
+	if(values == null || points == null)
+	{
+		return;
+	}
+
+	var method = "squarish";
+	var cubeVerts = [[0,0,0], [1,0,0], [1,1,0], [0,1,0],
+					 [0,0,1], [1,0,1], [1,1,1], [0,1,1]];
+	
+	var cubeOffsets = [];
+	for (var i = 0; i < 8; ++i)
+	{
+		var v = cubeVerts[i]
+		cubeOffsets.push(v[0] + size_z * (v[1] + size_y * v[2]));
+	}
+
+	var seg_table = (method === 'notSquarish' ? segTable : segTable2);
+	var vertexIndicesForThisCube = new Array(12);
+	var p0 = [0, 0, 0];
+	var cornerPositions = [p0, p0, p0, p0, p0, p0, p0, p0];
+	var cornerValues = new Float32Array(8);
+
+	var vertices = [];
+	var segments = [];
+	var faces = [];
+	var vertex_count = 0;
+	for (var x = 0; x < size_x - 1; x++) {
+	for (var y = 0; y < size_y - 1; y++) {
+	for (var z = 0; z < size_z - 1; z++) {
+
+		var offset0 = z + size_z * (y + size_y * x);
+
+		var i = (void 0);
+		var j = (void 0);
+		var cubeindex = 0;
+		for (i = 0; i < 8; ++i)
+		{
+			j = offset0 + cubeOffsets[i];
+			cornerPositions[i] = points[j];
+			cornerValues[i] = values[j];
+			cubeindex |= (cornerValues[i] < isolevel) ? 1 << i : 0;
+		}
+		if (cubeindex === 0 || cubeindex === 255) { continue; }
+
+
+		// 12 bit number, indicates which edges are crossed by the isosurface
+		var edge_mask = edgeTable[cubeindex];
+
+		// check which edges are crossed, and estimate the point location
+		// using a weighted average of scalar values at edge endpoints.
+		for (i = 0; i < 12; ++i) 
+		{
+			if ((edge_mask & (1 << i)) !== 0)
+			{
+				var e = edgeIndex[i];
+				var mu = (isolevel - cornerValues[e[0]]) /
+						 (cornerValues[e[1]] - cornerValues[e[0]]);
+				var p1 = cornerPositions[e[0]];
+				var p2 = cornerPositions[e[1]];
+
+				vertices.push(	p1[0] + (p2[0] - p1[0]) * mu,
+								p1[1] + (p2[1] - p1[1]) * mu,
+								p1[2] + (p2[2] - p1[2]) * mu);
+				vertexIndicesForThisCube[i] = vertex_count++;
+			}
+		}
+		var t = seg_table[cubeindex];
+		for (i = 0; i < t.length; i++) {
+			segments.push(vertexIndicesForThisCube[t[i]]);
+		}
+	}
+	}
+	}
+
+	return {vertices:vertices,segments:segments};
+}
+
+function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
+{
+	if (values == null || points == null)
+	{
+		return;
+	}
+
+	//TODO formerly 12 was frikkin 3
+	//setting to 9 because it should be divisible by 9
+	//threejsMC seemed confident they wouldn't be overflowed. They were. Come here if the surface is somehow cut off
+	//maybe it was clever about how it divided stuff up?
+	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * 9 );
+	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * 9 );
+	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * 9 );
+	solidMcScope.count = 0;
+	solidMcScope.values = values;
+
+	var cubeVerts = [[0,0,0], [1,0,0], [1,1,0], [0,1,0],
+					 [0,0,1], [1,0,1], [1,1,1], [0,1,1]];	
+	solidMcScope.cubeOffsets = [];
+	for (var i = 0; i < 8; ++i)
+	{
+		var v = cubeVerts[i]
+		solidMcScope.cubeOffsets.push(v[0] + size_z * (v[1] + size_y * v[2]));
+	}
+
+	// var sample = 3;
+	// for (var x = 3; x < sample+1; x++) {
+	// for (var y = 0; y < 1; y++) {
+	// for (var z = 0; z < 1; z++) {
+	for (var x = 1; x < size_x - 2; x++) {
+	for (var y = 1; y < size_y - 2; y++) {
+	for (var z = 1; z < size_z - 2; z++) {
+		var offset0 = z + size_z * (y + size_y * x);
+
+		polygonize( 
+			offset0 + solidMcScope.cubeOffsets[0], offset0 + solidMcScope.cubeOffsets[4],
+			offset0 + solidMcScope.cubeOffsets[7], offset0 + solidMcScope.cubeOffsets[3],
+			offset0 + solidMcScope.cubeOffsets[1], offset0 + solidMcScope.cubeOffsets[5],
+			offset0 + solidMcScope.cubeOffsets[6], offset0 + solidMcScope.cubeOffsets[2],
+			points, isolevel );
+	}
+	}
+	}
+
+	for ( var i = solidMcScope.count * 3, il = solidMcScope.positionArray.length; i < il; i ++ )
+	{
+		solidMcScope.positionArray[ i ] = 0.0;
+	}
+
+	return {
+		count:solidMcScope.count,
+		positionArray:solidMcScope.positionArray,
+		normalArray:solidMcScope.normalArray
 	}
 }
 
@@ -245,62 +386,7 @@ MapMirror.prototype.extract_block = function extract_block ( centerOnGrid, extra
 	this.block._size = size;
 };
 
-function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
-{
-	if (values == null || points == null)
-	{
-		return;
-	}
 
-	//TODO formerly 12 was frikkin 3
-	//setting to 9 because it should be divisible by 9
-	//threejsMC seemed confident they wouldn't be overflowed. They were. Come here if the surface is somehow cut off
-	//maybe it was clever about how it divided stuff up?
-	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * 9 );
-	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * 9 );
-	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * 9 );
-	solidMcScope.count = 0;
-	solidMcScope.values = values;
-
-	var cubeVerts = [[0,0,0], [1,0,0], [1,1,0], [0,1,0],
-					 [0,0,1], [1,0,1], [1,1,1], [0,1,1]];	
-	solidMcScope.cubeOffsets = [];
-	for (var i = 0; i < 8; ++i)
-	{
-		var v = cubeVerts[i]
-		solidMcScope.cubeOffsets.push(v[0] + size_z * (v[1] + size_y * v[2]));
-	}
-
-	// var sample = 3;
-	// for (var x = 3; x < sample+1; x++) {
-	// for (var y = 0; y < 1; y++) {
-	// for (var z = 0; z < 1; z++) {
-	for (var x = 1; x < size_x - 2; x++) {
-	for (var y = 1; y < size_y - 2; y++) {
-	for (var z = 1; z < size_z - 2; z++) {
-		var offset0 = z + size_z * (y + size_y * x);
-
-		polygonize( 
-			offset0 + solidMcScope.cubeOffsets[0], offset0 + solidMcScope.cubeOffsets[4],
-			offset0 + solidMcScope.cubeOffsets[7], offset0 + solidMcScope.cubeOffsets[3],
-			offset0 + solidMcScope.cubeOffsets[1], offset0 + solidMcScope.cubeOffsets[5],
-			offset0 + solidMcScope.cubeOffsets[6], offset0 + solidMcScope.cubeOffsets[2],
-			points, isolevel );
-	}
-	}
-	}
-
-	for ( var i = solidMcScope.count * 3, il = solidMcScope.positionArray.length; i < il; i ++ )
-	{
-		solidMcScope.positionArray[ i ] = 0.0;
-	}
-
-	return {
-		count:solidMcScope.count,
-		positionArray:solidMcScope.positionArray,
-		normalArray:solidMcScope.normalArray
-	}
-}
 
 function polygonize( 
 	q,q1,q1y,qy,qz,q1z,q1yz,qyz,
@@ -312,6 +398,8 @@ function polygonize(
 		fx2 = points[q1][0],
 		fy2 = points[qy][1],
 		fz2 = points[qz][2];
+
+	//ok so, don't assume you can just add shit! have to use whole cube!
 
 	// if(q === 0) console.log(fx) 
 
@@ -346,7 +434,7 @@ function polygonize(
 	{
 		compNorm( q );
 		compNorm( q1 );
-		insertVertexInterpolatedOverX( q * 3, 0, isolevel, fx, fy, fz, fx2, field0, field1 );
+		insertVertexInterpolatedOverX( q * 3, 0, isolevel, points[q], points[q1], field0, field1 );
 
 	}
 
@@ -354,7 +442,7 @@ function polygonize(
 	{
 		compNorm( q1 );
 		compNorm( q1y );
-		insertVertexInterpolatedOverY( q1 * 3,q1y*3, 3, isolevel, fx2, fy, fz, fy2, field1, field3 );
+		insertVertexInterpolatedOverY( q1 * 3,q1y*3, 3, isolevel, points[q1], points[q1y], field1, field3 );
 
 	}
 
@@ -362,7 +450,7 @@ function polygonize(
 	{
 		compNorm( qy );
 		compNorm( q1y );
-		insertVertexInterpolatedOverX( qy * 3, 6, isolevel, fx, fy2, fz, fx2, field2, field3 );
+		insertVertexInterpolatedOverX( qy * 3, 6, isolevel, points[qy], points[q1y], field2, field3 );
 
 	}
 
@@ -370,7 +458,7 @@ function polygonize(
 	{
 		compNorm( q );
 		compNorm( qy );
-		insertVertexInterpolatedOverY( q * 3,qy*3, 9, isolevel, fx, fy, fz, fy2, field0, field2 );
+		insertVertexInterpolatedOverY( q * 3,qy*3, 9, isolevel, points[q], points[qy], field0, field2 );
 
 	}
 
@@ -380,7 +468,7 @@ function polygonize(
 	{
 		compNorm( qz );
 		compNorm( q1z );
-		insertVertexInterpolatedOverX( qz * 3, 12, isolevel, fx, fy, fz2, fx2, field4, field5 );
+		insertVertexInterpolatedOverX( qz * 3, 12, isolevel, points[qz], points[q1z], field4, field5 );
 
 	}
 
@@ -388,7 +476,7 @@ function polygonize(
 	{
 		compNorm( q1z );
 		compNorm( q1yz );
-		insertVertexInterpolatedOverY( q1z * 3,q1yz*3, 15, isolevel, fx2, fy, fz2, fy2, field5, field7 );
+		insertVertexInterpolatedOverY( q1z * 3,q1yz*3, 15, isolevel, points[q1z], points[q1yz], field5, field7 );
 
 	}
 
@@ -396,7 +484,7 @@ function polygonize(
 	{
 		compNorm( qyz );
 		compNorm( q1yz );
-		insertVertexInterpolatedOverX( qyz * 3, 18, isolevel, fx, fy2, fz2, fx2, field6, field7 );
+		insertVertexInterpolatedOverX( qyz * 3, 18, isolevel, points[qyz], points[q1yz], field6, field7 );
 
 	}
 
@@ -404,7 +492,7 @@ function polygonize(
 	{
 		compNorm( qz );
 		compNorm( qyz );
-		insertVertexInterpolatedOverY( qz * 3,qyz*3, 21, isolevel, fx, fy, fz2, fy2, field4, field6 );
+		insertVertexInterpolatedOverY( qz * 3,qyz*3, 21, isolevel, points[qz], points[qyz], field4, field6 );
 
 	}
 
@@ -414,7 +502,7 @@ function polygonize(
 	{
 		compNorm( q );
 		compNorm( qz );
-		insertVertexInterpolatedOverZ( q * 3, qz*3,24, isolevel, fx, fy, fz, fz2, field0, field4 );
+		insertVertexInterpolatedOverZ( q * 3, qz*3,24, isolevel, points[q], points[qz], field0, field4 );
 
 	}
 
@@ -422,7 +510,7 @@ function polygonize(
 	{
 		compNorm( q1 );
 		compNorm( q1z );
-		insertVertexInterpolatedOverZ( q1 * 3, q1z*3,27, isolevel, fx2, fy,  fz, fz2, field1, field5 );
+		insertVertexInterpolatedOverZ( q1 * 3, q1z*3,27, isolevel, points[q1], points[q1z], field1, field5 );
 
 	}
 
@@ -430,7 +518,7 @@ function polygonize(
 	{
 		compNorm( q1y );
 		compNorm( q1yz );
-		insertVertexInterpolatedOverZ( q1y * 3, q1yz*3,30, isolevel, fx2, fy2, fz, fz2, field3, field7 );
+		insertVertexInterpolatedOverZ( q1y * 3, q1yz*3,30, isolevel, points[q1y], points[q1yz], field3, field7 );
 
 	}
 
@@ -438,7 +526,7 @@ function polygonize(
 	{
 		compNorm( qy );
 		compNorm( qyz );
-		insertVertexInterpolatedOverZ( qy * 3, qyz*3,33, isolevel, fx,  fy2, fz, fz2, field2, field6 );
+		insertVertexInterpolatedOverZ( qy * 3, qyz*3,33, isolevel, points[qy], points[qyz], field2, field6 );
 
 	}
 
@@ -489,28 +577,28 @@ function polygonize(
 	return numtris;
 }
 
-function insertVertexInterpolatedOverX( q, offset, isol, x, y, z, x2, valp1, valp2 )
+function insertVertexInterpolatedOverX( q, offset, isol, p, p2, valp1, valp2 )
 {
 	var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
 		nc = solidMcScope.normalCache;
 
-	solidMcScope.vlist[ offset + 0 ] = lerp( x, x2, mu );
-	solidMcScope.vlist[ offset + 1 ] = y;
-	solidMcScope.vlist[ offset + 2 ] = z;
+	solidMcScope.vlist[ offset + 0 ] = lerp( p[0], p2[0], mu );
+	solidMcScope.vlist[ offset + 1 ] = lerp( p[1], p2[1], mu );
+	solidMcScope.vlist[ offset + 2 ] = lerp( p[2], p2[2], mu );
 
 	solidMcScope.nlist[ offset + 0 ] = lerp( nc[ q + 0 ], nc[ q + 3 ], mu );
 	solidMcScope.nlist[ offset + 1 ] = lerp( nc[ q + 1 ], nc[ q + 4 ], mu );
 	solidMcScope.nlist[ offset + 2 ] = lerp( nc[ q + 2 ], nc[ q + 5 ], mu );
 }
 
-function insertVertexInterpolatedOverY( q, q2, offset, isol, x, y, z, y2, valp1, valp2 )
+function insertVertexInterpolatedOverY( q, q2, offset, isol, p, p2, valp1, valp2 )
 {
 	var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
 		nc = solidMcScope.normalCache;
 
-	solidMcScope.vlist[ offset + 0 ] = x;
-	solidMcScope.vlist[ offset + 1 ] = lerp( y, y2, mu );
-	solidMcScope.vlist[ offset + 2 ] = z;
+	solidMcScope.vlist[ offset + 0 ] = lerp( p[0], p2[0], mu );
+	solidMcScope.vlist[ offset + 1 ] = lerp( p[1], p2[1], mu );
+	solidMcScope.vlist[ offset + 2 ] = lerp( p[2], p2[2], mu );
 
 	solidMcScope.nlist[ offset + 0 ] = lerp( nc[ q + 0 ], nc[ q2 + 0 ], mu );
 	solidMcScope.nlist[ offset + 1 ] = lerp( nc[ q + 1 ], nc[ q2 + 1 ], mu );
@@ -518,14 +606,14 @@ function insertVertexInterpolatedOverY( q, q2, offset, isol, x, y, z, y2, valp1,
 
 }
 
-function insertVertexInterpolatedOverZ( q, q2, offset, isol, x, y, z, z2, valp1, valp2 )
+function insertVertexInterpolatedOverZ( q, q2, offset, isol, p, p2, valp1, valp2 )
 {
 	var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
 		nc = solidMcScope.normalCache;
 
-	solidMcScope.vlist[ offset + 0 ] = x;
-	solidMcScope.vlist[ offset + 1 ] = y;
-	solidMcScope.vlist[ offset + 2 ] = lerp( z, z2, mu );
+	solidMcScope.vlist[ offset + 0 ] = lerp( p[0], p2[0], mu );
+	solidMcScope.vlist[ offset + 1 ] = lerp( p[1], p2[1], mu );
+	solidMcScope.vlist[ offset + 2 ] = lerp( p[2], p2[2], mu );
 
 	solidMcScope.nlist[ offset + 0 ] = lerp( nc[ q + 0 ], nc[ q2 + 0 ], mu );
 	solidMcScope.nlist[ offset + 1 ] = lerp( nc[ q + 1 ], nc[ q2 + 1 ], mu );
@@ -855,85 +943,7 @@ solidMcScope.triTable = new Int32Array( [
 0, 3, 8, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1,
 - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1 ] );
 
-//---------------------boring way of doing it
-function wireframeMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
-{
-	if (values == null || points == null)
-	{
-		return;
-	}
 
-	var method = "squarish";
-	var cubeVerts = [[0,0,0], [1,0,0], [1,1,0], [0,1,0],
-					 [0,0,1], [1,0,1], [1,1,1], [0,1,1]];
-	
-	var cubeOffsets = [];
-	for (var i = 0; i < 8; ++i)
-	{
-		var v = cubeVerts[i]
-		cubeOffsets.push(v[0] + size_z * (v[1] + size_y * v[2]));
-	}
-
-	var seg_table = (method === 'notSquarish' ? segTable : segTable2);
-	var vertexIndicesForThisCube = new Array(12);
-	var p0 = [0, 0, 0];
-	var cornerPositions = [p0, p0, p0, p0, p0, p0, p0, p0];
-	var cornerValues = new Float32Array(8);
-
-	var vertices = [];
-	var segments = [];
-	var faces = [];
-	var vertex_count = 0;
-	for (var x = 0; x < size_x - 1; x++) {
-	for (var y = 0; y < size_y - 1; y++) {
-	for (var z = 0; z < size_z - 1; z++) {
-
-		var offset0 = z + size_z * (y + size_y * x);
-
-		var i = (void 0);
-		var j = (void 0);
-		var cubeindex = 0;
-		for (i = 0; i < 8; ++i)
-		{
-			j = offset0 + cubeOffsets[i];
-			cornerPositions[i] = points[j];
-			cornerValues[i] = values[j];
-			cubeindex |= (cornerValues[i] < isolevel) ? 1 << i : 0;
-		}
-		if (cubeindex === 0 || cubeindex === 255) { continue; }
-
-
-		// 12 bit number, indicates which edges are crossed by the isosurface
-		var edge_mask = edgeTable[cubeindex];
-
-		// check which edges are crossed, and estimate the point location
-		// using a weighted average of scalar values at edge endpoints.
-		for (i = 0; i < 12; ++i) 
-		{
-			if ((edge_mask & (1 << i)) !== 0)
-			{
-				var e = edgeIndex[i];
-				var mu = (isolevel - cornerValues[e[0]]) /
-							(cornerValues[e[1]] - cornerValues[e[0]]);
-				var p1 = cornerPositions[e[0]];
-				var p2 = cornerPositions[e[1]];
-
-				vertices.push(	p1[0] + (p2[0] - p1[0]) * mu,
-								p1[1] + (p2[1] - p1[1]) * mu,
-								p1[2] + (p2[2] - p1[2]) * mu);
-				vertexIndicesForThisCube[i] = vertex_count++;
-			}
-		}
-		var t = seg_table[cubeindex];
-		for (i = 0; i < t.length; i++) {
-			segments.push(vertexIndicesForThisCube[t[i]]);
-		}
-	}
-	}
-	}
-
-	return {vertices:vertices,segments:segments};
-}
 
 var edgeTable = new Int32Array([
 	0x0  , 0x0  , 0x202, 0x302, 0x406, 0x406, 0x604, 0x704,

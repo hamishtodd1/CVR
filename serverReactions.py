@@ -15,7 +15,7 @@ def connect(self):
 
 	modelImol = 0
 	modelMsg = {'command':"model"}
-	modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) )
+	modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) ) #does it need to be in a string? environment distances didn't need to be
 	self.write_message( modelMsg )
 
 	# mapMsg = {'command':"mapFilename",'mapFilename':'data/tutorial.map'}

@@ -1,26 +1,17 @@
-'use strict';
-/*
-TODO before newbattle, July 1st
-	Can load a map, can load a molecule
-	Fix the atom deletion problems
+ 'use strict';
+/* 
 	You want a "reset server" button before you make them interact again
 	Do the whole coot tutorial, and the EM one too
+		Can load a map, can load a molecule
+		Fix the atom deletion problems
 		Painter works as "add terminal residue"
 		Refinement
 			Grabbing two ends of a chain defines it as refinement area
 			Force restraints
 		Mutate / everything else sitting there in script
 		Spectation, or at least "Save"
-		Transfer the damn map. Need to be able to open them too...
-	Release
-		Little video of environment distances for drug discoverers - 4zzn
-		Extended video showing all features for "beta"
-		Send to Oculus
-	Urgh, irreg
-	Try on chrome canary
 
 	Expenses
-	Sweden travel
 	7Osme pass
 	Poland travel
 	Get stuff from Diego
@@ -95,7 +86,7 @@ Maya
 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	renderer.localClippingEnabled = true; //necessary if it's done in a shader you write?
+	renderer.localClippingEnabled = true;
 	renderer.sortObjects = false;
 	document.body.appendChild( renderer.domElement );
 
@@ -118,7 +109,6 @@ Maya
 			setTimeout(render,pauseLength);
 		} );
 	}
-	initVrInputSystem(renderer,ourVrEffect)
 
 	var maps = [];
 	var atoms = null; //because fixed length
@@ -135,64 +125,50 @@ Maya
 	    camera.updateProjectionMatrix();
 	}, false );
 	
-	var fakePanel = initSurroundings(renderer,true);
+	initSurroundings(renderer);
 	initScaleStick();
+	// initKeyboardInput();
+	// initMonomerReceiver()
 	// initMenus();
 	// initSpecatorRepresentation();
-	
-	function initPartTwo(modelDataString)
-	{
-		// makeModelFromCootString( modelDataString, visiBox.planes );
-		// initStats(visiBox.position);
-
-		var thingsToSpaceOut = [];
-
-		var visiblePlace = visiBox.position.clone()
-		// assemblage.worldToLocal(visiblePlace)
-		thingsToSpaceOut.push(
-			//coot specific
-			// initMutator(),
-			// initAtomDeleter(),
-			// initResidueDeleter(),
-			// initEnvironmentDistance(),
-			// initAutoRotamer(),
-			// initRefiner(),
-
-			// initPointer(),
-			// initAtomLabeller(),
-			// initRigidBodyMover(),
-			// initProteinPainter(),
-			// initNucleicAcidPainter()
-		);
-		// initMonomerReceiver()
-
-		var toolSpacing = 0.15;
-		for(var i = 0; i < thingsToSpaceOut.length; i++)
-		{
-			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.16);
-		}
-	}
-
 	initSocket();
 	initModelCreationSystem(visiBox.planes);
 	initMapCreationSystem(visiBox)
+	// initStats(visiBox.position);
+	initVrInputSystem(renderer,ourVrEffect)
 
+	function loadTutorialModelAndData()
+	{
+		//not just fileloader
+		var req = new XMLHttpRequest();
+		req.open('GET', 'data/drugIsInteresting.map', true);
+		req.responseType = 'arraybuffer';
+		req.onreadystatechange = function()
+		{
+			if (req.readyState === 4)
+			{
+				Map( req.response, false);
+			}
+		};
+		req.send(null);
+
+		// new THREE.FileLoader().load( "data/tutorialGetBondsRepresentation.txt",
+		// 	function( modelDataString )
+		// 	{
+		// 		makeModelFromCootString( modelDataString, visiBox.planes );
+		// 	}
+		// );
+	}
+	loadTutorialModelAndData()
+	addSingleFunctionToPanel(loadTutorialModelAndData);
+
+	socket.commandReactions["loadTutorialModelAndData"] = function(msg)
+	{
+		// loadTutorialModelAndData()
+	}
 	socket.commandReactions["model"] = function(msg)
 	{
-		//does it need to be in a string? environment distances didn't need to be
-		if(msg.modelDataString)
-		{
-			initPartTwo(msg.modelDataString)
-		}
-		else
-		{
-			new THREE.FileLoader().load( "data/tutorialGbr.txt",
-				function( modelDataString )
-				{
-					initPartTwo(modelDataString)
-				}
-			);
-		}
+		makeModelFromCootString( msg.modelDataString, visiBox.planes );
 	}
 	socket.commandReactions["map"] = function(msg)
 	{
@@ -201,24 +177,34 @@ Maya
 		// maps.push(newMap);
 		// assemblage.add(newMap)
 	}
-	socket.commandReactions["mapFilename"] = function(msg)
-	{
-		//not just fileloader
-		// var req = new XMLHttpRequest();
-		// req.open('GET', msg.mapFilename, true);
-		// req.responseType = 'arraybuffer';
-		// req.onreadystatechange = function()
-		// {
-		// 	if (req.readyState === 4)
-		// 	{
-		// 		console.log(req.response)
-		// 		// Map( req.response, false);
-		// 	}
-		// };
-		// req.send(null);
-	}
 	socket.onopen = function()
 	{
+		var thingsToSpaceOut = []; //can do better than that now
+
+		var visiblePlace = visiBox.position.clone()
+		// assemblage.worldToLocal(visiblePlace)
+		thingsToSpaceOut.push(
+			//coot specific
+			initMutator(),
+			// initAtomDeleter(),
+			// initResidueDeleter(),
+			initEnvironmentDistance(),
+			initAutoRotamer(),
+			initRefiner(),
+
+			initPointer(),
+			// initAtomLabeller(),
+			initRigidBodyMover(),
+			initProteinPainter(),
+			initNucleicAcidPainter()
+		);
+
+		var toolSpacing = 0.15;
+		for(var i = 0; i < thingsToSpaceOut.length; i++)
+		{
+			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.16);
+		}
+
 		//hmm there was "animate" above, do you need this?
 		render();
 	}

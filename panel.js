@@ -2,10 +2,9 @@
 /*
 	TODO
 		reproduce current graph
-		load tutorial model and data
 		display manager
 
-	could have it follow your head. Probably creates too much distracting movement.
+	Could have it follow your head. Probably creates too much distracting movement.
 	Words should be small. You read them a couple times and then you know where they are
 	You probably want to be able to dial up and down the name sizes
 	You probably still want things to be grouped... at least before the user moves them
@@ -19,79 +18,7 @@
 
 	Look at the origami software http://www.amandaghassaei.com/projects/origami_simulator/
 
-	Buttons and switches to have
-		merge molecules
-		List of all atoms, all residues
-		Put your tools on there
-		Load tutorial model and data
-		sequence view
-		Group work features
-			“round table” button for if there are multiple people - makes it so all your heads are at reasonable angle
-			"Synchronize view"
-		"Superpose"? LSQ, SSSM
-		For you: "check synchronization of coot and CVR molecule"
-		Save, load, export map
-		Stats obv
-		pukkers
-		alignment vs pir
-		Control bindings
-		Stuff about sequence! Eg reverse direction
-		Displays eg ramachandran for whatever you're currently changing. Like dials
-		Get monomer, get map and molecule?
-		Refmac
-		Undo/redo? Help vive people!
-		Graphics quality?
-		Play tutorial video
-		Hydrogen visible
-		The time and date, your internet connection speed
-		Refinement options
-			Use Torsion restraints (default off)
-			Use planar peptide restraints (default on)
-			Use trans peptide restraints(default on)
-			Ramachandran restraints(default off)
-			Alpha helix restraints(default off)
-			beta strand restraints(default off)
-			Refinement "weight"?
-		"Other modelling tools"
-			cis <-> trans
-			base pair
-			skeletonize map
-			sharpen map?
-			Find
-				Waters
-				Secondary structure
-				Ligands
-		Haven't been through "Ligand" or "Extensions". Various things in "validate"
-		list of the buttons on your controller, you drag things in to make them do stuff
-
-		Display manager; master switches needed for all
-			Visibility
-			Delete
-			Map
-				isDiffmap
-				Active for refinement
-				Color (have a wheel)
-				Contour level scrolls
-				Opacity? Urgh fuck that
-				Block size (WARNING MOTHER FUCKER!!!)
-				Sample rate
-				Chickenwire
-				Show unit cell
-			Molecule
-				Show symmetry atoms
-				Which one is affected by "undo"
-				Which one gets atoms and chains added to it
-				Carbon color
-				Display methods
-					Bond radius
-					atom radiuse
-					cAlpha only
-					Waters visible
-					Color by
-						B factors / occupancy / other metric
-						Chain
-						Atom (default)
-						amino acid (i.e. rainbow)
+	Put "recenter panel" buttons behind the panel
 */
 
 /*
@@ -103,8 +30,132 @@
 		When you grab it all hidden things appear
 */
 
-var addMenuToPanel;
-var updatePanelInput;
+function initPanelDemo()
+{
+	var thingsInMenu = [
+		{string:"Example menu"},
+		{string:"    Switch", switchObject:controllers[0].controllerModel, switchProperty:"visible"},
+		{string:"    Button", buttonFunction:function(){controllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random())}}
+	];
+	MenuOnPanel(thingsInMenu)
+
+	MenuOnPanel([{
+		string: new Date().toLocaleTimeString(),
+		additionalUpdate: function()
+		{
+			if( frameCount % 30 === 0 )
+			{
+				this.material.setText( new Date().toLocaleTimeString() )
+			}
+		}
+	}])
+
+	addSingleFunctionToPanel = function(f)
+	{
+		var processedFunctionName = f.name;
+		for(var i = 0; i < processedFunctionName.length; i++)
+		{
+			if( processedFunctionName[i] === processedFunctionName[i].toUpperCase() )
+			{
+				processedFunctionName = processedFunctionName.slice(0,i) + " " + processedFunctionName.slice(i,processedFunctionName.length)
+				i++;
+			}
+		}
+		processedFunctionName = processedFunctionName[0].toUpperCase() + processedFunctionName.slice(1,processedFunctionName.length)
+
+		MenuOnPanel([{string:processedFunctionName, buttonFunction:f}])
+	}
+
+	var fakeStrings = [
+		"merge molecules",
+		"List of all atoms, all residues?",
+		"Your tools, your metrics",
+		"Group work features",
+		"	Round table",// for if there are multiple people - makes it so all your heads are at reasonable angle",
+		"	Synchronize view",
+		"Superpose",
+		"	LSQ", 
+		"	SSSM",
+		"check synchronization of coot and CVR molecule", //for us
+		"Save, load, export map",
+		"pukkers",
+		"Sequence view",
+		"	Reverse direction",
+		"	alignment vs pir",
+		"	Ask paul what people tend to use it for",
+		"Control bindings",
+		"Refmac",
+		"Undo/redo? Help vive people!",
+		"Graphics quality",
+		"Play tutorial video",
+		"Hydrogen visible",
+		"Refinement options",
+		"	Use Torsion restraints ",		//(default off)
+		"	Use planar peptide restraints",	//(default on)
+		"	Use trans peptide restraints",	//(default on)
+		"	Ramachandran restraints",		//(default off)
+		"	Alpha helix restraints",		//(default off)
+		"	beta strand restraints",		//(default off)
+		"	Refinement weight",				//?
+		"Other modelling tools",
+		"	cis <-> trans",
+		"	base pair",
+		"	skeletonize map",
+		"	sharpen map?",
+		"	Find",
+		"		Waters",
+		"		Secondary structure",
+		"		Ligands",
+
+		//Haven't been through "Ligand" or "Extensions". Various things in "validate"
+		//list of the buttons on your controller, you drag things in to make them do stuff
+
+		"Display manager", //master switches needed for all
+		"	Visibility",
+		"	Delete",
+		"	Map",
+		"		isDiffmap",
+		"		Active for refinement",
+		"		Color",// (have a wheel)
+		"		Contour level scrolls",
+		"		Opacity",//Urgh fuck that
+		"		Block size", // WARNING GREEDY GUTS
+		"		Sample rate",
+		"		Chickenwire",
+		"		Show unit cell",
+		"	Molecule",
+		"		Show symmetry atoms",
+		"		Which one is affected by undo",
+		"		Which one gets atoms and chains added to it",
+		"		Carbon color",
+		"		Display methods",
+		"			Bond radius",
+		"			atom radiuse",
+		"			cAlpha only",
+		"			Waters visible",
+		"			Color by",
+		"				B factors / occupancy / other metric",
+		"				Chain",
+		"				Atom (default)",
+		"				amino acid (i.e. rainbow)",
+	];
+
+	var bunch = [];
+	for(var i = 0; i < fakeStrings.length; i++)
+	{
+		bunch.push({string:fakeStrings[i]})
+
+		if( i === fakeStrings.length-1 || fakeStrings[i+1][0] !== "	")
+		{
+			MenuOnPanel(bunch)
+			bunch.length = 0;
+		}
+	}
+}
+
+var MenuOnPanel;
+var addSingleFunctionToPanel;
+var updatePanel;
 
 function initPanel()
 {
@@ -192,7 +243,7 @@ function initPanel()
 		panel.add(cursors[i])
 	}
 
-	updatePanelInput = function()
+	updatePanel = function()
 	{
 		/*
 			Having your cursor exactly on the geometry, which is an approximation, is having your cake and eating it
@@ -203,7 +254,7 @@ function initPanel()
 
 		for(var i = 0; i < controllers.length; i++)
 		{
-			var intersections = controllers[i].intersectLaserWithObject(collisionPanel) //we want it intersected with a perfect bloody sphere
+			var intersections = controllers[i].intersectLaserWithObject(collisionPanel)
 			if( intersections.length )
 			{
 				var intersection = intersections[0].point
@@ -227,6 +278,7 @@ function initPanel()
 			if( controllers[i].position.length() > panel.scale.x )
 			{
 				panel.scale.setScalar( controllers[i].position.length() )
+				collisionPanel.scale.copy( panel.scale )
 			}
 		}
 	}
@@ -236,68 +288,109 @@ function initPanel()
 	var defaultColor = new THREE.Color(0xFFFFFF);
 	var highlightedColor = cursorMaterial.color
 
+	var menus = []; //not really menus are they
+
 	// var audio = new Audio("data/piano/A0-1-48.wav");
 	// audio.play();
-	addMenuToPanel = function(thingsInMenu)
+	MenuOnPanel = function(thingsInMenu)
 	{
-		var lineAngularHeight = 0.05;
+		var lineAngularHeight = 0.034;
 
 		var textMeshes = Array(thingsInMenu.length);
-		var widestSignWidth = -1;
+		var widestSignWidth = 0;
+		var totalElementsHeight = 0;
 		for(var i = 0; i < textMeshes.length; i++)
 		{
 			textMeshes[i] = makeTextSign( thingsInMenu[i].string, false, false, true)
+			for(var propt in thingsInMenu[i])
+			{
+				if(propt !== "string")
+				{
+					textMeshes[i][propt] = thingsInMenu[i][propt]
+				}
+			}
+
 			if( textMeshes[i].geometry.vertices[1].x > widestSignWidth)
 			{
 				widestSignWidth = textMeshes[i].geometry.vertices[1].x;
+			}
+
+			totalElementsHeight++;
+			if(textMeshes[i].rectangularObject3D)
+			{
+				totalElementsHeight += textMeshes[i].rectangularObject3D.geometry.vertices[0].y
 			}
 		}
 
 		//"menu space", scaled by lineAngularHeight
 		{
-			var height = thingsInMenu.length;
-			var width = widestSignWidth
 			var outlineThickness = 0.2;
-			var menu = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(width+outlineThickness*2,height+outlineThickness*2), new THREE.MeshBasicMaterial({color:0x000000}));
-			
+			var menu = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth+outlineThickness*2,totalElementsHeight+outlineThickness*2), new THREE.MeshBasicMaterial({color:0x262626}));
+			menus.push(menu)
+
 			for(var i = 0; i < textMeshes.length; i++)
 			{
-				if( thingsInMenu[i].switchObject )
+				menu.add(textMeshes[i])
+				if(i === 0)
 				{
-					textMeshes[i].material.color.copy( thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty] ? onColor : offColor)
+					textMeshes[i].position.z = 0.0001;
+					textMeshes[i].position.x = outlineThickness;
+					textMeshes[i].position.y = totalElementsHeight-1 + outlineThickness;
+				}
+				else
+				{
+					textMeshes[i].position.copy( textMeshes[i-1].position )
+					textMeshes[i].position.y -= 1
 				}
 
-				textMeshes[i].position.x = outlineThickness;
-				textMeshes[i].position.y = thingsInMenu.length - i - 1 + outlineThickness;
-				textMeshes[i].position.z = 0.0001;
-				menu.add(textMeshes[i])
+				if( textMeshes[i].rectangularObject3D )
+				{
+					menu.add(textMeshes[i].rectangularObject3D)
+					textMeshes[i].rectangularObject3D.position.copy(textMeshes[i].position)
+					textMeshes[i].rectangularObject3D.position.y -= 1
+				}
+
+				if( textMeshes[i].switchObject )
+				{
+					textMeshes[i].material.color.copy( textMeshes[i].switchObject[textMeshes[i].switchProperty] ? onColor : offColor)
+				}
 			}
+
+			var menuBackground = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth,textMeshes.length), new THREE.MeshBasicMaterial({color:0x3F3F3F}));
+			menuBackground.position.set( outlineThickness,outlineThickness,textMeshes[0].position.z / 2 )
+			menu.add( menuBackground )
 		}
 
 		menu.matrixAutoUpdate = false;
 		menu.azimuthal = TAU;
-		menu.polar = -TAU / 8 + panel.children.length * 0.2;
-		while(menu.polar > TAU / 8)
+		var horizontalSpacing = 0.5;
+		menu.polar = menus.length === 1 ? -aroundness / 2 : menus[menus.length-2].polar + horizontalSpacing
+		while(menu.polar > aroundness / 2 )
 		{
-			menu.polar -= TAU / 4
-			menu.azimuthal -= lineAngularHeight * 3
+			menu.polar -= aroundness
+			menu.azimuthal -= lineAngularHeight * 4
 		}
+		//want to use their polar width
 		menu.parentController = null;
 		collisionPanel.add(menu)
 
 		var planeAngularHeight = menu.geometry.vertices[1].y * lineAngularHeight;
-		var planeAngularWidth  = menu.geometry.vertices[1].x * lineAngularHeight;
 
-		thingsToBeUpdated.push(menu)
+		objectsToBeUpdated.push(menu)
 		menu.update = function()
 		{
-			for(var i = 0; i < thingsInMenu.length; i++)
+			for(var i = 0; i < textMeshes.length; i++)
 			{
+				if( textMeshes[i].additionalUpdate )
+				{
+					textMeshes[i].additionalUpdate();
+				}
+
 				if( textMeshes[i].material.color.equals(highlightedColor) )
 				{
-					if( thingsInMenu[i].switchObject )
+					if( textMeshes[i].switchObject )
 					{
-						textMeshes[i].material.color.copy( thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty] ? onColor : offColor)
+						textMeshes[i].material.color.copy( textMeshes[i].switchObject[textMeshes[i].switchProperty] ? onColor : offColor)
 					}
 					else
 					{
@@ -305,7 +398,7 @@ function initPanel()
 					}
 				}
 
-				if( thingsInMenu[i].buttonFunction || thingsInMenu[i].switchObject )
+				if( textMeshes[i].buttonFunction || textMeshes[i].switchObject )
 				{
 					for(var j = 0; j < controllers.length; j++)
 					{
@@ -314,13 +407,13 @@ function initPanel()
 							textMeshes[i].material.color.copy( highlightedColor )
 							if( controllers[j].button1 && !controllers[j].button1Old )
 							{
-								if( thingsInMenu[i].buttonFunction )
+								if( textMeshes[i].buttonFunction )
 								{
-									thingsInMenu[i].buttonFunction()
+									textMeshes[i].buttonFunction()
 								}
-								if( thingsInMenu[i].switchObject )
+								if( textMeshes[i].switchObject )
 								{
-									thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty] = !thingsInMenu[i].switchObject[thingsInMenu[i].switchProperty];
+									textMeshes[i].switchObject[textMeshes[i].switchProperty] = !textMeshes[i].switchObject[textMeshes[i].switchProperty];
 								}
 							}
 						}
@@ -332,7 +425,7 @@ function initPanel()
 			{
 				for(var i = 0; i < controllers.length; i++)
 				{
-					if( controllers[i].grippingTop && !controllers[i].grippingTopOld )
+					if( controllers[i].grippingTop && !controllers[i].grippingTopOld ) //or alternatively, get grabbed if controllers not grabbing anything. i.e. this goes in panelUpdate. Look in todo!
 					{
 						if( controllers[i].intersectLaserWithObject( this ).length !== 0 )
 						{
@@ -341,21 +434,28 @@ function initPanel()
 					}
 				}
 			}
-			else
+
+			if(menu.parentController)
 			{
 				menu.polar = menu.parentController.cursor.polar;
 				menu.azimuthal = menu.parentController.cursor.azimuthal;
+
+				updateMatrix()
 
 				if( !menu.parentController.grippingTop)
 				{
 					menu.parentController = null;
 				}
 			}
+		}
 
-			menu.polar = polarClipToAllowedArea( menu.polar );
-			menu.polar = polarClipToAllowedArea( menu.polar + planeAngularWidth ) - planeAngularWidth;
+		function updateMatrix()
+		{
 			menu.azimuthal = azimuthalClipToAllowedArea( menu.azimuthal );
 			menu.azimuthal = azimuthalClipToAllowedArea( menu.azimuthal + planeAngularHeight ) - planeAngularHeight;
+			var planeAngularWidth  = menu.geometry.vertices[1].x * lineAngularHeight;
+			menu.polar = polarClipToAllowedArea( menu.polar );
+			menu.polar = polarClipToAllowedArea( menu.polar + planeAngularWidth ) - planeAngularWidth;
 
 			var bl = anglesToPanel(menu.polar, menu.azimuthal).multiplyScalar(0.996)
 			var tl = anglesToPanel(menu.polar, menu.azimuthal + planeAngularHeight).multiplyScalar(0.996)
@@ -377,12 +477,8 @@ function initPanel()
 			menu.matrix.makeBasis(basisX,basisY,basisZ)
 			menu.matrix.setPosition(bl);
 		}
+		updateMatrix()
 	}
 
-	var thingsInMenu = [
-		{string:"Example menu"},
-		{string:"    Switch", switchObject:panel.material, switchProperty:"visible"},
-		{string:"    Button", buttonFunction:function(){panel.material.color.setRGB(Math.random(),Math.random(),Math.random())}}
-	];
-	addMenuToPanel(thingsInMenu)
+	initPanelDemo()
 }

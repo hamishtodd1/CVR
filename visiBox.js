@@ -14,8 +14,6 @@ function initVisiBox()
 		return center;
 	}
 	
-	thingsToBeUpdated.push(visiBox)
-	
 	visiBox.position.y = -0.25;
 	scene.add(visiBox);
 	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.5
@@ -155,6 +153,7 @@ function initVisiBox()
 			this.planes[i].applyMatrix4(visiBox.matrixWorld);
 		}
 	}
+	objectsToBeUpdated.push(visiBox)
 
 	visiBox.corners[0].position.x = 0;
 	

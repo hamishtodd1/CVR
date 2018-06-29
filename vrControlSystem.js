@@ -1,8 +1,22 @@
 var updateVrInput;
+var resetSensor;
 
 function initVrInputSystem(renderer,ourVrEffect)
 {
 	var cameraRepositioner = new THREE.VRControls( camera );
+	resetSensor = function()
+	{
+		cameraRepositioner.resetSensor();
+	}
+
+	var positionCorrection = new THREE.Vector3();
+	MenuOnPanel([
+		{string:"Set current position as center", buttonFunction:function()
+		{
+			positionCorrection.copy(camera.position)
+			ourVrEffect.setPositionCorrection(positionCorrection)
+		}}
+	])
 
 	document.addEventListener( 'keydown', function( event )
 	{
@@ -72,8 +86,6 @@ function initVrInputSystem(renderer,ourVrEffect)
 	var laserRadius = 0.001;
 	for(var i = 0; i < 2; i++)
 	{
-		controllers[ i ] = new THREE.Object3D();
-
 		{
 			controllers[ i ].laser = new THREE.Mesh(
 				new THREE.CylinderBufferGeometryUncentered( laserRadius, 1), 
@@ -178,6 +190,7 @@ function initVrInputSystem(renderer,ourVrEffect)
 			controllers[affectedControllerIndex].oldQuaternion.copy(controllers[ affectedControllerIndex ].quaternion);
 			
 			controllers[affectedControllerIndex].position.fromArray( gamepads[k].pose.position );
+			controllers[affectedControllerIndex].position.sub(positionCorrection)
 			controllers[affectedControllerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
 			controllers[affectedControllerIndex].updateMatrixWorld();
 

@@ -26,7 +26,7 @@ var camera = new THREE.PerspectiveCamera( 70, //can be changed by VR effect
 		0.1, 700);
 var scene = new THREE.Scene().add(camera);
 
-var controllers = Array(2);
+var controllers = [new THREE.Object3D(),new THREE.Object3D()]
 var models = [];
 var maps = [];
 
@@ -37,7 +37,7 @@ var frameCount = 0;
 //------varying
 //mousePosition = new THREE.Vector2(); //[0,1],[0,1]
 
-var thingsToBeUpdated = [];
+var objectsToBeUpdated = [];
 var holdables = [];
 var socket = null;
 
