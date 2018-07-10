@@ -120,10 +120,10 @@ Maya
 		var thingsToSpaceOut = [];
 
 		thingsToSpaceOut.push( 
-			// initPointer(),
+			initPointer(),
 			initAtomLabeller(),
-			// initMutator(),
-			initPainter(),
+			initMutator(),
+			// initPainter(),
 			// initAtomDeleter(),
 			// initEnvironmentDistance(),
 			// initResidueDeleter(),
@@ -149,14 +149,23 @@ Maya
 		//does it need to be in a string? environment distances didn't need to be
 		// makeModelFromCootString( msg.modelDataString, visiBox.planes );
 
-		initTools();
+		// initTools();
+
+		new THREE.FileLoader().load( "data/tutorialGbr.txt",
+			function( modelDataString )
+			{
+				makeModelFromCootString( modelDataString, visiBox.planes );
+
+				initTools();
+			}
+		);
 	}
 	socket.commandReactions["loadTutorialModel"] = function(msg)
 	{
 		new THREE.FileLoader().load( "data/tutorialGbr.txt",
 			function( modelDataString )
 			{
-				// makeModelFromCootString( modelDataString, visiBox.planes );
+				makeModelFromCootString( modelDataString, visiBox.planes );
 
 				initTools();
 			}
@@ -171,27 +180,27 @@ Maya
 	}
 	socket.commandReactions["mapFilename"] = function(msg)
 	{
-		// var req = new XMLHttpRequest();
-		// req.open('GET', msg.mapFilename, true);
-		// req.responseType = 'arraybuffer';
-		// req.onreadystatechange = function()
-		// {
-		// 	if (req.readyState === 4)
-		// 	{
-		// 		console.log(msg.mapFilename)
-		// 		if( msg.mapFilename === "data/emd_3908.map")
-		// 		{
-		// 			var newMap = Map( req.response, false, visiBox, 7.87 );
-		// 		}
-		// 		else
-		// 		{
-		// 			var newMap = Map( req.response, false, visiBox );
-		// 		}
-		// 		maps.push(newMap);
-		// 		assemblage.add(newMap)
-		// 	}
-		// };
-		// req.send(null);
+		var req = new XMLHttpRequest();
+		req.open('GET', msg.mapFilename, true);
+		req.responseType = 'arraybuffer';
+		req.onreadystatechange = function()
+		{
+			if (req.readyState === 4)
+			{
+				console.log(msg.mapFilename)
+				if( msg.mapFilename === "data/emd_3908.map")
+				{
+					var newMap = Map( req.response, false, visiBox, 7.87 );
+				}
+				else
+				{
+					var newMap = Map( req.response, false, visiBox );
+				}
+				maps.push(newMap);
+				assemblage.add(newMap)
+			}
+		};
+		req.send(null);
 	}
 	socket.onopen = function()
 	{
