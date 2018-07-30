@@ -1,6 +1,4 @@
 <!--
-
-
 And by the way, go to top right arrow>settings>region & language>plus sign and put in eng UK and minus sign to get rid of fucking eng US
 
 Install procedure
@@ -64,7 +62,6 @@ Need to optimize this workflow.
 		</style>
 	</head>
 	<body>
-		<!--these two scripts are purely for the ripped-off setup-->
 		<script type="x-shader/x-vertex" id="modelVertexShader">
 			varying vec3 N;
 			varying vec3 v;
@@ -105,7 +102,9 @@ Need to optimize this workflow.
 		
 		<script src="lib/three.js"></script>
 		<script src="lib/sceneUtils.js"></script>
-		<script src="lib/WireframeGeometry.js"></script>
+		<!--<script src="lib/WireframeGeometry.js"></script> if you've had no errors for a while, delete this and the file-->
+
+		<script src="lib/THREE.AugmentedConsole.js"></script>
 
 		<script src="lib/OBJLoader.js"></script>
 		<script src="lib/PDBLoader.js"></script>
@@ -117,11 +116,11 @@ Need to optimize this workflow.
 		<!--<script src="tempVr.js"></script>-->
 
 		<script src="surroundings.js"></script>
-		<script src="minimalUglymol.js?v=4"></script>
+		<script src="panel.js"></script>
+
+
 		<script src="maps.js"></script>
 		
-		<script src="miscFunctions.js"></script>
-		<script src="variables.js"></script>
 		<script src="vrControlSystem.js"></script>
 		
 		<script src="models.js"></script>
@@ -132,18 +131,23 @@ Need to optimize this workflow.
 			<script src="tools/misc.js"></script>
 			<script src="tools/movers.js"></script>
 			<script src="tools/refine.js"></script>
-			<script src="tools/painter.js"></script>
+			<script src="tools/proteinPainter.js"></script>
+			<script src="tools/nucleicAcidPainter.js"></script>
 			<script src="tools/mutator.js"></script>
-
+			<script src="tools/handDistances.js"></script>
+			
 		<script src="stats.js"></script>
-		<script src="menus.js"></script>
 		<script src="spectatorRepresentation.js"></script>
 		
 		<script src="scaleStick.js"></script>
+		<script src="keyboardInputAndMonomerReceiver.js"></script>
 		<script src="visiBox.js"></script>
 		
 		<script src="loop.js"></script>
 		<script src="connection.js"></script>
+		
+		<script src="miscFunctions.js"></script>
+		<script src="variables.js"></script>
 		<script src="initialization.js"></script>
 	</body>
 </html>

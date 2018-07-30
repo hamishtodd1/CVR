@@ -99,7 +99,7 @@ Atom.prototype.setLabelVisibility = function(labelVisibility)
 
 		var model = getModelWithImol(this.imol);
 		model.add( this.label );
-		thingsToBeUpdated.push(this.label);
+		objectsToBeUpdated.push(this.label.update);
 	}
 	
 	if(this.label !== undefined)
@@ -125,11 +125,23 @@ function updateLabel()
 	this.parent.worldToLocal(localCameraPosition);
 	this.lookAt(localCameraPosition);
 }
+function changeBondBetweenAtomsToDouble(bondData, atomA, atomB)
+{
+	for(var j = 0; j < bondData.length; j++)
+	{
+		for(var i = 0; i < bondData[j].length; i++)
+		{
+			if( (atomA === bondData[j][i][3] && atomB === bondData[j][i][4])
+			 || (atomB === bondData[j][i][3] && atomA === bondData[j][i][4]) )
+			{
+				bondData[j][i][2] = 2;
+			}
+		}
+	}
+}
 
 function initModelCreationSystem( visiBoxPlanes)
 {
-	var models = [];
-
 	var cylinderSides = 15;
 
 	getModelWithImol = function(imol)
@@ -157,7 +169,7 @@ function initModelCreationSystem( visiBoxPlanes)
 	var nSphereVertices = atomGeometry.vertices.length;
 	var nSphereFaces = atomGeometry.faces.length;
 
-	makeModelFromCootString = function( modelStringCoot, thingsToBeUpdated, visiBoxPlanes, callback )
+	makeModelFromCootString = function( modelStringCoot, visiBoxPlanes, callback )
 	{
 		//position, isHydrogen, spec, "residue"
 		var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
@@ -213,11 +225,14 @@ function initModelCreationSystem( visiBoxPlanes)
 		}
 
 		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
-
-		// var traceGeometry = new THREE.TubeBufferGeometry( //and then no hiders for this
-		// 		new THREE.CatmullRomCurve3( carbonAlphas ), //the residue locations? Or is that an average?
-		// 		carbonAlphas.length*8, 0.1, 16 );
-		// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
+		model.carbonAlphaPositions = [];
+		for(var i = 0, il = model.atoms.length; i < il; i++)
+		{
+			if(model.atoms[i].name === " CA ")
+			{
+				model.carbonAlphaPositions[model.atoms[i].resNo] = model.atoms[i].position;
+			}
+		}
 		
 		model.imol = model.atoms[0].imol;
 		assemblage.add(model);
@@ -233,25 +248,39 @@ function initModelCreationSystem( visiBoxPlanes)
 			averagePosition.multiplyScalar( 1 / model.atoms.length);
 			assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
 		}
+
+		return model;
+	}
+
+	makeModelFromElementsAndCoords = function(elements,coords)
+	{
+		var atoms = Array(elements.length);
+		for(var i = 0; i < atoms.length; i++)
+		{
+			atoms[i] = new Atom( elements[i], new THREE.Vector3().fromArray(coords,3*i) );
+		}
+		return makeMoleculeMesh( atoms, false );
 	}
 
 	makeMoleculeMesh = function( atoms, clip, bondDataFromCoot )
 	{
-		var molecule = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
+		var moleculeMesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
 			vertexColors: THREE.VertexColors
 		} ) );
-		molecule.atoms = atoms;
+		moleculeMesh.atoms = atoms;
 
 		if(clip)
 		{
-			molecule.material.clippingPlanes = visiBoxPlanes;
+			moleculeMesh.material.clippingPlanes = visiBoxPlanes;
 		}
 
-		var bufferGeometry = molecule.geometry;
+		var bufferGeometry = moleculeMesh.geometry;
 
 		var atomColors = Array(10);
 		for(var i = 0; i < atomColors.length; i++)
+		{
 			atomColors[i] = new THREE.Color( 0.2,0.2,0.2 );
+		}
 		atomColors[0].setRGB(72/255,193/255,103/255); //carbon
 		atomColors[1].setRGB(0.8,0.8,0.2); //sulphur
 		atomColors[2].setRGB(0.8,0.2,0.2); //oxygen
@@ -267,8 +296,6 @@ function initModelCreationSystem( visiBoxPlanes)
 		else
 		{
 			bondData = Array(10);
-			//position position, bondNumber, index index
-			//coords never seem to be correct to more than three and a half decimal places
 			for(var i = 0; i < bondData.length; i++)
 			{
 				bondData[i] = [];
@@ -285,14 +312,23 @@ function initModelCreationSystem( visiBoxPlanes)
 					{
 						if( atoms[i].position.distanceTo( atoms[j].position ) < 1.81 ) //quantum chemistry
 						{
-							bondData[ atoms[i].element ].push( [[],[],1,i,j]);
-							bondData[ atoms[i].element ].push( [[],[],1,j,i]);
+							// if(atoms[i].name !== " O  ")
+							// {
+								//position position, bondNumber, index index
+								bondData[ atoms[i].element ].push( [[],[],1,i,j]);
+								// bondData[ atoms[i].element ].push( [[],[],1,j,i]);
+							// }
+							// else
+							// {
+							// 	bondData[ atoms[i].element ].push( [[],[],2,i,j]);
+							// 	bondData[ atoms[i].element ].push( [[],[],2,j,i]);
+							// }
 						}
 					}
 				}
 			}
 
-			console.log(JSON.stringify(bondData))
+			// console.error(JSON.stringify(bondData))
 		}
 
 		var numberOfCylinders = 0;
@@ -306,20 +342,22 @@ function initModelCreationSystem( visiBoxPlanes)
 					continue;
 				}
 				var atom = atoms[bondData[i][j][3]];
-				var potentialBondPartner = atoms[ bondData[i][j][4] ];
+				var bondPartner = atoms[ bondData[i][j][4] ];
 
-				if(atom.bondPartners.indexOf(potentialBondPartner) !== -1)
+				if(atom.bondPartners.indexOf(bondPartner) !== -1)
 				{
 					continue;
 				}
 
-				atom.bondPartners.push( potentialBondPartner );
-				numberOfCylinders++;
+				atom.bondPartners.push( bondPartner );
+				bondPartner.bondPartners.push( atom );
+				numberOfCylinders += 2;
 
 				if( bondData[i][j][2] > 1)
 				{
-					atom.extraBondPartners.push(potentialBondPartner)
-					numberOfCylinders++;
+					atom.extraBondPartners.push(bondPartner)
+					bondPartner.extraBondPartners.push( atom );
+					numberOfCylinders += 2;
 
 					if( bondData[i][j][2] !== 2)
 					{
@@ -330,6 +368,7 @@ function initModelCreationSystem( visiBoxPlanes)
 		}
 
 		var numberOfAtoms = atoms.length;
+
 		//Speedup opportunity: you only need as many colors as there are atoms and bonds, not as many as there are triangles.
 		//we are assuming fixed length for all these arrays and that is it
 		bufferGeometry.addAttribute( 'position',new THREE.BufferAttribute(new Float32Array( 3 * (cylinderSides * numberOfCylinders * 2 + numberOfAtoms * nSphereVertices) ), 3) );
@@ -345,7 +384,7 @@ function initModelCreationSystem( visiBoxPlanes)
 			this.array[ index*3+2 ] = c;
 		}
 		
-		molecule.colorAtom = function( atom, newColor )
+		moleculeMesh.colorAtom = function( atom, newColor )
 		{
 			if(!newColor)
 			{
@@ -381,7 +420,7 @@ function initModelCreationSystem( visiBoxPlanes)
 			}
 		}
 
-		molecule.setAtomRepresentationPosition = function( atom, newPosition )
+		moleculeMesh.setAtomRepresentationPosition = function( atom, newPosition )
 		{
 			if(newPosition)
 			{
@@ -414,12 +453,17 @@ function initModelCreationSystem( visiBoxPlanes)
 				{
 					refreshCylinderCoordsAndNormals( atom.position, midPoint, atom.bondFirstVertexIndices[i],
 						this.geometry, cylinderSides, bondRadius );
+
+					var bfviFromPartnersPov = bondPartner.bondFirstVertexIndices[ bondPartner.bondPartners.indexOf( atom ) ];
+					refreshCylinderCoordsAndNormals( bondPartner.position, midPoint, bfviFromPartnersPov,
+						this.geometry, cylinderSides, bondRadius );
 				}
 				else
 				{
 					//ideally the perp vector would be in same plane as other bonds
+					//WON'T WORK WHEN YOU MOVE A DOUBLE BOND
 					var bondVector = bondPartner.position.clone().sub(atom.position)
-					var addition = randomPerpVector(bondVector).setLength(bondRadius);
+					var addition = randomPerpVector(bondVector).setLength(bondRadius*1.5);
 
 					var leftStart = atom.position.clone().add(addition);
 					var leftEnd = midPoint.clone().add(addition);
@@ -484,11 +528,16 @@ function initModelCreationSystem( visiBoxPlanes)
 				}
 			}
 
-			molecule.colorAtom(atom);
-			molecule.setAtomRepresentationPosition(atom)
+			moleculeMesh.colorAtom(atom);
+			moleculeMesh.setAtomRepresentationPosition(atom)
 		}
 
-		return molecule;
+		// var traceGeometry = new THREE.TubeBufferGeometry(
+		// 		new THREE.CatmullRomCurve3( carbonAlphas ),
+		// 		carbonAlphas.length*8, 0.1, 16 );
+		// var trace = new THREE.Mesh( tubeGeometry, new THREE.MeshLambertMaterial({color:0xFF0000}));
+
+		return moleculeMesh;
 	}
 
 	var highlightColor = new THREE.Color(1,1,1);
@@ -669,7 +718,7 @@ function initModelCreationSystem( visiBoxPlanes)
 				var atom = model.atoms[msg.atoms[i][3]];
 				atom.position.fromArray( msg.atoms[i][2] );
 				model.setAtomRepresentationPosition(atom);
-			}
+			} 
 			model.geometry.attributes.position.needsUpdate = true;
 		}
 
@@ -692,6 +741,4 @@ function initModelCreationSystem( visiBoxPlanes)
 			model.geometry.attributes.position.needsUpdate = true;
 		}
 	}
-
-	return models;
 }

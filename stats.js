@@ -1,55 +1,68 @@
 /*
-	Ramachandran
-	Lists of:
-		unmodelled blobs
-		incorrect chiral volumes
-		Difference map peaks
-	Bar charts (presumably all one bar per residue?):
-		peptide omega distortion
-		NCS differences
-		Rotamer analysis
-		Geometry graphs
-			Bonds
-			Angles
-			Planes
-			Chirals
-		B factor graph, we talked about this. Two bars per residue
-		B factor variance
-
 	If you recently used the b factors you'll probably use them again
-	So 
 
-	Want to be able to point at bars and go to their residue
-
-	They're on the left, floor to ceiling, to line up residue.
-
-	Some 3D thing with all the bar charts would be cool
 	Pull the ones you're most interested in to the front
 	Some go into the floor
 	Pull it out like a towel rail
 	
-	Maybe:
-		at all times, you have floating cursors on the walls
-		They are always "at the end of your lasers"
-		Probably the wall should actually be curved, cylindrical
-		But "things to pick up" should probably still be in reach
-		It shouldn't be far away
-		You can rearrange it as you please, bunch of rectangles
-
-	There again, no AAAD. You want stats that concern a thing to be close to that thing
-
-	IT MAY WELL BE NICER TO HAVE THE INFO THERE ON THE BLOODY CHAIN
-	but this will probably still be useful for ramachandrans
-	"hover" = see a bunch of things highlighted on the chain that
-		are not usually visible.
+	"hover" = see a bunch of things highlighted on the chain that are not usually visible.
+		you have all your different metrics as a little list and move your hand over them
 	At the very least, when a stat highlights a thing, you should show the map there
 
-	Having the graph is probably at least good for navigating
-		But you shouldn't have to flick gaze between it and molecule, so stuff goes on there!
 */
 
-//we can do better than bar charts and ramachandran.
 function initStats(visiBoxPosition)
+{
+	// var correlationIndicatorsGeometry = new THREE.EfficientSphereBufferGeometry(2.0);
+	// new THREE.FileLoader().load(
+	// 	'data/residueCorrelations.txt',
+	// 	function ( data )
+	// 	{
+	// 		var residueCorrelations = eval(data)
+	// 		var correlationIndicators = Array(models[0].carbonAlphaPositions.length);
+	// 		//seem to need to make them one model ;_;
+
+	// 		for(var i = 0, il = residueCorrelations.length; i < il; i++)
+	// 		{
+	// 			var nastiness = 2 * clamp(residueCorrelations[i][1]-0.5,0,0.5);
+	// 			correlationIndicators[i] = new THREE.Mesh(correlationIndicatorsGeometry,new THREE.MeshBasicMaterial({
+	// 				// opacity: 1-residueCorrelations[i][1],
+	// 				// transparent:true,
+	// 				color: new THREE.Color(1,1-nastiness,1-nastiness)
+	// 			}));
+	// 			models[0].add(correlationIndicators[i]);
+	// 			models[0].remove(correlationIndicators[i]);
+
+	// 			var resNo = residueCorrelations[i][0][2];
+	// 			correlationIndicators[i].position.copy(models[0].carbonAlphaPositions[resNo])
+	// 		}
+	// 		console.log(correlationIndicators[0])
+	// 	},
+	// 	function ( xhr ) {},function ( err ) {}
+	// );
+
+
+	// new THREE.FileLoader().load(
+	// 	'data/residueDistortions.txt',
+	// 	function ( data )
+	// 	{
+	// 		var residueDistortions = eval(data)
+	// 		console.log(residueDistortions)
+	// 	},
+	// 	function ( xhr ) {},function ( err ) {}
+	// );
+	/*
+		distortion score: 1-4 is green, 2-9 is orange, 9+ is red
+		CBeta deviations
+	*/
+	// {'restraint': {'restraint_type': 'Bond', 'sigma': 0.019, 'target_value': 1.458, 'fixed_atom_flags': [0, 0]}, 'atom_indices': [0, 1], 'distortion_score': 3.551691954394837, 'residue_spec': [True, 'A', 1, '']}
+	// {'restraint': {'restraint_type': 'NBC', 'sigma': 0.02, 'target_value': 2.64, 'fixed_atom_flags': [0, 0]}, 'atom_indices': [1392, 1394], 'distortion_score': -0.07484748222726961, 'residue_spec': [True, 'B', 87, '']},
+
+	initBarcharts(visiBoxPosition);
+}
+
+//we can do better than bar charts and ramachandran.
+function initBarcharts(visiBoxPosition)
 {
 	var randomData = Array(37);
 	for(var i = 0; i < randomData.length; i++)
@@ -57,11 +70,8 @@ function initStats(visiBoxPosition)
 		randomData[i] = Math.random();
 	}
 	var randomGraph = Graph(randomData);
-	randomGraph.rotation.y = TAU/4
-	randomGraph.position.x = -ROOM_RADIUS + 0.0001;
-	randomGraph.position.y = -randomGraph.scale.y / 2;
-	randomGraph.scale.multiplyScalar(0.5)
-	randomGraph.position.z = randomGraph.getWorldSpaceWidth()/2
+	randomGraph.position.z = -0.5
+	randomGraph.scale.multiplyScalar(0.05)
 	scene.add(randomGraph)
 
 	{
@@ -79,7 +89,7 @@ function initStats(visiBoxPosition)
 	var atomPositionToPutInCenterOfVisiBox = null;
 	var extraHighlightCountDown = null;
 
-	thingsToBeUpdated.push(randomGraph)
+	objectsToBeUpdated.push(randomGraph)
 	randomGraph.update = function()
 	{
 		//your controllers have a laser
@@ -139,6 +149,8 @@ function initStats(visiBoxPosition)
 
 			if(proportionThroughMovement >= 1)
 			{
+				//and also set zoom level?
+
 				assemblage.onLetGo()
 
 				requestCommencementTime = null;
@@ -165,7 +177,6 @@ function initStats(visiBoxPosition)
 function Graph(data)
 {
 	var graph = new THREE.Group;
-	graph.position.z = -FOCALPOINT_DISTANCE
 	// graph.scale.setScalar(0.1)
 	var background = new THREE.Mesh(THREE.OriginCorneredPlaneGeometry(), new THREE.MeshBasicMaterial());
 	background.position.z = -0.0001
@@ -201,11 +212,6 @@ function Graph(data)
 	yAxis.label.rotation.z = TAU/4;
 	graph.add(xAxis.label)
 	graph.add(yAxis.label)
-
-	graph.getWorldSpaceWidth = function()
-	{
-		return background.scale.x * this.scale.x;
-	}
 
 	graph.displayDataset = function(data)
 	{

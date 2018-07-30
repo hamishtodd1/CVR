@@ -1,40 +1,32 @@
 /*
-	Not an ideal situation. 
-
-	Paul makes the argument that it should be a sphere because you rotate lots
-	But you do not rotate around the center
-	Having the corners might just be a really good way 
-
-	You grab the box and it moves with your hand.
-	But when you rotate, it rotates the molecule along with it
-	What happens when you do both at once?
-	If you think about Paul's argument, this is objectively better because you don't get to do anything with rotation when you move a sphere
-
-	The edges also shouldn't do the silly scaling thing
-
-	Is there any reason to limit its height? Why shouldn't it go up and down and back infinitely.
-		Answer: it's the "visually distracting" thing. You don't want to be able to see more than one interesting thing at once
+	TODO edges shouldn't do the silly scaling thing
 */
 
-//Old notes:
-
-//it's a truncated cone (perspective), and the front face is as close to you as is comfortable. You grab the back rim and resize
-//Eh... if the lateral boundaries don't matter, probably you just need near and far!
-//Handle could be what you see when you look up with your eyes(not your head), but you don't see it normally, that's distracting
-//Spin the rim to make the front move away?
-//Jesus stereoscopy, you'd need different things happenning in the renderers. Don't do this, a cone is fine
-//Jesus... if people go far with this and it's a very thin slice, it is very much like a 2D screen
-//Ideally you also have lamps around your hands
-//hmm maybe your hands should be the planes, when you're not holding anything?
-//it's a very simple shader to make it spherical
-
-function initVisiBox(initialScale, maps)
+function initVisiBox()
 {
 	var visiBox = new THREE.Object3D();
+
+	visiBox.centerInAssemblageSpace = function()
+	{
+		var center = this.position.clone();
+		assemblage.updateMatrixWorld();
+		assemblage.worldToLocal( center );
+		return center;
+	}
 	
-	thingsToBeUpdated.push(visiBox)
-	
-	visiBox.scale.setScalar(initialScale);
+	visiBox.position.y = -0.25;
+	scene.add(visiBox);
+	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.5
+	visiBox.scale.x = visiBox.scale.y * 1.5
+	visiBox.scale.z = visiBox.scale.y * 1.2
+
+	//when you're resizing
+	// var someSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhongMaterial({color:0xFF0000}));
+	// scene.add(someSphere);
+	// someSphere.position.copy(visiBox.centerInAssemblageSpace())
+
+	var faceToFront = 0.2; //there was that one guy who kept inching back when it restarted. He could have resized the visibox
+	visiBox.position.z = -visiBox.scale.z / 2 - faceToFront;
 	visiBox.ordinaryParent = scene;
 	visiBox.ordinaryParent.add(visiBox);
 	
@@ -44,7 +36,7 @@ function initVisiBox(initialScale, maps)
 	var faces = Array(6);
 	for(var i = 0; i < 6; i++)
 	{
-		faces[i] = new THREE.Mesh(ourSquareGeometry, new THREE.MeshLambertMaterial({color:0xFF0000,transparent:true, opacity:0.5, side:THREE.DoubleSide}) );
+		faces[i] = new THREE.Mesh(ourSquareGeometry, new THREE.MeshLambertMaterial({color:0x333333,transparent:true, opacity:0.5, side:THREE.DoubleSide}) );
 		visiBox.add( faces[i] );
 		if( i === 1 ) faces[i].rotation.x = TAU/2;
 		if( i === 2 ) faces[i].rotation.x = TAU/4;
@@ -65,15 +57,6 @@ function initVisiBox(initialScale, maps)
 		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF});
 		visiBox.updateMatrix();
 
-		assemblage.ordinaryParent = scene;
-		assemblage.onLetGo = function()
-		{
-			for(var i = 0; i < maps.length; i++)
-			{
-				maps[i].extractAndRepresentBlock();
-			}
-		}
-		
 		function putOnCubeCorner(i, position)
 		{
 			position.setScalar(0.5);
@@ -108,7 +91,7 @@ function initVisiBox(initialScale, maps)
 
 	var cornerRadius = 0.01;
 	
-	//TODO can resize with two corners at once
+	//TODO resize with two corners at once
 	visiBox.update = function()
 	{
 		visiBox.updateMatrixWorld();
@@ -116,7 +99,8 @@ function initVisiBox(initialScale, maps)
 		{
 			if(visiBox.corners[i].parent !== visiBox)
 			{
-				var newCornerPosition = visiBox.corners[ i ].getWorldPosition();
+				var newCornerPosition = new THREE.Vector3()
+				visiBox.corners[ i ].getWorldPosition(newCornerPosition);
 				visiBox.worldToLocal(newCornerPosition);
 				visiBox.scale.x *= ( Math.abs(newCornerPosition.x)-0.5 ) + 1;
 				visiBox.scale.y *= ( Math.abs(newCornerPosition.y)-0.5 ) + 1;
@@ -128,21 +112,17 @@ function initVisiBox(initialScale, maps)
 				putOnCubeCorner(i, newNewCornerPosition );
 				visiBox.localToWorld(newNewCornerPosition);
 				
-				var displacement = visiBox.corners[ i ].getWorldPosition().sub( newNewCornerPosition )
+				var displacement = new THREE.Vector3()
+				visiBox.corners[ i ].getWorldPosition(displacement)
+				displacement.sub( newNewCornerPosition )
 				
 				visiBox.position.add(displacement);
-
-				//could do the map refresh thing too
 				
 				break;
 			}
 		}
 		
 		var facesVisible = false;
-		if(visiBox.parent !== scene)
-		{
-			facesVisible = true;
-		}
 		var cornerScale = new THREE.Vector3(cornerRadius/visiBox.scale.x,cornerRadius/visiBox.scale.y,cornerRadius/visiBox.scale.z);
 		for(var i = 0; i < visiBox.corners.length; i++)
 		{
@@ -157,10 +137,10 @@ function initVisiBox(initialScale, maps)
 				facesVisible = true;
 			}
 		}
-		for(var i = 0; i < faces.length; i++)
-		{
-			// faces[i].visible = facesVisible;
-		}
+		// for(var i = 0; i < faces.length; i++)
+		// {
+		// 	faces[i].visible = facesVisible;
+		// }
 		
 		//beware, the planes may be the negatives of what you expect, seemingly because of threejs bug
 		for(var i = 0; i < this.planes.length; i++)
@@ -173,6 +153,9 @@ function initVisiBox(initialScale, maps)
 			this.planes[i].applyMatrix4(visiBox.matrixWorld);
 		}
 	}
+	objectsToBeUpdated.push(visiBox)
+
+	visiBox.corners[0].position.x = 0;
 	
 	return visiBox;
 }

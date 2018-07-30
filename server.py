@@ -26,11 +26,10 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		self.set_nodelay(True)
 		print('Opened connection')
 
-		if runningInCoot == False:
-			self.write_message({"command":"model"})
-			self.write_message({"command":"mapFilename",'mapFilename':'data/tutorialMap.map'})
-		else:
+		if runningInCoot == True:
 			serverReactions.connect(self)
+		else:
+			self.write_message({"command":"loadTutorialModelAndData"})
 
 	def on_message(self, msgContainer):
 		if runningInCoot == True:

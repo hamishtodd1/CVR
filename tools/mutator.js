@@ -50,17 +50,12 @@ function initMutator()
 			{
 				var newPlaque = plaque.clone();
 				newPlaque.position.copy(position);
+				newPlaque.visible = false
 				mutator.add( newPlaque );
 
-				var aaAtoms = Array(geometryAtoms.elements.length);
-			 	for(var i = 0; i < aaAtoms.length; i++)
-			 	{
-			 		aaAtoms[i] = new Atom( geometryAtoms.elements[i], new THREE.Vector3().fromArray(geometryAtoms.attributes.position.array,3*i) );
-			 	}
-			 	
-			 	mutator.AAs[aaIndex] = makeMoleculeMesh( aaAtoms, false );
-			 	
-			 	mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
+				mutator.AAs[aaIndex] = makeModelFromElementsAndCoords(geometryAtoms.elements,geometryAtoms.attributes.position.array)
+				
+				mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
 				newPlaque.add( mutator.AAs[aaIndex] );
 				
 				var nameMesh = makeTextSign( aaNames[aaIndex] );
@@ -131,14 +126,14 @@ function initMutator()
 			this.AAs[i].scale.setScalar(mutatorAaAngstrom);
 		}
 
-		// var msg = { command: "mutateAndAutofit" };
-		// closestAtom.assignAtomSpecToObject( msg );
-		// socket.send( JSON.stringify( msg ) );
+		var msg = { command: "mutateAndAutofit", newResidue:"CYS" };
+		closestAtom.assignAtomSpecToObject( msg );
+		socket.send( JSON.stringify( msg ) );
 
 		label.visible = this.parent === scene;
 	}
 	
-	thingsToBeUpdated.push(mutator);
+	// objectsToBeUpdated.push(mutator);
 	holdables.push(mutator);
 	scene.add(mutator);
 	return mutator;

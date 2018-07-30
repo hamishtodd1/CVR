@@ -1,85 +1,26 @@
-function initSurroundings( loadFloor )
+'use strict';
+
+function initSurroundings( renderer )
 {
-	scene.fog = new THREE.Fog( 0xffffff, 1, 600 );
-	scene.fog.color.setHSL( 0.6, 0, 1 );
-	
-	// LIGHTS
+	//floor
+	var ourTextureLoader = new THREE.TextureLoader();
+	ourTextureLoader.crossOrigin = true;
+	var floorDimension = 8;				
+	var floorTile = new THREE.Mesh( new THREE.PlaneBufferGeometry( floorDimension, floorDimension ), new THREE.MeshLambertMaterial());
+	floorTile.position.y = -1.2;
+	floorTile.rotation.x = -TAU / 4;
+	scene.add(floorTile);
+	ourTextureLoader.load(
+		"data/textures/Floor4.png",
+		function(texture)
+		{
+			texture.magFilter = THREE.NearestFilter;
+			floorTile.material.map = texture;
+		},
+		function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
+	);
 
-	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-	hemiLight.color.setHSL( 0.6, 1, 0.6 );
-	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
-	hemiLight.position.set( 0, 500, 0 );
-	scene.add( hemiLight );
-
-	dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-	dirLight.color.setHSL( 0.1, 1, 0.95 );
-	dirLight.position.set( -1, 1.75, 1 );
-	dirLight.position.multiplyScalar( 50 );
-	scene.add( dirLight );
-
-	dirLight.castShadow = true;
-
-	dirLight.shadow.mapSize.width = 2048;
-	dirLight.shadow.mapSize.height = 2048;
-
-	var d = 50;
-
-	dirLight.shadow.camera.left = -d;
-	dirLight.shadow.camera.right = d;
-	dirLight.shadow.camera.top = d;
-	dirLight.shadow.camera.bottom = -d;
-
-	dirLight.shadow.camera.far = 3500;
-	dirLight.shadow.bias = -0.0001;
-
-	var floorY = -1;
-
-	var wallHeight = 1.5;
-	var wallMaterial = new THREE.MeshStandardMaterial({color:0xBBBBBB, side:THREE.DoubleSide});
-	var walls = Array(3);
-	for(var i = 0; i < walls.length; i++)
-	{
-		walls[i] = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_RADIUS*2,wallHeight), wallMaterial);
-		walls[i].rotation.y = (i+1) * TAU/4;
-		walls[i].position.x = ROOM_RADIUS;
-		walls[i].position.y = floorY + wallHeight / 2;
-		walls[i].position.applyAxisAngle(yVector,i*TAU/4);
-		scene.add(walls[i])
-	}
-	
-	var OurTextureLoader = new THREE.TextureLoader();
-	OurTextureLoader.crossOrigin = true;
-	if(loadFloor)
-	{
-		OurTextureLoader.load(
-			"data/textures/Floor4.png",
-			function(texture)
-			{
-				texture.magFilter = THREE.NearestFilter;
-//				texture.minFilter = THREE.LinearMipMapLinearFilter;
-
-				var floorMat = new THREE.MeshPhongMaterial({ map: texture }); 
-				
-				var floorDimension = 8;
-				var floorTile = new THREE.Mesh( new THREE.PlaneBufferGeometry( floorDimension, floorDimension ), floorMat);
-//				floorTile.receiveShadow = true;
-				
-				floorTile.position.y = floorY;
-				floorTile.rotation.x = -TAU / 4;
-				scene.add(floorTile);
-
-				// var wallHeight = 2;
-				// var walls = new THREE.Mesh(
-				// 	new THREE.CylinderBufferGeometry(2,2,2,64,1,true), 
-				// 	wallMaterial );
-				// walls.position.y = floorTile.position.y + wallHeight / 2;
-				// scene.add(walls);
-			},
-			function ( xhr ) {}, function ( xhr ) {console.log( 'texture loading error' );}
-		);
-	}
-
-	// SKYDOME
+	//------------Sky
 
 	var vertexShader = document.getElementById( 'vertexShader' ).textContent;
 	var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
@@ -89,17 +30,73 @@ function initSurroundings( loadFloor )
 		offset:		 { type: "f", value: 33 },
 		exponent:	 { type: "f", value: 0.6 }
 	};
-	uniforms.topColor.value.copy( hemiLight.color );
+	uniforms.topColor.value.copy( new THREE.Color().setHSL( 0.6, 1, 0.6 ) );
 
-	scene.fog.color.copy( uniforms.bottomColor.value );
+	var skyDome = new THREE.Mesh( 
+		new THREE.SphereGeometry( camera.far*0.99, 32, 15 ),
+		new THREE.ShaderMaterial( { 
+			vertexShader: vertexShader, 
+			fragmentShader: fragmentShader, 
+			uniforms: uniforms, 
+			side: THREE.BackSide
+		})
+	);
+	scene.add( skyDome );
 
-	var skyGeo = new THREE.SphereGeometry( 600, 32, 15 );
-	var skyMat = new THREE.ShaderMaterial( { 
-		vertexShader: vertexShader, 
-		fragmentShader: fragmentShader, 
-		uniforms: uniforms, 
-		side: THREE.BackSide } );
+	//-----------------lights
+	/*
+		Could attach one to people's heads? Hands?
+	*/
 
-	var sky = new THREE.Mesh( skyGeo, skyMat );
-	scene.add( sky );
+	var ambientLight = new THREE.AmbientLight( 0xffffff, 0.7 );
+	// ambientLight.color.setHSL( 0.6, 1, 0.6 );
+	scene.add( ambientLight );
+
+	var ourLight = new THREE.PointLight(0xFFFFFF,1,99,0.36,0,1);
+	// ourLight.color.setHSL( 0.1, 1, 0.95 );
+	// ourLight.position.set( -1, 1.75, 1 );
+	ourLight.target = controllers[0]
+	ourLight.position.multiplyScalar( 0.1 );
+	scene.add( ourLight );
+	
+	var helperSphere = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshPhongMaterial({color:0xFF0000}));
+	helperSphere.geometry.computeBoundingSphere();
+	ourLight.boundingSphere = helperSphere.geometry.boundingSphere;
+	ourLight.ordinaryParent = scene;
+	ourLight.add(helperSphere);
+	holdables.push(ourLight)
+
+	var shadowsPresent = false;
+	if(shadowsPresent)
+	{
+		// var shadowSurface = new THREE.Mesh(new THREE.SphereBufferGeometry( 1 ).applyMatrix(new THREE.Matrix4().makeScale(panelDimensions.x,panelDimensions.y,panelDimensions.z)), new THREE.MeshBasicMaterial({side:THREE.DoubleSide}) )
+		// scene.add(shadowSurface) // want to use it for intersection and for shadow. Necessary to be in scene for former?
+		//there's an argument for having the shadow of the panel on the floor
+
+		renderer.shadowMap.enabled = true;
+		renderer.shadowMap.type = THREE.BasicShadowMap;
+
+		controllers[0].controllerModel.castShadow = true;
+		controllers[1].controllerModel.castShadow = true;
+		//the controller lasers too?
+		backPanel.receiveShadow = true;
+		floorTile.receiveShadow = true;
+
+		if(ourLight.isDirectionalLight)
+		{
+			var dimension = 0.06;
+			ourLight.shadow.camera.left = -dimension;
+			ourLight.shadow.camera.right = dimension;
+			ourLight.shadow.camera.top = dimension;
+			ourLight.shadow.camera.bottom = -dimension;
+		}
+
+		ourLight.shadow.camera.far = 10;
+		ourLight.shadow.camera.near = ourLight.boundingSphere.radius / 2;
+		ourLight.shadow.mapSize.width = 512;
+		ourLight.shadow.mapSize.height = 512;
+		ourLight.castShadow = true;
+	}
+
+	initPanel();
 }

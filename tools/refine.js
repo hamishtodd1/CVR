@@ -156,7 +156,7 @@ function initRefiner()
 
 	autoRefiner.onLetGo = stopRefinement;
 	
-	thingsToBeUpdated.push(autoRefiner);
+	objectsToBeUpdated.push(autoRefiner);
 	holdables.push(autoRefiner)
 	scene.add(autoRefiner);
 	autoRefiner.ordinaryParent = autoRefiner.parent;

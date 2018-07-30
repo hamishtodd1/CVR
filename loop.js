@@ -21,24 +21,16 @@ function establishAttachment(child, intendedParent)
 	}
 }
 
-function loop( maps, models, controllers, vrInputSystem, visiBox )
+function loop( maps, models, controllers, visiBox )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;
 	
-	vrInputSystem.update();
+	updateVrInput();
+	updatePanel();
 	
 	for(var i = 0; i < controllers.length; i++)
 	{
-		if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 && 
-			frameCount % 10 === 0 )
-		{
-			for(var j = 0; j < maps.length; j++)
-			{
-				maps[j].addToIsolevel( 0.22 * controllers[i].thumbStickAxes[1] )
-			}
-		}
-		
 		if( controllers[i].grippingTop )
 		{
 			if( controllers[i].children.length === 2)
@@ -108,10 +100,9 @@ function loop( maps, models, controllers, vrInputSystem, visiBox )
 		establishAttachment(assemblage, scene);
 	}
 
-	for( var i = 0; i < thingsToBeUpdated.length; i++)
+	for( var i = 0; i < objectsToBeUpdated.length; i++)
 	{
-		// console.log(thingsToBeUpdated[i])
-		thingsToBeUpdated[i].update();
+		objectsToBeUpdated[i].update();
 	}
 	
 	// for(var i = 0; i < maps.length; i++)

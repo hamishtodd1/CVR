@@ -41,6 +41,20 @@ function checkForNewGlobals()
 }
 //also nice would be "check for unused variables"
 
+function logExtremes(array,indexToInspect)
+{
+	var lowest = Infinity;
+	var highest = -Infinity;
+	for(var i = 0; i < array.length; i++)
+	{
+		if(array[i][indexToInspect] < lowest)
+			lowest = array[i][indexToInspect];
+		if(array[i][indexToInspect] > highest)
+			highest = array[i][indexToInspect];
+	}
+	console.log(lowest,highest)
+}
+
 function clamp(value, min, max)
 {
 	if(value < min)
@@ -108,9 +122,26 @@ THREE.Object3D.prototype.getUnitVectorInObjectSpace = function(axis)
 	return axis.clone().applyMatrix4(this.matrixWorld).sub(this.getWorldPosition()).normalize();
 }
 
-THREE.OriginCorneredPlaneGeometry = function(width,height)
+THREE.OriginCorneredPlaneBufferGeometry = function(width,height)
 {
 	var g = new THREE.PlaneBufferGeometry(1,1);
+	g.applyMatrix(new THREE.Matrix4().makeTranslation(0.5,0.5,0))
+
+	if(width)
+	{
+		g.applyMatrix(new THREE.Matrix4().makeScale(width,1,1))
+	}
+	if(height)
+	{
+		g.applyMatrix(new THREE.Matrix4().makeScale(1,height,1))
+	}
+
+	return g;
+}
+
+THREE.OriginCorneredPlaneGeometry = function(width,height)
+{
+	var g = new THREE.PlaneGeometry(1,1);
 	g.applyMatrix(new THREE.Matrix4().makeTranslation(0.5,0.5,0))
 
 	if(width)
@@ -200,6 +231,35 @@ THREE.Quaternion.prototype.distanceTo = function(q2)
 	if (theta>Math.PI/2) theta = Math.PI - theta;
 	return theta;
 }
+THREE.Quaternion.prototype.getAxisWithAngleAsLength = function()
+{
+	var scaleFactor = Math.sqrt(1-qw*qw);
+	var axis = new THREE.Vector3(
+		this.x / scaleFactor,
+		this.y / scaleFactor,
+		this.z / scaleFactor
+		);
+	axis.setLength(2 * Math.acos(this.w));
+	return axis;
+}
+THREE.Quaternion.prototype.multiplyScalar = function(scalar)
+{
+	this.x *= scalar;
+	this.y *= scalar;
+	this.z *= scalar;
+	this.w *= scalar;
+
+	return this;
+}
+THREE.Quaternion.prototype.add = function(q2)
+{
+	this.x += q2.x;
+	this.y += q2.y;
+	this.z += q2.z;
+	this.w += q2.w;
+
+	return this;
+}
 
 THREE.Face3.prototype.getCorner = function(i)
 {
@@ -268,4 +328,15 @@ function randomPerpVector(ourVector){
 	}
 	
 	return perpVector;
+}
+
+function removeAndRecursivelyDispose(obj)
+{
+	obj.parent.remove(obj);
+	if (obj.geometry) { obj.geometry.dispose(); }
+	if (obj.material) { obj.material.dispose(); }
+	for(var i = 0; i < obj.children.length; i++)
+	{
+		removeAndRecursivelyDispose(obj.children[i])
+	}
 }

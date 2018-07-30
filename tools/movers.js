@@ -114,7 +114,7 @@ function initRigidBodyMover()
 	holdables.push(rigidBodyMover)
 	scene.add(rigidBodyMover);
 	rigidBodyMover.ordinaryParent = rigidBodyMover.parent;
-	thingsToBeUpdated.push(rigidBodyMover);
+	objectsToBeUpdated.push(rigidBodyMover);
 
 	return rigidBodyMover;
 }
@@ -176,7 +176,7 @@ function initAutoRotamer()
 
 	autoRotamer.onLetGo = turnOffAllHighlights;
 	
-	thingsToBeUpdated.push(autoRotamer);
+	objectsToBeUpdated.push(autoRotamer);
 	holdables.push(autoRotamer)
 	scene.add(autoRotamer);
 	autoRotamer.ordinaryParent = autoRotamer.parent;

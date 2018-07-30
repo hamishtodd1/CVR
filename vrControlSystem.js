@@ -1,8 +1,22 @@
-//Left and right on stick = contour, up and down is for currently selected menu?
+var updateVrInput;
+var resetSensor;
 
-function initVrInputSystem(controllers, renderer,ourVrEffect)
+function initVrInputSystem(renderer,ourVrEffect)
 {
 	var cameraRepositioner = new THREE.VRControls( camera );
+	resetSensor = function()
+	{
+		cameraRepositioner.resetSensor();
+	}
+
+	var positionCorrection = new THREE.Vector3();
+	MenuOnPanel([
+		{string:"Set current position as center", buttonFunction:function()
+		{
+			positionCorrection.copy(camera.position)
+			ourVrEffect.setPositionCorrection(positionCorrection)
+		}}
+	])
 
 	document.addEventListener( 'keydown', function( event )
 	{
@@ -22,16 +36,7 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 		}
 	}, false ); 
 	
-	var vrInputSystem = {};
-
-	var riftControllerKeys = {
-		thumbstickButton:0,
-		grippingTop: 1,
-		grippingSide:2,
-		button1: 3,
-		button2: 4
-	}
-	var viveControllerKeys = {
+	var controllerKeys = {
 		thumbstickButton:0,
 		grippingTop: 1,
 		grippingSide:2,
@@ -41,6 +46,7 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 	
 	function overlappingHoldable(holdable)
 	{
+		//TODO once a weird bug here where geometry was undefined
 		var ourPosition = this.controllerModel.geometry.boundingSphere.center.clone();
 		this.localToWorld( ourPosition );
 		
@@ -66,7 +72,7 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 			function ( object ) 
 			{
 				controllers[  i ].controllerModel.geometry = object.children[0].geometry;
-				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xVector,TAU/8) );
+				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xVector,0.7) );
 				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeTranslation(
 					0.008 * ( i == LEFT_CONTROLLER_INDEX?-1:1),
 					0.041,
@@ -80,15 +86,13 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 	var laserRadius = 0.001;
 	for(var i = 0; i < 2; i++)
 	{
-		controllers[ i ] = new THREE.Object3D();
-
 		{
 			controllers[ i ].laser = new THREE.Mesh(
-				new THREE.CylinderBufferGeometryUncentered( laserRadius, 2), 
-				new THREE.MeshBasicMaterial({color:0xFF0000, /*transparent:true,opacity:0.4*/}) 
+				new THREE.CylinderBufferGeometryUncentered( laserRadius, 1), 
+				new THREE.MeshBasicMaterial({color:0xFF0000, transparent:true,opacity:0.14}) 
 			);
 			controllers[ i ].laser.rotation.x = -TAU/4
-			controllers[ i ].laser.visible = false;
+			// controllers[ i ].laser.visible = false;
 			controllers[ i ].add(controllers[ i ].laser);
 			var raycaster = new THREE.Raycaster();
 			controllers[ i ].intersectLaserWithObject = function(object3D)
@@ -105,7 +109,7 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 			}
 		}
 
-		for( var propt in riftControllerKeys )
+		for( var propt in controllerKeys )
 		{
 			controllers[ i ][propt] = false;
 			controllers[ i ][propt+"Old"] = false;
@@ -117,13 +121,15 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 
 		controllers[ i ].oldPosition = controllers[ i ].position.clone();
 		controllers[ i ].oldQuaternion = controllers[ i ].quaternion.clone();
+		controllers[ i ].deltaQuaternion = controllers[ i ].quaternion.clone();
+		controllers[ i ].deltaPosition = controllers[ i ].position.clone();
 		
 		controllers[ i ].overlappingHoldable = overlappingHoldable;
 		
 		loadControllerModel(i);
 	}
 
-	vrInputSystem.update = function()
+	updateVrInput = function()
 	{
 		if(cameraRepositioner)
 		{
@@ -141,7 +147,6 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 				continue;
 			}
 			var affectedControllerIndex = -1;
-			var keys = null;
 			if (gamepads[k].id === "OpenVR Gamepad" )
 			{
 				if(gamepads[k].index )
@@ -152,17 +157,25 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 				{
 					affectedControllerIndex = LEFT_CONTROLLER_INDEX;
 				}
-				keys = viveControllerKeys;
 			}
 			else if (gamepads[k].id === "Oculus Touch (Right)")
 			{
 				affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
-				keys = riftControllerKeys;
 			}
 			else if (gamepads[k].id === "Oculus Touch (Left)")
 			{
 				affectedControllerIndex = LEFT_CONTROLLER_INDEX;
-				keys = riftControllerKeys;
+			}
+			else if (gamepads[k].id === "Spatial Controller (Spatial Interaction Source)")
+			{
+				if( gamepads[k].hand === "right" )
+				{
+					affectedControllerIndex = RIGHT_CONTROLLER_INDEX;
+				}
+				else
+				{
+					affectedControllerIndex = LEFT_CONTROLLER_INDEX;
+				}
 			}
 			else
 			{
@@ -177,21 +190,27 @@ function initVrInputSystem(controllers, renderer,ourVrEffect)
 			controllers[affectedControllerIndex].oldQuaternion.copy(controllers[ affectedControllerIndex ].quaternion);
 			
 			controllers[affectedControllerIndex].position.fromArray( gamepads[k].pose.position );
+			controllers[affectedControllerIndex].position.sub(positionCorrection)
 			controllers[affectedControllerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
 			controllers[affectedControllerIndex].updateMatrixWorld();
 
-			for( var propt in riftControllerKeys )
+			controllers[affectedControllerIndex].deltaPosition.copy(controllers[ affectedControllerIndex ].position).sub(controllers[ affectedControllerIndex ].oldPosition);
+			// console.log(controllers[affectedControllerIndex].deltaPosition,controllers[ affectedControllerIndex ].position,controllers[ affectedControllerIndex ].oldPosition)
+			controllers[affectedControllerIndex].deltaQuaternion.copy(controllers[affectedControllerIndex].oldQuaternion).inverse().multiply(controllers[affectedControllerIndex].quaternion);
+
+			for( var propt in controllerKeys )
 			{
 				controllers[ affectedControllerIndex ][propt+"Old"] = controllers[ affectedControllerIndex ][propt];
-				controllers[ affectedControllerIndex ][propt] = gamepads[k].buttons[riftControllerKeys[propt]].pressed;
+				controllers[ affectedControllerIndex ][propt] = gamepads[k].buttons[controllerKeys[propt]].pressed;
 			}
+			controllers[ affectedControllerIndex ]["grippingSide"] = gamepads[k].buttons[controllerKeys["grippingSide"]].value > 0.7;
+			// if(!logged)console.log(gamepads[k])
+			// 	logged = 1
 
-			//gamepads[k].buttons[riftControllerKeys.grippingTop].value;
+			//gamepads[k].buttons[controllerKeys.grippingTop].value;
 
 			// controllers[ affectedControllerIndex ].controllerModel.material.color.r = controllers[ affectedControllerIndex ].button1?1:0;
 			// controllers[ affectedControllerIndex ].controllerModel.material.color.g = controllers[ affectedControllerIndex ].button2?1:0;
 		}
 	}
-	
-	return vrInputSystem;
 }

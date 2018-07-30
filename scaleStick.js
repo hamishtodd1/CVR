@@ -22,5 +22,5 @@ function initScaleStick()
 		clippingPlane.normal.copy( direction ).negate();
 		clippingPlane.constant = controllers[1].position.dot( direction );
 	}
-	thingsToBeUpdated.push( scaleStick );
+	objectsToBeUpdated.push( scaleStick );
 }
