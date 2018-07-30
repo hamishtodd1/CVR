@@ -14,8 +14,6 @@ Beta starts on October 15th 2018. Build should be guaranteed stable (and more us
 
 ## How do I set it up
 
-This is pre-beta so you're not really supposed to :) but if you are super eager, and don't mind that there are very few features and no guarantee of stability...
-
 You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/file/d/15OHw1VtXu-QXTvmz9qNLut6K_KhDMcMK - make sure to go to chrome://flags and enable webVR AND gamepad extensions). 
 
 1. Run server.py with python 2.7
