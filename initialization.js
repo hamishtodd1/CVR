@@ -45,6 +45,7 @@
  	Copy and paste 3D blocks of atoms
  	Desktop view? Urgh
  	NCS! It is a complex-to-look-at 3D thing! Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
+ 	"Take screenshot"
 
  Games to get maybe
  	UI interest
@@ -125,6 +126,7 @@
  	    camera.updateProjectionMatrix();
  	}, false );
  	
+ 	
  	initSurroundings(renderer);
  	initScaleStick();
  	// initKeyboardInput();
@@ -159,7 +161,7 @@
  		// 	}
  		// );
  	}
- 	loadTutorialModelAndData()
+ 	// loadTutorialModelAndData()
  	addSingleFunctionToPanel(loadTutorialModelAndData);
 
  	socket.commandReactions["loadTutorialModelAndData"] = function(msg)
@@ -184,20 +186,22 @@
  		var visiblePlace = visiBox.position.clone()
  		// assemblage.worldToLocal(visiblePlace)
  		thingsToSpaceOut.push(
- 			//coot specific
- 			initMutator(),
- 			// initAtomDeleter(),
- 			// initResidueDeleter(),
- 			initEnvironmentDistance(),
- 			initAutoRotamer(),
- 			initRefiner(),
+ 			// //coot specific
+ 			// initMutator(),
+ 			// // initAtomDeleter(),
+ 			// // initResidueDeleter(),
+ 			// // initEnvironmentDistance(),
+ 			// initAutoRotamer(),
+ 			// initRefiner(),
 
- 			initPointer(),
- 			// initAtomLabeller(),
- 			initRigidBodyMover(),
- 			initProteinPainter(),
- 			initNucleicAcidPainter()
+ 			// initPointer(),
+ 			// // initAtomLabeller(),
+ 			// initRigidBodyMover(),
+ 			// initProteinPainter(),
+ 			// initNucleicAcidPainter()
  		);
+
+ 		initProbeDotter()
 
  		var toolSpacing = 0.15;
  		for(var i = 0; i < thingsToSpaceOut.length; i++)

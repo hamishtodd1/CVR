@@ -1,3 +1,7 @@
+/*
+	Cornices, skirting board, those things that run along the wall, color below, color above, carpet, maybe things in the corners so you know which corner is which.
+*/
+
 'use strict';
 
 function initSurroundings( renderer )

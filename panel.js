@@ -68,76 +68,76 @@ function initPanelDemo()
 
 	var fakeStrings = [
 		"merge molecules",
-		"List of all atoms, all residues?",
-		"Your tools, your metrics",
-		"Group work features",
-		"	Round table",// for if there are multiple people - makes it so all your heads are at reasonable angle",
-		"	Synchronize view",
-		"Superpose",
-		"	LSQ", 
-		"	SSSM",
-		"check synchronization of coot and CVR molecule", //for us
-		"Save, load, export map",
-		"pukkers",
-		"Sequence view",
-		"	Reverse direction",
-		"	alignment vs pir",
-		"	Ask paul what people tend to use it for",
-		"Control bindings",
-		"Refmac",
-		"Undo/redo? Help vive people!",
-		"Graphics quality",
-		"Play tutorial video",
-		"Hydrogen visible",
-		"Refinement options",
-		"	Use Torsion restraints ",		//(default off)
-		"	Use planar peptide restraints",	//(default on)
-		"	Use trans peptide restraints",	//(default on)
-		"	Ramachandran restraints",		//(default off)
-		"	Alpha helix restraints",		//(default off)
-		"	beta strand restraints",		//(default off)
-		"	Refinement weight",				//?
-		"Other modelling tools",
-		"	cis <-> trans",
-		"	base pair",
-		"	skeletonize map",
-		"	sharpen map?",
-		"	Find",
-		"		Waters",
-		"		Secondary structure",
-		"		Ligands",
+		// "List of all atoms, all residues?",
+		// "Your tools, your metrics",
+		// "Group work features",
+		// "	Round table",// for if there are multiple people - makes it so all your heads are at reasonable angle",
+		// "	Synchronize view",
+		// "Superpose",
+		// "	LSQ", 
+		// "	SSSM",
+		// "check synchronization of coot and CVR molecule", //for us
+		// "Save, load, export map",
+		// "pukkers",
+		// "Sequence view",
+		// "	Reverse direction",
+		// "	alignment vs pir",
+		// "	Ask paul what people tend to use it for",
+		// "Control bindings",
+		// "Refmac",
+		// "Undo/redo? Help vive people!",
+		// "Graphics quality",
+		// "Play tutorial video",
+		// "Hydrogen visible",
+		// "Refinement options",
+		// "	Use Torsion restraints ",		//(default off)
+		// "	Use planar peptide restraints",	//(default on)
+		// "	Use trans peptide restraints",	//(default on)
+		// "	Ramachandran restraints",		//(default off)
+		// "	Alpha helix restraints",		//(default off)
+		// "	beta strand restraints",		//(default off)
+		// "	Refinement weight",				//?
+		// "Other modelling tools",
+		// "	cis <-> trans",
+		// "	base pair",
+		// "	skeletonize map",
+		// "	sharpen map?",
+		// "	Find",
+		// "		Waters",
+		// "		Secondary structure",
+		// "		Ligands",
 
-		//Haven't been through "Ligand" or "Extensions". Various things in "validate"
-		//list of the buttons on your controller, you drag things in to make them do stuff
+		// //Haven't been through "Ligand" or "Extensions". Various things in "validate"
+		// //list of the buttons on your controller, you drag things in to make them do stuff
 
-		"Display manager", //master switches needed for all
-		"	Visibility",
-		"	Delete",
-		"	Map",
-		"		isDiffmap",
-		"		Active for refinement",
-		"		Color",// (have a wheel)
-		"		Contour level scrolls",
-		"		Opacity",//Urgh fuck that
-		"		Block size", // WARNING GREEDY GUTS
-		"		Sample rate",
-		"		Chickenwire",
-		"		Show unit cell",
-		"	Molecule",
-		"		Show symmetry atoms",
-		"		Which one is affected by undo",
-		"		Which one gets atoms and chains added to it",
-		"		Carbon color",
-		"		Display methods",
-		"			Bond radius",
-		"			atom radiuse",
-		"			cAlpha only",
-		"			Waters visible",
-		"			Color by",
-		"				B factors / occupancy / other metric",
-		"				Chain",
-		"				Atom (default)",
-		"				amino acid (i.e. rainbow)",
+		// "Display manager", //master switches needed for all
+		// "	Visibility",
+		// "	Delete",
+		// "	Map",
+		// "		isDiffmap",
+		// "		Active for refinement",
+		// "		Color",// (have a wheel)
+		// "		Contour level scrolls",
+		// "		Opacity",//Urgh fuck that
+		// "		Block size", // WARNING GREEDY GUTS
+		// "		Sample rate",
+		// "		Chickenwire",
+		// "		Show unit cell",
+		// "	Molecule",
+		// "		Show symmetry atoms",
+		// "		Which one is affected by undo",
+		// "		Which one gets atoms and chains added to it",
+		// "		Carbon color",
+		// "		Display methods",
+		// "			Bond radius",
+		// "			atom radiuse",
+		// "			cAlpha only",
+		// "			Waters visible",
+		// "			Color by",
+		// "				B factors / occupancy / other metric",
+		// "				Chain",
+		// "				Atom (default)",
+		// "				amino acid (i.e. rainbow)",
 	];
 
 	var bunch = [];
