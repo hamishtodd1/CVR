@@ -4,7 +4,7 @@
 
 'use strict';
 
-function initSurroundings( renderer )
+function initSurroundings()
 {
 	//floor
 	var ourTextureLoader = new THREE.TextureLoader();

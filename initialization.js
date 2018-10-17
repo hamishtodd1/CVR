@@ -84,32 +84,22 @@
  	// 	return;
  	// }
 
- 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
  	renderer.setPixelRatio( window.devicePixelRatio );
  	renderer.setSize( window.innerWidth, window.innerHeight );
  	renderer.localClippingEnabled = true;
  	renderer.sortObjects = false;
  	document.body.appendChild( renderer.domElement );
 
- 	{
- 		// renderer.vr.enabled = true;
- 		// var vrButton = WEBVR.createButton( renderer );
- 		// document.body.appendChild( vrButton );
- 	}
- 	var ourVrEffect = new THREE.VREffect( renderer );
- 	var loopCallString = getStandardFunctionCallString(loop);
- 	function render()
- 	{
- 		eval(loopCallString);
- 		ourVrEffect.requestAnimationFrame( function()
- 		{
- 			//a reasonable indicator is ourVREffect.isPresenting
- 			ourVrEffect.render( scene, camera );
-
- 			var pauseLength = 0
- 			setTimeout(render,pauseLength);
- 		} );
- 	}
+	renderer.vr.enabled = true;
+ 	let vrButton = WEBVR.createButton( renderer )
+	document.body.appendChild( vrButton );
+	document.addEventListener( 'keydown', function( event )
+	{
+		if(event.keyCode === 69 )
+		{
+			vrButton.onClick()
+		}
+	}, false ); 
 
  	var maps = [];
  	var atoms = null; //because fixed length
@@ -126,8 +116,7 @@
  	    camera.updateProjectionMatrix();
  	}, false );
  	
- 	
- 	initSurroundings(renderer);
+ 	initSurroundings();
  	initScaleStick();
  	// initKeyboardInput();
  	// initMonomerReceiver()
@@ -137,7 +126,7 @@
  	initModelCreationSystem(visiBox.planes);
  	initMapCreationSystem(visiBox)
  	// initStats(visiBox.position);
- 	initVrInputSystem(renderer,ourVrEffect)
+ 	initHandInput()
 
  	function loadTutorialModelAndData()
  	{
@@ -209,7 +198,11 @@
  			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.16);
  		}
 
- 		//hmm there was "animate" above, do you need this?
- 		render();
+ 		let loopCallString = getStandardFunctionCallString(loop);
+ 		renderer.setAnimationLoop( function()
+ 		{
+ 			eval(loopCallString);
+ 			renderer.render( scene, camera );
+ 		} )
  	}
  })();
