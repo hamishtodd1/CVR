@@ -101,6 +101,4 @@ function initSurroundings()
 		ourLight.shadow.mapSize.height = 512;
 		ourLight.castShadow = true;
 	}
-
-	initPanel();
 }

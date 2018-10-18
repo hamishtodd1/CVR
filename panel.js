@@ -1,4 +1,3 @@
-'use strict';
 /*
 	TODO
 		reproduce current graph
@@ -152,10 +151,6 @@ function initPanelDemo()
 		}
 	}
 }
-
-var MenuOnPanel;
-var addSingleFunctionToPanel;
-var updatePanel;
 
 function initPanel()
 {

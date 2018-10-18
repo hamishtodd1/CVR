@@ -47,6 +47,9 @@
  	NCS! It is a complex-to-look-at 3D thing! Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
  	"Take screenshot"
 
+ Bugs
+ 	Firefox: sometimes it just doesn't start. setAnimationLoop is set, but loop is not called
+
  Games to get maybe
  	UI interest
  		redout / dirt, might have more ui stuff?	
@@ -97,9 +100,9 @@
 	{
 		if(event.keyCode === 69 )
 		{
-			vrButton.onClick()
+			vrButton.onclick()
 		}
-	}, false ); 
+	}, false );
 
  	var maps = [];
  	var atoms = null; //because fixed length
@@ -117,6 +120,7 @@
  	}, false );
  	
  	initSurroundings();
+ 	initPanel();
  	initScaleStick();
  	// initKeyboardInput();
  	// initMonomerReceiver()
@@ -127,6 +131,21 @@
  	initMapCreationSystem(visiBox)
  	// initStats(visiBox.position);
  	initHandInput()
+
+ 	// debugger;
+
+ 	{
+ 		MenuOnPanel([
+ 			{string:"Set current position as center", buttonFunction:function()
+ 			{
+ 				let cameraPositionWithOurCorrection = camera.position.clone()
+ 				cameraPositionWithOurCorrection.y += 1.6
+ 				renderer.vr.setPositionAsOrigin( cameraPositionWithOurCorrection )
+ 			}}
+ 		])
+ 		//gonna do this until threejs's height correction comes from somewhere!
+ 		renderer.vr.setPositionAsOrigin(new THREE.Vector3(0,1.6,0))
+ 	}
 
  	function loadTutorialModelAndData()
  	{
@@ -151,7 +170,7 @@
  		// );
  	}
  	// loadTutorialModelAndData()
- 	addSingleFunctionToPanel(loadTutorialModelAndData);
+ 	// addSingleFunctionToPanel(loadTutorialModelAndData);
 
  	socket.commandReactions["loadTutorialModelAndData"] = function(msg)
  	{
@@ -183,7 +202,7 @@
  			// initAutoRotamer(),
  			// initRefiner(),
 
- 			// initPointer(),
+ 			initPointer(),
  			// // initAtomLabeller(),
  			// initRigidBodyMover(),
  			// initProteinPainter(),

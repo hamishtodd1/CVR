@@ -1,3 +1,8 @@
+function ceilPowerOfTwo( value )
+{
+	return Math.pow( 2, Math.ceil( Math.log( value ) / Math.LN2 ) );
+}
+
 function makeTextSign(originalText, twoSided, materialOnly, originCornered)
 {
 	if(twoSided == undefined)
@@ -12,12 +17,11 @@ function makeTextSign(originalText, twoSided, materialOnly, originCornered)
 	material.setText = function(text)
 	{
 		var font = "Trebuchet"
-		var backgroundMargin = 50;
 		var textSize = 100;
 		context.font = textSize + "pt " + font;
 		var textWidth = context.measureText(text).width;
-		canvas.width = textWidth + backgroundMargin;
-		canvas.height = textSize + backgroundMargin;
+		canvas.height = ceilPowerOfTwo(textSize)
+		canvas.width =  ceilPowerOfTwo(textWidth);
 
 		context.font = textSize + "pt " + font;
 		context.textAlign = "center";
@@ -25,11 +29,7 @@ function makeTextSign(originalText, twoSided, materialOnly, originCornered)
 		
 		var backGroundColor = "#3F3D3F"
 		context.fillStyle = backGroundColor;
-		context.fillRect(
-			canvas.width / 2 - textWidth / 2 - backgroundMargin / 2, 
-			canvas.height / 2 - textSize / 2 - backgroundMargin / 2,
-			textWidth + backgroundMargin, 
-			textSize + backgroundMargin);
+		context.fillRect(0,0,canvas.width,canvas.height);
 		
 		var textColor = "#D3D1D3"
 		context.fillStyle = textColor;
