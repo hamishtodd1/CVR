@@ -28,7 +28,7 @@ let camera = new THREE.PerspectiveCamera( 70, //can be changed by VR effect
 let scene = new THREE.Scene().add(camera);
 
 let renderer = new THREE.WebGLRenderer( { antialias: true } );
-let controllers = [new THREE.Object3D(),new THREE.Object3D()]
+let handControllers = [new THREE.Object3D(),new THREE.Object3D()]
 
 let models = [];
 let maps = [];

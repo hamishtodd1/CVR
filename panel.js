@@ -33,8 +33,8 @@ function initPanelDemo()
 {
 	var thingsInMenu = [
 		{string:"Example menu"},
-		{string:"    Switch", switchObject:controllers[0].controllerModel, switchProperty:"visible"},
-		{string:"    Button", buttonFunction:function(){controllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random())}}
+		{string:"    Switch", switchObject:handControllers[0].controllerModel, switchProperty:"visible"},
+		{string:"    Button", buttonFunction:function(){handControllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random())}}
 	];
 	MenuOnPanel(thingsInMenu)
 
@@ -234,7 +234,7 @@ function initPanel()
 		cursors[i] = new THREE.Mesh(cursorGeometry,cursorMaterial)
 		cursors[i].polar = 0;
 		cursors[i].azimuthal = 0;
-		controllers[i].cursor = cursors[i]
+		handControllers[i].cursor = cursors[i]
 		panel.add(cursors[i])
 	}
 
@@ -247,9 +247,9 @@ function initPanel()
 			The laser should end at the cursor
 		*/
 
-		for(var i = 0; i < controllers.length; i++)
+		for(var i = 0; i < handControllers.length; i++)
 		{
-			var intersections = controllers[i].intersectLaserWithObject(collisionPanel)
+			var intersections = handControllers[i].intersectLaserWithObject(collisionPanel)
 			if( intersections.length )
 			{
 				var intersection = intersections[0].point
@@ -267,12 +267,12 @@ function initPanel()
 				cursors[i].position.copy( intersections[0].point )
 				// cursors[i].position.copy( anglesToPanel(cursors[i].polar,cursors[i].azimuthal) )
 
-				controllers[i].laser.scale.y = controllers[i].position.distanceTo( cursors[i].position.clone().applyMatrix4(panel.matrix) )
+				handControllers[i].laser.scale.y = handControllers[i].position.distanceTo( cursors[i].position.clone().applyMatrix4(panel.matrix) )
 			}
 
-			if( controllers[i].position.length() > panel.scale.x )
+			if( handControllers[i].position.length() > panel.scale.x )
 			{
-				panel.scale.setScalar( controllers[i].position.length() )
+				panel.scale.setScalar( handControllers[i].position.length() )
 				collisionPanel.scale.copy( panel.scale )
 			}
 		}
@@ -395,12 +395,12 @@ function initPanel()
 
 				if( textMeshes[i].buttonFunction || textMeshes[i].switchObject )
 				{
-					for(var j = 0; j < controllers.length; j++)
+					for(var j = 0; j < handControllers.length; j++)
 					{
-						if( controllers[j].intersectLaserWithObject( textMeshes[i] ).length !== 0 )
+						if( handControllers[j].intersectLaserWithObject( textMeshes[i] ).length !== 0 )
 						{
 							textMeshes[i].material.color.copy( highlightedColor )
-							if( controllers[j].button1 && !controllers[j].button1Old )
+							if( handControllers[j].button1 && !handControllers[j].button1Old )
 							{
 								if( textMeshes[i].buttonFunction )
 								{
@@ -418,13 +418,13 @@ function initPanel()
 
 			if(!menu.parentController )
 			{
-				for(var i = 0; i < controllers.length; i++)
+				for(var i = 0; i < handControllers.length; i++)
 				{
-					if( controllers[i].grippingTop && !controllers[i].grippingTopOld ) //or alternatively, get grabbed if controllers not grabbing anything. i.e. this goes in panelUpdate. Look in todo!
+					if( handControllers[i].grippingTop && !handControllers[i].grippingTopOld ) //or alternatively, get grabbed if handControllers not grabbing anything. i.e. this goes in panelUpdate. Look in todo!
 					{
-						if( controllers[i].intersectLaserWithObject( this ).length !== 0 )
+						if( handControllers[i].intersectLaserWithObject( this ).length !== 0 )
 						{
-							menu.parentController = controllers[i]
+							menu.parentController = handControllers[i]
 						}
 					}
 				}
