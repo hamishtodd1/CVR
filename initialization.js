@@ -1,6 +1,8 @@
-  'use strict';
- /* 
- 	You want a "reset server" button before you make them interact again
+'use strict';
+ /*
+	Look in the email from whatsisname
+
+ 	probe dots
  	Do the whole coot tutorial, and the EM one too
  		Can load a map, can load a molecule
  		Fix the atom deletion problems
@@ -10,30 +12,24 @@
  			Force restraints
  		Mutate / everything else sitting there in script
  		Spectation, or at least "Save"
-
- 	Expenses
- 	7Osme pass
- 	Poland travel
- 	Get stuff from Diego
  	
- TODO at some point
+ TODO during PhD
+ 	Non-vr head movement sensetivity demo
+ 	easy: "hand distances"
+ 	Octree selection
+ 	NCS! It is a complex-to-look-at 3D thing! Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
  	Place atom at pointer
  		Should replace ligand builder, "add oxt to residue"
  		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
  	Anisotropic atoms? There may be some interesting stuff here
- 	"Skeletonization"?
  	Everything in "Measures"
  	Ramachandran diagrams, hard spheres
- 	probe dots
- 	Octree selection
  	Test monomer tool
  	"Carbon alpha mode", often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
- 	easy: "hand distances"
+ 	"Skeletonization"? Is that different from above?
  	Get monomer with web speech
  	Selection of rotamers
  	"Add alt conformer"
- 	Non-vr head movement sensetivity demo
- 	Get that structure Paul suggested
  	"undo"
  		Just coot undo, then get the result? Full refresh
  		Button on controller reserved
@@ -44,10 +40,9 @@
  	ambient occlusion maps for all?
  	Copy and paste 3D blocks of atoms
  	Desktop view? Urgh
- 	NCS! It is a complex-to-look-at 3D thing! Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
  	"Take screenshot"
 
- Games to get maybe
+VR Games to get maybe
  	UI interest
  		redout / dirt, might have more ui stuff?	
  		Vanishing realms
@@ -96,6 +91,7 @@
  		// var vrButton = WEBVR.createButton( renderer );
  		// document.body.appendChild( vrButton );
  	}
+
  	var ourVrEffect = new THREE.VREffect( renderer );
  	var loopCallString = getStandardFunctionCallString(loop);
  	function render()
@@ -179,7 +175,7 @@
  		// maps.push(newMap);
  		// assemblage.add(newMap)
  	}
- 	socket.onopen = function()
+ 	socket.onopenAGASD = function()
  	{
  		var thingsToSpaceOut = []; //can do better than that now
 

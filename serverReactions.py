@@ -1,3 +1,5 @@
+#a "reset server" button would be nice
+
 from coot import *
 import json
 
