@@ -42,7 +42,10 @@
  	Desktop view? Urgh
  	"Take screenshot"
 
-VR Games to get maybe
+ Bugs
+ 	Firefox: sometimes it just doesn't start. setAnimationLoop is set, but loop is not called
+
+ VR Games to get maybe
  	UI interest
  		redout / dirt, might have more ui stuff?	
  		Vanishing realms
@@ -79,33 +82,22 @@ VR Games to get maybe
  	// 	return;
  	// }
 
- 	var renderer = new THREE.WebGLRenderer( { antialias: true } );
  	renderer.setPixelRatio( window.devicePixelRatio );
  	renderer.setSize( window.innerWidth, window.innerHeight );
  	renderer.localClippingEnabled = true;
  	renderer.sortObjects = false;
  	document.body.appendChild( renderer.domElement );
 
- 	{
- 		// renderer.vr.enabled = true;
- 		// var vrButton = WEBVR.createButton( renderer );
- 		// document.body.appendChild( vrButton );
- 	}
-
- 	var ourVrEffect = new THREE.VREffect( renderer );
- 	var loopCallString = getStandardFunctionCallString(loop);
- 	function render()
- 	{
- 		eval(loopCallString);
- 		ourVrEffect.requestAnimationFrame( function()
- 		{
- 			//a reasonable indicator is ourVREffect.isPresenting
- 			ourVrEffect.render( scene, camera );
-
- 			var pauseLength = 0
- 			setTimeout(render,pauseLength);
- 		} );
- 	}
+	renderer.vr.enabled = true;
+ 	let vrButton = WEBVR.createButton( renderer )
+	document.body.appendChild( vrButton );
+	document.addEventListener( 'keydown', function( event )
+	{
+		if(event.keyCode === 69 )
+		{
+			vrButton.onclick()
+		}
+	}, false );
 
  	var maps = [];
  	var atoms = null; //because fixed length
@@ -122,8 +114,8 @@ VR Games to get maybe
  	    camera.updateProjectionMatrix();
  	}, false );
  	
- 	
- 	initSurroundings(renderer);
+ 	initSurroundings();
+ 	initPanel();
  	initScaleStick();
  	// initKeyboardInput();
  	// initMonomerReceiver()
@@ -133,7 +125,22 @@ VR Games to get maybe
  	initModelCreationSystem(visiBox.planes);
  	initMapCreationSystem(visiBox)
  	// initStats(visiBox.position);
- 	initVrInputSystem(renderer,ourVrEffect)
+ 	initHandInput()
+
+ 	// debugger;
+
+ 	{
+ 		MenuOnPanel([
+ 			{string:"Set current position as center", buttonFunction:function()
+ 			{
+ 				let cameraPositionWithOurCorrection = camera.position.clone()
+ 				cameraPositionWithOurCorrection.y += 1.6
+ 				renderer.vr.setPositionAsOrigin( cameraPositionWithOurCorrection )
+ 			}}
+ 		])
+ 		//gonna do this until threejs's height correction comes from somewhere!
+ 		renderer.vr.setPositionAsOrigin(new THREE.Vector3(0,1.6,0))
+ 	}
 
  	function loadTutorialModelAndData()
  	{
@@ -158,7 +165,7 @@ VR Games to get maybe
  		// );
  	}
  	// loadTutorialModelAndData()
- 	addSingleFunctionToPanel(loadTutorialModelAndData);
+ 	// addSingleFunctionToPanel(loadTutorialModelAndData);
 
  	socket.commandReactions["loadTutorialModelAndData"] = function(msg)
  	{
@@ -190,7 +197,7 @@ VR Games to get maybe
  			// initAutoRotamer(),
  			// initRefiner(),
 
- 			// initPointer(),
+ 			initPointer(),
  			// // initAtomLabeller(),
  			// initRigidBodyMover(),
  			// initProteinPainter(),
@@ -205,7 +212,11 @@ VR Games to get maybe
  			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.16);
  		}
 
- 		//hmm there was "animate" above, do you need this?
- 		render();
+ 		let loopCallString = getStandardFunctionCallString(loop);
+ 		renderer.setAnimationLoop( function()
+ 		{
+ 			eval(loopCallString);
+ 			renderer.render( scene, camera );
+ 		} )
  	}
  })();

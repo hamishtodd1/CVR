@@ -92,24 +92,24 @@ function initBarcharts(visiBoxPosition)
 	objectsToBeUpdated.push(randomGraph)
 	randomGraph.update = function()
 	{
-		//your controllers have a laser
+		//your handControllers have a laser
 		//If the laser is in the rectangular area, it is visible
 		//the bars should change color if they are being pointed at
 		//as should the backgrounds, that lets you drag them
 
-		if(!models.length || !controllers.length)
+		if(!models.length || !handControllers.length)
 		{
 			return;
 		}
 
 		for(var i = 0; i < 2; i++)
 		{
-			var intersections = controllers[i].intersectLaserWithObject(randomGraph.background)
+			var intersections = handControllers[i].intersectLaserWithObject(randomGraph.background)
 			if(intersections.length)
 			{
-				controllers[i].laser.visible = true;
+				handControllers[i].laser.visible = true;
 				
-				if(controllers[i].button1 && !controllers[i].button1Old)
+				if(handControllers[i].button1 && !handControllers[i].button1Old)
 				{
 					positionPointedTo = intersections[0].point;
 					//The rubbish part
@@ -125,7 +125,7 @@ function initBarcharts(visiBoxPosition)
 			}
 			else
 			{
-				controllers[i].laser.visible = false;
+				handControllers[i].laser.visible = false;
 			}
 		}
 

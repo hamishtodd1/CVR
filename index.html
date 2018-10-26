@@ -1,54 +1,3 @@
-<!--
-windows key + space to change keyboard layout
-
-Install procedure
-	work/setup-path to ensure python, pip, coot were all consistent
-	Needed pip to install python modules
-		To install pip needed python with SSL
-		Had to use 2.7.14
-		Edited Modules/setup to uncomment the SSL section
-		   	Changed library to lib64 from lib
-		   	--with-ensurepip=install
-	python.exe get-pip.py
-	pip install singledispatch
-	pip install backports_abc
-	pip install tornado
-	Never try to avoid pip
-
-Update procedure, in autobuild:
-	Switch virtual machine connection mode to NAT
-	in gitcoot/coot, git pull
-	in gitcoot/coot, bash autogen.sh
-	in gitcoot/build, bash CIH 
-	in gitcoot/build, make
-	in gitcoot/build, make install
-	It is now in Linux-localhost
-
-Running procedure:
-	Switch virtual machine connection mode to host-only
-		May say "invalid settings". Go to file > host network manager
-		Create one and enable DCPH
-	hostname -I gets ip address to put in browser
-	For no graphics: /home/htodd/autobuild/Linux-localhost.../bin/coot --no-graphics -s CVR/Server.py
-	To get out of coot:
-		ctrl C
-		ctrl D
-	
-at some point:
-	do a 
-	git status
-	make sure that it's clean
-	"Your branch is up to date"
-	"working directory clean"
-	then:
-	    git branch refinement origin/refinement
-
-https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes it's a bit old but fast and no timebomb
-
-Workflow: save script, change window, ctrl+C to finish script in coot, ctrl+D to exit coot, up and enter to re-run coot
-Need to optimize this workflow.
--->
-
 <html>
 	<head>
 		<title>cootVR</title>
@@ -104,24 +53,18 @@ Need to optimize this workflow.
 		<script src="lib/sceneUtils.js"></script>
 		<!--<script src="lib/WireframeGeometry.js"></script> if you've had no errors for a while, delete this and the file-->
 
-		<script src="lib/THREE.AugmentedConsole.js"></script>
+		<!-- <script src="lib/THREE.AugmentedConsole.js"></script> -->
 
 		<script src="lib/OBJLoader.js"></script>
 		<script src="lib/PDBLoader.js"></script>
 		
-		<!--<script src="lib/vrEnabledWebVr.js"></script>-->
-		<script src="lib/tempWebVR.js"></script>
-		<script src="lib/tempVREffect.js"></script>
-		<script src="lib/tempVrHeadControl.js"></script>
-		<!--<script src="tempVr.js"></script>-->
+		<script src="lib/WebVR.js"></script>
+		<script src="handInput.js"></script>
 
 		<script src="surroundings.js"></script>
 		<script src="panel.js"></script>
 
-
 		<script src="maps.js"></script>
-		
-		<script src="vrControlSystem.js"></script>
 		
 		<script src="models.js"></script>
 		<script src="holdables.js"></script>
@@ -152,3 +95,54 @@ Need to optimize this workflow.
 		<script src="initialization.js"></script>
 	</body>
 </html>
+
+<!--
+windows key + space to change keyboard layout
+
+Install procedure
+	work/setup-path to ensure python, pip, coot were all consistent
+	Needed pip to install python modules
+		To install pip needed python with SSL
+		Had to use 2.7.14
+		Edited Modules/setup to uncomment the SSL section
+		   	Changed library to lib64 from lib
+		   	--with-ensurepip=install
+	python.exe get-pip.py
+	pip install singledispatch
+	pip install backports_abc
+	pip install tornado
+	Never try to avoid pip
+
+Update procedure, in autobuild:
+	Switch virtual machine connection mode to NAT
+	in gitcoot/coot, git pull
+	in gitcoot/coot, bash autogen.sh
+	in gitcoot/build, bash CIH 
+	in gitcoot/build, make
+	in gitcoot/build, make install
+	It is now in Linux-localhost
+
+Running procedure:
+	Switch virtual machine connection mode to host-only
+		May say "invalid settings". Go to file > host network manager
+		Create one and enable DCPH
+	hostname -I gets ip address to put in browser
+	For no graphics: /home/htodd/autobuild/Linux-localhost.../bin/coot --no-graphics -s CVR/Server.py
+	To get out of coot:
+		ctrl C
+		ctrl D
+	
+at some point:
+	do a 
+	git status
+	make sure that it's clean
+	"Your branch is up to date"
+	"working directory clean"
+	then:
+	    git branch refinement origin/refinement
+
+https://drive.google.com/open?id=0BzudLt22BqGRRElMNmVqQjJWS2c webvr build, yes it's a bit old but fast and no timebomb
+
+Workflow: save script, change window, ctrl+C to finish script in coot, ctrl+D to exit coot, up and enter to re-run coot
+Need to optimize this workflow.
+-->

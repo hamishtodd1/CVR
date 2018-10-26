@@ -4,7 +4,7 @@
 
 'use strict';
 
-function initSurroundings( renderer )
+function initSurroundings()
 {
 	//floor
 	var ourTextureLoader = new THREE.TextureLoader();
@@ -59,7 +59,7 @@ function initSurroundings( renderer )
 	var ourLight = new THREE.PointLight(0xFFFFFF,1,99,0.36,0,1);
 	// ourLight.color.setHSL( 0.1, 1, 0.95 );
 	// ourLight.position.set( -1, 1.75, 1 );
-	ourLight.target = controllers[0]
+	ourLight.target = handControllers[0]
 	ourLight.position.multiplyScalar( 0.1 );
 	scene.add( ourLight );
 	
@@ -80,8 +80,8 @@ function initSurroundings( renderer )
 		renderer.shadowMap.enabled = true;
 		renderer.shadowMap.type = THREE.BasicShadowMap;
 
-		controllers[0].controllerModel.castShadow = true;
-		controllers[1].controllerModel.castShadow = true;
+		handControllers[0].controllerModel.castShadow = true;
+		handControllers[1].controllerModel.castShadow = true;
 		//the controller lasers too?
 		backPanel.receiveShadow = true;
 		floorTile.receiveShadow = true;
@@ -101,6 +101,4 @@ function initSurroundings( renderer )
 		ourLight.shadow.mapSize.height = 512;
 		ourLight.castShadow = true;
 	}
-
-	initPanel();
 }

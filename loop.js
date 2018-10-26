@@ -21,25 +21,25 @@ function establishAttachment(child, intendedParent)
 	}
 }
 
-function loop( maps, models, controllers, visiBox )
+function loop( maps, models, handControllers, visiBox )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;
-	
-	updateVrInput();
+
+	readHandInput();
 	updatePanel();
 	
-	for(var i = 0; i < controllers.length; i++)
+	for(var i = 0; i < handControllers.length; i++)
 	{
-		if( controllers[i].grippingTop )
+		if( handControllers[i].grippingTop )
 		{
-			if( controllers[i].children.length === 2)
+			if( handControllers[i].children.length === 2)
 			{
 				var distanceOfClosestObject = Infinity;
 				selectedHoldable = null;
 				for(var j = 0; j < holdables.length; j++ )
 				{
-					if( controllers[i].overlappingHoldable(holdables[j]) )
+					if( handControllers[i].overlappingHoldable(holdables[j]) )
 					{
 						selectedHoldable = holdables[j];
 						break;
@@ -47,7 +47,7 @@ function loop( maps, models, controllers, visiBox )
 				}
 				if(selectedHoldable)
 				{
-					establishAttachment(selectedHoldable, controllers[i]);
+					establishAttachment(selectedHoldable, handControllers[i]);
 				}
 			}
 		}
@@ -55,7 +55,7 @@ function loop( maps, models, controllers, visiBox )
 		{
 			for(var j = 0; j < holdables.length; j++ )
 			{
-				if( holdables[j].parent === controllers[i])
+				if( holdables[j].parent === handControllers[i])
 				{
 					establishAttachment( holdables[j], holdables[j].ordinaryParent );
 				}
@@ -65,11 +65,11 @@ function loop( maps, models, controllers, visiBox )
 	
 	var bothAttachedController = RIGHT_CONTROLLER_INDEX;
 
-	if( controllers[0].grippingSide && controllers[1].grippingSide )
+	if( handControllers[0].grippingSide && handControllers[1].grippingSide )
 	{
-		var handSeparationDifferential = controllers[0].position.distanceTo( 
-			controllers[1].position ) / 
-			controllers[0].oldPosition.distanceTo( controllers[1].oldPosition );
+		var handSeparationDifferential = handControllers[0].position.distanceTo( 
+			handControllers[1].position ) / 
+			handControllers[0].oldPosition.distanceTo( handControllers[1].oldPosition );
 		
 		// visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 
 		// visiBox.scale.multiplyScalar( handSeparationDifferential );
@@ -79,19 +79,19 @@ function loop( maps, models, controllers, visiBox )
 		assemblage.scale.multiplyScalar( handSeparationDifferential );
 		assemblage.position.multiplyScalar(assemblage.scale.x);
 
-		// establishAttachment(visiBox, controllers[bothAttachedController]);
-		establishAttachment(assemblage, controllers[bothAttachedController]);
+		// establishAttachment(visiBox, handControllers[bothAttachedController]);
+		establishAttachment(assemblage, handControllers[bothAttachedController]);
 		// establishAttachment(visiBox, scene);
 		// establishAttachment(assemblage, scene);
 	}
-	else if( controllers[bothAttachedController].grippingSide && !controllers[1-bothAttachedController].grippingSide )
+	else if( handControllers[bothAttachedController].grippingSide && !handControllers[1-bothAttachedController].grippingSide )
 	{
-		// establishAttachment(visiBox, controllers[bothAttachedController]);
-		establishAttachment(assemblage, controllers[bothAttachedController]);
+		// establishAttachment(visiBox, handControllers[bothAttachedController]);
+		establishAttachment(assemblage, handControllers[bothAttachedController]);
 	}
-	else if( controllers[1-bothAttachedController].grippingSide && !controllers[bothAttachedController].grippingSide )
+	else if( handControllers[1-bothAttachedController].grippingSide && !handControllers[bothAttachedController].grippingSide )
 	{
-		establishAttachment(assemblage, controllers[1-bothAttachedController]);
+		establishAttachment(assemblage, handControllers[1-bothAttachedController]);
 		// establishAttachment(visiBox, scene);
 	}
 	else

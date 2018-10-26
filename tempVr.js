@@ -4,18 +4,18 @@
 
 function initControllers()
 {
-	var controllers = Array(2);
+	var handControllers = Array(2);
 
 	function loadControllerModel(i)
 	{
 		new THREE.OBJLoader().load( "data/meshes/external_controller01_" + (i===LEFT_CONTROLLER_INDEX?"left":"right") + ".obj",
 			function ( object ) 
 			{
-				controllers[  i ].controllerModel.geometry = object.children[0].geometry;
+				handControllers[  i ].controllerModel.geometry = object.children[0].geometry;
 			
-				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xUnit,0.5) );
-				controllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeTranslation((i==LEFT_CONTROLLER_INDEX?1:-1)*0.002,0.036,-0.039) );
-				controllers[  i ].controllerModel.geometry.computeBoundingSphere();
+				handControllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeRotationAxis(xUnit,0.5) );
+				handControllers[  i ].controllerModel.geometry.applyMatrix( new THREE.Matrix4().makeTranslation((i==LEFT_CONTROLLER_INDEX?1:-1)*0.002,0.036,-0.039) );
+				handControllers[  i ].controllerModel.geometry.computeBoundingSphere();
 			},
 			function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load OBJ" ); } );
 	}
@@ -23,23 +23,23 @@ function initControllers()
 	var controllerMaterial = new THREE.MeshLambertMaterial({color:0x444444});
 	for(var i = 0; i < 2; i++)
 	{
-		controllers[ i ] = new THREE.Object3D();
-		scene.add( controllers[ i ] );
+		handControllers[ i ] = new THREE.Object3D();
+		scene.add( handControllers[ i ] );
 		
-		controllers[ i ].controllerModel = new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() );
-		controllers[ i ].add( controllers[ i ].controllerModel );
+		handControllers[ i ].controllerModel = new THREE.Mesh( new THREE.Geometry(), controllerMaterial.clone() );
+		handControllers[ i ].add( handControllers[ i ].controllerModel );
 
-		controllers[ i ].position.y = -0.1;
+		handControllers[ i ].position.y = -0.1;
 
-		// markPositionAndQuaternion(controllers[i]);
+		// markPositionAndQuaternion(handControllers[i]);
 		
 		loadControllerModel(i);
 	}
 
-	return controllers;
+	return handControllers;
 }
 
-function initVrInputSystem(controllers, ourVrEffect, renderer)
+function initVrInputSystem(handControllers, ourVrEffect, renderer)
 {	
 	var cameraRepositioner = new THREE.VRControls( camera );
 
@@ -70,14 +70,14 @@ function initVrInputSystem(controllers, ourVrEffect, renderer)
 	}
 	for(var i = 0; i < 2; i++)
 	{
-		controllers[ i ].thumbStickAxes = [0,0];
-		controllers[ i ].overlappingHoldable = overlappingHoldable;
-		controllers[ i ].oldPosition = controllers[ i ].position.clone();
-		controllers[ i ].oldQuaternion = controllers[ i ].quaternion.clone();
+		handControllers[ i ].thumbStickAxes = [0,0];
+		handControllers[ i ].overlappingHoldable = overlappingHoldable;
+		handControllers[ i ].oldPosition = handControllers[ i ].position.clone();
+		handControllers[ i ].oldQuaternion = handControllers[ i ].quaternion.clone();
 
 		for( var propt in riftControllerKeys )
 		{
-			controllers[ i ][propt] = false;
+			handControllers[ i ][propt] = false;
 		}
 	}
 
@@ -122,20 +122,20 @@ function initVrInputSystem(controllers, ourVrEffect, renderer)
 				continue;
 			}
 			
-			controllers[affectedControllerIndex].thumbStickAxes[0] = gamepads[k].axes[0];
-			controllers[affectedControllerIndex].thumbStickAxes[1] = gamepads[k].axes[1];
+			handControllers[affectedControllerIndex].thumbStickAxes[0] = gamepads[k].axes[0];
+			handControllers[affectedControllerIndex].thumbStickAxes[1] = gamepads[k].axes[1];
 			
-			controllers[affectedControllerIndex].oldPosition.copy(controllers[ affectedControllerIndex ].position);
-			controllers[affectedControllerIndex].oldQuaternion.copy(controllers[ affectedControllerIndex ].quaternion);
+			handControllers[affectedControllerIndex].oldPosition.copy(handControllers[ affectedControllerIndex ].position);
+			handControllers[affectedControllerIndex].oldQuaternion.copy(handControllers[ affectedControllerIndex ].quaternion);
 			
-			controllers[affectedControllerIndex].position.fromArray( gamepads[k].pose.position );
-			controllers[affectedControllerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
-			controllers[affectedControllerIndex].updateMatrixWorld();
+			handControllers[affectedControllerIndex].position.fromArray( gamepads[k].pose.position );
+			handControllers[affectedControllerIndex].quaternion.fromArray( gamepads[k].pose.orientation );
+			handControllers[affectedControllerIndex].updateMatrixWorld();
 			
-			controllers[affectedControllerIndex].grippingSide = gamepads[k].buttons[riftControllerKeys.grippingSide].pressed;
-			controllers[affectedControllerIndex].grippingTop = gamepads[k].buttons[riftControllerKeys.grippingTop].pressed;
+			handControllers[affectedControllerIndex].grippingSide = gamepads[k].buttons[riftControllerKeys.grippingSide].pressed;
+			handControllers[affectedControllerIndex].grippingTop = gamepads[k].buttons[riftControllerKeys.grippingTop].pressed;
 			
-			controllers[affectedControllerIndex].button1 = gamepads[k].buttons[riftControllerKeys.button1].pressed;
+			handControllers[affectedControllerIndex].button1 = gamepads[k].buttons[riftControllerKeys.button1].pressed;
 		}
 	}
 }
