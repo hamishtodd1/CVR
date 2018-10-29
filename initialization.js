@@ -1,4 +1,4 @@
-  'use strict';
+'use strict';
  /* 
  	You want a "reset server" button before you make them interact again
  	Do the whole coot tutorial, and the EM one too

@@ -1,7 +1,7 @@
 /*
 	You want something to show which c-alpha the stats are talking about
-	A sphere with dotted lines going to all the stats. The sphere sits on the
-	How about: all the stats specific to a c-alpha are tiny
+		A sphere with dotted lines going to all the stats. The sphere sits on the
+		How about: all the stats specific to a c-alpha are tiny
 
 	If you recently used the b factors you'll probably use them again
 
