@@ -3,6 +3,9 @@
 	Look in the email from whatsisname
 
  	probe dots
+=======
+ /* 
+ 	You want a "reset server" button before you make them interact again
  	Do the whole coot tutorial, and the EM one too
  		Can load a map, can load a molecule
  		Fix the atom deletion problems
