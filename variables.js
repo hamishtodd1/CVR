@@ -1,8 +1,8 @@
 'use strict';
 
-if( !window.Worker || !navigator.getVRDisplays)
+if( !window.Worker )
 {
-	console.error("Missing dependency. Get chromium")
+	console.error("Missing dependency")
 }
 
 const TAU = Math.PI * 2;

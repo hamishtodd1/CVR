@@ -14,7 +14,7 @@ function initVisiBox()
 		return center;
 	}
 	
-	visiBox.position.y = -0.25;
+	visiBox.position.y = -0.3;
 	scene.add(visiBox);
 	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.5
 	visiBox.scale.x = visiBox.scale.y * 1.5
