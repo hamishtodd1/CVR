@@ -277,16 +277,16 @@ function initModelCreationSystem( visiBoxPlanes)
 		var bufferGeometry = moleculeMesh.geometry;
 
 		var atomColors = Array(10);
-		for(var i = 0; i < atomColors.length; i++)
-		{
-			atomColors[i] = new THREE.Color( 0.2,0.2,0.2 );
-		}
-		atomColors[0].setRGB(72/255,193/255,103/255); //carbon
-		atomColors[1].setRGB(0.8,0.8,0.2); //sulphur
-		atomColors[2].setRGB(0.8,0.2,0.2); //oxygen
-		atomColors[3].setRGB(0.2,0.4,0.8); //nitrogen
-		atomColors[6].setRGB(1.0,165/255,0.0); //phosphorus
-		atomColors[9].setRGB(1.0,1.0,1.0); //hydrogen
+		atomColors[0] = standardAtomColors["carbon"]
+		atomColors[1] = standardAtomColors["sulphur"]
+		atomColors[2] = standardAtomColors["oxygen"]
+		atomColors[3] = standardAtomColors["nitrogen"]
+		atomColors[4] = new THREE.Color( 0.2,0.2,0.2 )
+		atomColors[5] = new THREE.Color( 0.2,0.2,0.2 )
+		atomColors[6] = standardAtomColors["phosphorus"]
+		atomColors[7] = new THREE.Color( 0.2,0.2,0.2 )
+		atomColors[8] = new THREE.Color( 0.2,0.2,0.2 )
+		atomColors[9] = standardAtomColors["hydrogen"]
 
 		var bondData;
 		if( bondDataFromCoot )

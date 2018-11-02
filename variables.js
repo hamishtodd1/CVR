@@ -16,6 +16,15 @@ const RIGHT_CONTROLLER_INDEX = 0;
 const LEFT_CONTROLLER_INDEX = 1-RIGHT_CONTROLLER_INDEX;
 const TETRAHEDRAL_ANGLE = 2 * Math.atan(Math.sqrt(2))
 
+const standardAtomColors = {
+	"carbon":		new THREE.Color(72/255,193/255,103/255),
+	"sulphur":		new THREE.Color(0.8,0.8,0.2),
+	"oxygen":		new THREE.Color(0.8,0.2,0.2),
+	"nitrogen":		new THREE.Color(0.2,0.4,0.8),
+	"phosphorus":	new THREE.Color(1.0,165/255,0.0),
+	"hydrogen":		new THREE.Color(1.0,1.0,1.0)
+}
+
 let ourClock = new THREE.Clock( true ); //.getElapsedTime ()
 let frameDelta = 0;
 let logged = 0;

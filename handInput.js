@@ -1,4 +1,4 @@
-// var resetSensor;
+//somewhere in here is the red ball
 
 function initHandInput()
 {

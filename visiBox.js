@@ -1,5 +1,5 @@
 /*
-	TODO edges shouldn't do the silly scaling thing
+	edges shouldn't do the silly scaling thing
 */
 
 function initVisiBox()
@@ -16,9 +16,9 @@ function initVisiBox()
 	
 	visiBox.position.y = -0.3;
 	scene.add(visiBox);
-	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.5
+	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.2
 	visiBox.scale.x = visiBox.scale.y * 1.5
-	visiBox.scale.z = visiBox.scale.y * 1.2
+	visiBox.scale.z = visiBox.scale.y * 1.0
 
 	//when you're resizing
 	// var someSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhongMaterial({color:0xFF0000}));
@@ -155,7 +155,22 @@ function initVisiBox()
 	}
 	objectsToBeUpdated.push(visiBox)
 
-	visiBox.corners[0].position.x = 0;
+	let rememberedScale = zeroVector.clone()
+	MenuOnPanel([{
+		string:"Toggle clipping planes", buttonFunction:function()
+		{
+			if( rememberedScale.equals(zeroVector) )
+			{
+				rememberedScale.copy(visiBox.scale)
+				visiBox.scale.setScalar(camera.far*2)
+			}
+			else
+			{
+				visiBox.scale.copy(rememberedScale)
+				rememberedScale.copy(zeroVector)
+			}
+		}
+	}],4.23,5.42)
 	
 	return visiBox;
 }

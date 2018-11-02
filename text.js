@@ -10,62 +10,84 @@ function makeTextSign(originalText, twoSided, materialOnly, originCornered)
 		twoSided = true;
 	}
 
-	var canvas = document.createElement("canvas");
-	var context = canvas.getContext("2d");
-	var material = new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)});
+	let canvas = document.createElement("canvas");
+	let context = canvas.getContext("2d");
+	let material = new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(canvas)});
 
 	material.setText = function(text)
 	{
-		var font = "Trebuchet"
-		var textSize = 100;
-		context.font = textSize + "pt " + font;
-		var textWidth = context.measureText(text).width;
-		canvas.height = ceilPowerOfTwo(textSize)
+		let font = "Trebuchet"
+		let resolution = 128
+		canvas.height = resolution
+
+		let approximateVerticalPaddingProportion = 0.27
+		//Ambiguous what this really is. Even without padding it fails to take up whole height.
+		let textHeight = Math.round(canvas.height * (1-approximateVerticalPaddingProportion))
+		context.font = textHeight + "pt " + font;
+
+		let textWidth = context.measureText(text).width;
 		canvas.width =  ceilPowerOfTwo(textWidth);
 
-		context.font = textSize + "pt " + font;
+		context.font = textHeight + "pt " + font; //yes, seriously
 		context.textAlign = "center";
 		context.textBaseline = "middle";
 		
-		var backGroundColor = "#3F3D3F"
+		let backGroundColor = "#3F3D3F"
 		context.fillStyle = backGroundColor;
 		context.fillRect(0,0,canvas.width,canvas.height);
 		
-		var textColor = "#D3D1D3"
+		let textColor = "#D3D1D3"
 		context.fillStyle = textColor;
 		context.fillText(text, canvas.width / 2, canvas.height / 2);
 
 		this.map.needsUpdate = true;
 
-		//the geometry isn't affected ofc
+		return textWidth
+
+		//geometry isn't affected
 	}
-	material.setText(originalText);
+	let textWidth = material.setText(originalText);
 
 	if(materialOnly !== undefined && materialOnly === true)
 	{
 		return material;
 	}
 
-	if(originCornered===undefined|| originCornered === false)
+	if( originCornered===undefined)
 	{
-		var geo = new THREE.PlaneGeometry(canvas.width / canvas.height, 1)
+		originCornered = false
 	}
-	else
+	let geo = originCornered ? new THREE.OriginCorneredPlaneGeometry(textWidth/canvas.height, 1) : new THREE.PlaneGeometry(textWidth/canvas.height, 1)
+
+	let trimOff = 0.5 - (textWidth/canvas.width)/2
+	for(let i = 0; i < 2; i++)
 	{
-		var geo = new THREE.OriginCorneredPlaneGeometry(canvas.width / canvas.height, 1)
+		for(let j = 0; j < 3; j++)
+		{
+			if( geo.faceVertexUvs[0][i][j].x == 0)
+			{
+				geo.faceVertexUvs[0][i][j].x = trimOff
+			}
+			else
+			{
+				geo.faceVertexUvs[0][i][j].x = 1 - trimOff
+			}
+		}
 	}
+	geo.uvsNeedUpdate = true
 	
+	let sign = null
 	if(twoSided)
 	{
-		var firstSign = new THREE.Mesh( geo, material );
-		var secondSign = firstSign.clone();
+		let firstSign = new THREE.Mesh( geo, material );
+		let secondSign = firstSign.clone();
 		secondSign.rotation.y = TAU / 2;
-		var sign = new THREE.Group();
+		sign = new THREE.Group();
 		sign.add(firstSign, secondSign);
 	}
 	else
 	{
-		var sign = new THREE.Mesh( geo, material );
+		sign = new THREE.Mesh( geo, material );
 	}
 
 	return sign;

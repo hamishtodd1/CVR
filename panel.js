@@ -29,129 +29,6 @@
 		When you grab it all hidden things appear
 */
 
-function initPanelDemo()
-{
-	var thingsInMenu = [
-		{string:"Example menu"},
-		{string:"    Switch", switchObject:handControllers[0].controllerModel, switchProperty:"visible"},
-		{string:"    Button", buttonFunction:function(){handControllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random())}}
-	];
-	MenuOnPanel(thingsInMenu)
-
-	MenuOnPanel([{
-		string: new Date().toLocaleTimeString(),
-		additionalUpdate: function()
-		{
-			if( frameCount % 30 === 0 )
-			{
-				this.material.setText( new Date().toLocaleTimeString() )
-			}
-		}
-	}])
-
-	addSingleFunctionToPanel = function(f)
-	{
-		var processedFunctionName = f.name;
-		for(var i = 0; i < processedFunctionName.length; i++)
-		{
-			if( processedFunctionName[i] === processedFunctionName[i].toUpperCase() )
-			{
-				processedFunctionName = processedFunctionName.slice(0,i) + " " + processedFunctionName.slice(i,processedFunctionName.length)
-				i++;
-			}
-		}
-		processedFunctionName = processedFunctionName[0].toUpperCase() + processedFunctionName.slice(1,processedFunctionName.length)
-
-		MenuOnPanel([{string:processedFunctionName, buttonFunction:f}])
-	}
-
-	var fakeStrings = [
-		"merge molecules",
-		// "List of all atoms, all residues?",
-		// "Your tools, your metrics",
-		// "Group work features",
-		// "	Round table",// for if there are multiple people - makes it so all your heads are at reasonable angle",
-		// "	Synchronize view",
-		// "Superpose",
-		// "	LSQ", 
-		// "	SSSM",
-		// "check synchronization of coot and CVR molecule", //for us
-		// "Save, load, export map",
-		// "pukkers",
-		// "Sequence view",
-		// "	Reverse direction",
-		// "	alignment vs pir",
-		// "	Ask paul what people tend to use it for",
-		// "Control bindings",
-		// "Refmac",
-		// "Undo/redo? Help vive people!",
-		// "Graphics quality",
-		// "Play tutorial video",
-		// "Hydrogen visible",
-		// "Refinement options",
-		// "	Use Torsion restraints ",		//(default off)
-		// "	Use planar peptide restraints",	//(default on)
-		// "	Use trans peptide restraints",	//(default on)
-		// "	Ramachandran restraints",		//(default off)
-		// "	Alpha helix restraints",		//(default off)
-		// "	beta strand restraints",		//(default off)
-		// "	Refinement weight",				//?
-		// "Other modelling tools",
-		// "	cis <-> trans",
-		// "	base pair",
-		// "	skeletonize map",
-		// "	sharpen map?",
-		// "	Find",
-		// "		Waters",
-		// "		Secondary structure",
-		// "		Ligands",
-
-		// //Haven't been through "Ligand" or "Extensions". Various things in "validate"
-		// //list of the buttons on your controller, you drag things in to make them do stuff
-
-		// "Display manager", //master switches needed for all
-		// "	Visibility",
-		// "	Delete",
-		// "	Map",
-		// "		isDiffmap",
-		// "		Active for refinement",
-		// "		Color",// (have a wheel)
-		// "		Contour level scrolls",
-		// "		Opacity",//Urgh fuck that
-		// "		Block size", // WARNING GREEDY GUTS
-		// "		Sample rate",
-		// "		Chickenwire",
-		// "		Show unit cell",
-		// "	Molecule",
-		// "		Show symmetry atoms",
-		// "		Which one is affected by undo",
-		// "		Which one gets atoms and chains added to it",
-		// "		Carbon color",
-		// "		Display methods",
-		// "			Bond radius",
-		// "			atom radiuse",
-		// "			cAlpha only",
-		// "			Waters visible",
-		// "			Color by",
-		// "				B factors / occupancy / other metric",
-		// "				Chain",
-		// "				Atom (default)",
-		// "				amino acid (i.e. rainbow)",
-	];
-
-	var bunch = [];
-	for(var i = 0; i < fakeStrings.length; i++)
-	{
-		bunch.push({string:fakeStrings[i]})
-
-		if( i === fakeStrings.length-1 || fakeStrings[i+1][0] !== "	")
-		{
-			MenuOnPanel(bunch)
-			bunch.length = 0;
-		}
-	}
-}
-
 function initPanel()
 {
 	function anglesToPanel(polar, azimuthal)
@@ -164,7 +41,7 @@ function initPanel()
 	}
 	
 	var aroundness = 4.1;
-	var downness = 1.1;
+	var downness = 0.9;
 	function polarClipToAllowedArea(polar)
 	{
 		if(polar < Math.PI)
@@ -287,7 +164,7 @@ function initPanel()
 
 	// var audio = new Audio("data/piano/A0-1-48.wav");
 	// audio.play();
-	MenuOnPanel = function(thingsInMenu)
+	MenuOnPanel = function(thingsInMenu,polar,azimuthal)
 	{
 		var lineAngularHeight = 0.034;
 
@@ -322,6 +199,9 @@ function initPanel()
 			var outlineThickness = 0.2;
 			var menu = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth+outlineThickness*2,totalElementsHeight+outlineThickness*2), new THREE.MeshBasicMaterial({color:0x262626}));
 			menus.push(menu)
+			menu.matrixAutoUpdate = false;
+			menu.parentController = null;
+			collisionPanel.add(menu)
 
 			for(var i = 0; i < textMeshes.length; i++)
 			{
@@ -356,18 +236,22 @@ function initPanel()
 			menu.add( menuBackground )
 		}
 
-		menu.matrixAutoUpdate = false;
-		menu.azimuthal = TAU;
-		var horizontalSpacing = 0.5;
-		menu.polar = menus.length === 1 ? -aroundness / 2 : menus[menus.length-2].polar + horizontalSpacing
-		while(menu.polar > aroundness / 2 )
+		if(polar === undefined && azimuthal === undefined)
 		{
-			menu.polar -= aroundness
-			menu.azimuthal -= lineAngularHeight * 4
+			menu.azimuthal = TAU;
+			var horizontalSpacing = 0.5;
+			menu.polar = menus.length === 1 ? -aroundness / 2 : menus[menus.length-2].polar + horizontalSpacing
+			while(menu.polar > aroundness / 2 )
+			{
+				menu.polar -= aroundness
+				menu.azimuthal -= lineAngularHeight * 4
+			}
 		}
-		//want to use their polar width
-		menu.parentController = null;
-		collisionPanel.add(menu)
+		else
+		{
+			menu.azimuthal = azimuthal
+			menu.polar = polar
+		}
 
 		var planeAngularHeight = menu.geometry.vertices[1].y * lineAngularHeight;
 
@@ -440,6 +324,7 @@ function initPanel()
 				if( !menu.parentController.grippingTop)
 				{
 					menu.parentController = null;
+					console.log("polar:", menu.polar,"azimuthal:", menu.azimuthal)
 				}
 			}
 		}
@@ -473,7 +358,119 @@ function initPanel()
 			menu.matrix.setPosition(bl);
 		}
 		updateMatrix()
+
+		return menu
 	}
 
-	initPanelDemo()
+	addSingleFunctionToPanel = function(f,polar, azimuthal)
+	{
+		var processedFunctionName = f.name;
+		for(var i = 0; i < processedFunctionName.length; i++)
+		{
+			if( processedFunctionName[i] === processedFunctionName[i].toUpperCase() )
+			{
+				processedFunctionName = processedFunctionName.slice(0,i) + " " + processedFunctionName.slice(i,processedFunctionName.length)
+				i++;
+			}
+		}
+		processedFunctionName = processedFunctionName[0].toUpperCase() + processedFunctionName.slice(1,processedFunctionName.length)
+
+		MenuOnPanel([{string:processedFunctionName, buttonFunction:f}],polar, azimuthal)
+	}
+
+	// initPanelDemo()
+	MenuOnPanel([
+		{string:"Example menu"},
+		{string:"    Switch", switchObject:handControllers[0].controllerModel, switchProperty:"visible"},
+		{string:"    Button", buttonFunction:function(){handControllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random())}}
+	])
+}
+
+function initPanelDemo()
+{
+	var fakeStrings = [
+		"merge molecules",
+		"List of all atoms, all residues?",
+		"Your tools, your metrics",
+		"Group work features",
+		"	Round table",// for if there are multiple people - makes it so all your heads are at reasonable angle",
+		"	Synchronize view",
+		"Superpose",
+		"	LSQ", 
+		"	SSSM",
+		"Save, load, export map",
+		"pukkers",
+		"Sequence view",
+		"	Reverse direction",
+		"	alignment vs pir",
+		"	Ask paul what people tend to use it for",
+		"Control bindings",
+		"Refmac",
+		"Undo/redo? Help vive people!",
+		"Graphics quality",
+		"Play tutorial video",
+		"Hydrogen visible",
+		"Refinement options",
+		"	Use Torsion restraints ",		//(default off)
+		"	Use planar peptide restraints",	//(default on)
+		"	Use trans peptide restraints",	//(default on)
+		"	Ramachandran restraints",		//(default off)
+		"	Alpha helix restraints",		//(default off)
+		"	beta strand restraints",		//(default off)
+		"	Refinement weight",				//?
+		"Other modelling tools",
+		"	cis <-> trans",
+		"	base pair",
+		"	skeletonize map",
+		"	sharpen map?",
+		"	Find",
+		"		Waters",
+		"		Secondary structure",
+		"		Ligands",
+		"check synchronization of coot and CVR molecule", //for us
+
+		//Haven't been through "Ligand" or "Extensions". Various things in "validate"
+		//list of the buttons on your controller, you drag things in to make them do stuff
+
+		"Display manager", //master switches needed for all
+		"	Visibility",
+		"	Delete",
+		"	Map",
+		"		isDiffmap",
+		"		Active for refinement",
+		"		Color",// (have a wheel)
+		"		Contour level scrolls",
+		//"		Opacity",
+		"		Block size (puke warning)",
+		"		Sample rate",
+		"		Chickenwire",
+		"		Show unit cell",
+		"	Molecule",
+		"		Show symmetry atoms",
+		"		Which one is affected by undo",
+		"		Which one gets atoms and chains added to it",
+		"		Carbon color",
+		"		Display methods",
+		"			Bond radius",
+		"			atom radiuse",
+		"			cAlpha only",
+		"			Waters visible",
+		"			Color by",
+		"				B factors / occupancy / other metric",
+		"				Chain",
+		"				Atom (default)",
+		"				amino acid (i.e. rainbow)",
+	];
+
+	var bunch = [];
+	for(var i = 0; i < fakeStrings.length; i++)
+	{
+		bunch.push({string:fakeStrings[i]})
+
+		if( i === fakeStrings.length-1 || fakeStrings[i+1][0] !== "	")
+		{
+			MenuOnPanel(bunch)
+			bunch.length = 0;
+		}
+	}
 }

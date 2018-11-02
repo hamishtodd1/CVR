@@ -59,15 +59,20 @@ function initSurroundings()
 	var ourLight = new THREE.PointLight(0xFFFFFF,1,99,0.36,0,1);
 	// ourLight.color.setHSL( 0.1, 1, 0.95 );
 	// ourLight.position.set( -1, 1.75, 1 );
-	ourLight.target = handControllers[0]
-	ourLight.position.multiplyScalar( 0.1 );
+	// ourLight.target = handControllers[0]
+	ourLight.position.set( 0,0.1,0.1 );
 	scene.add( ourLight );
 	
-	var helperSphere = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshPhongMaterial({color:0xFF0000}));
+	let helperSphereRadius = 0.04
+	var helperSphere = new THREE.Mesh(new THREE.SphereGeometry(helperSphereRadius), new THREE.MeshPhongMaterial({color:0xFF0000}));
 	helperSphere.geometry.computeBoundingSphere();
 	ourLight.boundingSphere = helperSphere.geometry.boundingSphere;
 	ourLight.ordinaryParent = scene;
 	ourLight.add(helperSphere);
+	var label = makeTextSign( "Light" );
+	label.position.z = helperSphereRadius;
+	label.scale.setScalar(helperSphereRadius/2)
+	helperSphere.add(label);
 	holdables.push(ourLight)
 
 	var shadowsPresent = false;
