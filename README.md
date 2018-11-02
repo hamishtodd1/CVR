@@ -36,3 +36,21 @@ But no to all "Cardboard" headsets including Daydream and GearVR. In the history
 ## Will you have feature <x> from Coot?
 
 Yes, I really hope to implement that! In principle I could have other things too :3
+
+## Why don't you use Unity / Unreal?
+
+I do use three.js, which is a graphics api. In comparison with that, Unity/Unreal:
+
+-Longer to compile and load
+-Weird UI for development
+-Fairly frequent frustrating bugs and plugin issues
+-Much larger download for users (threejs is 500KB)
+-More complicated API
+-Selfish motivation: I am more able to develop my programming skills with threejs
+
+Reasons why many people use Unity/Unreal instead of three.js (or gtk or ogre):
+-API offers many, many more features for dealing with animations, particles, sound effects, pathfinding AI
+-*If* you want those things, they will be handled pretty efficiently, in comparison with you writing them yourself, unless you are extremely experienced with writing those things
+-The UI is very useful for setting up large environments with lots of objects in them
+
+All this is to say: Unity/Unreal are for making video games in the mould of modern-day video games. I.e. you have a team of between 3 and 300 people, the majority of whom can't program, pouring work into a "virtual world". This isn't much like the goals of Coot.
