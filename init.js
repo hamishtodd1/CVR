@@ -31,9 +31,11 @@ TODO during PhD
 		Should replace ligand builder, "add oxt to residue"
 		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
 	Complex-to-look-at 3D things
-		NCS! It is a  thing! Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
-		Alt conformers
+		Alt conformers; opacity?
+		Manually aligning tomograms?
 		Anisotropic atoms? There may be some interesting stuff here
+		NCS; Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
+		Those little webbings on Coot's amide planes
 	easy: "hand distances"
 	Non-vr head movement sensetivity demo
 	probe dots
@@ -45,6 +47,9 @@ TODO during PhD
 	ambient occlusion maps for all?
 	Copy and paste 3D blocks of atoms
 	"Take screenshot"
+
+Beyond
+	IMOD is also em and might also benefit from
 
 Bugs
 	Firefox: sometimes it just doesn't start. setAnimationLoop is set, but loop is not called
@@ -103,11 +108,13 @@ function init()
 	assemblage.scale.setScalar( 0.028 ); //0.045, 0.028 is nice, 0.01 fits on screen
 	scene.add(assemblage);
 	
-	window.addEventListener( 'resize', function(){ //doesn't work if in VR
+	let windowResize = function()
+	{
 	    renderer.setSize( window.innerWidth, window.innerHeight );
 	    camera.aspect = window.innerWidth / window.innerHeight;
 	    camera.updateProjectionMatrix();
-	}, false );
+	}
+	window.addEventListener( 'resize', windowResize)
 	
 	initSurroundings();
 	initScaleStick();
@@ -137,7 +144,7 @@ function init()
 		renderer.vr.setPositionAsOrigin( camera.position )
 	}
 	addSingleFunctionToPanel(setCurrentCameraPositionAsCenter,6.05,5.38)
-	setCurrentCameraPositionAsCenter()
+	setCurrentCameraPositionAsCenter() //wanna be accessible from behind the panel?
 
 	let vrButton = WEBVR.createButton( renderer )
 	document.body.appendChild( vrButton );
@@ -146,11 +153,18 @@ function init()
 		if(event.keyCode === 69 )
 		{
 			vrButton.onclick()
+			window.removeEventListener('resize', windowResize)
 		}
 	}, false );
 
 	function loadTutorialModelAndData()
 	{
+		//probably insufficient, do more here
+		for(let i = assemblage.children.length-1; i >-1; i--)
+		{
+			assemblage.children[i].dispose()
+		}
+
 		//not just fileloader
 		let req = new XMLHttpRequest();
 		req.open('GET', 'data/tutorial.map', true);
@@ -194,7 +208,6 @@ function init()
 		// assemblage.worldToLocal(visiblePlace)
 		thingsToSpaceOut.push(
 			// //coot specific
-			// initMutator(),
 			// // initAtomDeleter(),
 			// // initResidueDeleter(),
 			// // initEnvironmentDistance(),
@@ -205,8 +218,9 @@ function init()
 			// initProbeDotter(),
 			// // initAtomLabeller(),
 			// initRigidBodyMover(),
-			// initProteinPainter(),
-			// initNucleicAcidPainter()
+			// initNucleicAcidPainter(),
+			initMutator()
+			// initProteinPainter()
 		);
 
 		initNewAtomRoster()

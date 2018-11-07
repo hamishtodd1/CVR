@@ -1,5 +1,7 @@
 /*
 	edges shouldn't do the silly scaling thing
+	arguably corner movement should be horizontally mirrored
+	maybe it should be frustum shaped?
 */
 
 function initVisiBox()
@@ -18,14 +20,14 @@ function initVisiBox()
 	scene.add(visiBox);
 	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.2
 	visiBox.scale.x = visiBox.scale.y * 1.5
-	visiBox.scale.z = visiBox.scale.y * 1.0
+	visiBox.scale.z = visiBox.scale.y * 2.0
 
 	//when you're resizing
 	// var someSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhongMaterial({color:0xFF0000}));
 	// scene.add(someSphere);
 	// someSphere.position.copy(visiBox.centerInAssemblageSpace())
 
-	var faceToFront = 0.2; //there was that one guy who kept inching back when it restarted. He could have resized the visibox
+	var faceToFront = 0.33; //there was that one guy who kept inching back when it restarted. He could have resized the visibox
 	visiBox.position.z = -visiBox.scale.z / 2 - faceToFront;
 	visiBox.ordinaryParent = scene;
 	visiBox.ordinaryParent.add(visiBox);

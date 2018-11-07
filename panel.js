@@ -3,7 +3,11 @@
 		reproduce current graph
 		display manager
 
-	Could have it follow your head. Probably creates too much distracting movement.
+	Shortcut system
+		the balls stay on the panel (do that)
+		Notch off the corners so there are eight corners for it to get caught on, eight shortcuts
+
+	Could have it follow your head. Paradoxically, would create too much distracting movement.
 	Words should be small. You read them a couple times and then you know where they are
 	You probably want to be able to dial up and down the name sizes
 	You probably still want things to be grouped... at least before the user moves them
@@ -14,13 +18,7 @@
 	should be that things move each other out of the way. No, normal monitor rules.
 	Alternative idea... they're all extruded in this ellipsoidy way, like a bunch of pipes pointed directly at you
 	Might be good to smooth the movement on the panel
-
-	Look at the origami software http://www.amandaghassaei.com/projects/origami_simulator/
-
-	Put "recenter panel" buttons behind the panel
-*/
-
-/*
+	
 	This is not necessarily what we want, but is the obvious idea
 	Would prefer to manipulate things on the things themselves
 	some equivalent of "right click"? But it's terribly hard to get that on a surface
@@ -33,15 +31,15 @@ function initPanel()
 {
 	function anglesToPanel(polar, azimuthal)
 	{
-		var vec = new THREE.Vector3(0,0,-1);
+		let vec = new THREE.Vector3(0,0,-1);
 		vec.applyAxisAngle(xVector, azimuthal)
 		vec.applyAxisAngle(yVector, -polar)
 
 		return vec
 	}
 	
-	var aroundness = 4.1;
-	var downness = 0.9;
+	let aroundness = 4.1;
+	let downness = 0.9;
 	function polarClipToAllowedArea(polar)
 	{
 		if(polar < Math.PI)
@@ -78,8 +76,8 @@ function initPanel()
 		return azimuthal;
 	}
 
-	var quadsWide = 2,quadsTall = 2;
-	var panel = new THREE.Mesh( new THREE.PlaneGeometry(aroundness,downness,32,16),
+	let quadsWide = 2,quadsTall = 2;
+	let panel = new THREE.Mesh( new THREE.PlaneGeometry(aroundness,downness,32,16),
 		new THREE.MeshPhongMaterial({
 			color:0x666666,
 			// shininess:100,
@@ -92,20 +90,20 @@ function initPanel()
 		panel.geometry.vertices[i].y -= downness / 2;
 		panel.geometry.vertices[i].copy( anglesToPanel(panel.geometry.vertices[i].x,panel.geometry.vertices[i].y,0) )
 	}
-	panel.scale.set(0.84,1.24,0.64)
+	// panel.scale.set(0.84,1.24,0.64)
 	panel.scale.setScalar(0.84)
 	scene.add(panel)
 
-	var collisionPanel = new THREE.Mesh( 
+	let collisionPanel = new THREE.Mesh(
 		new THREE.SphereGeometry(1, 64,64),
 		new THREE.MeshBasicMaterial({ side:THREE.DoubleSide }) );
 	collisionPanel.material.visible = false;
 	collisionPanel.scale.copy( panel.scale )
 	scene.add( collisionPanel );
 
-	var cursorGeometry = new THREE.EfficientSphereGeometry(0.01);
-	var cursorMaterial = new THREE.MeshPhongMaterial({color:0xffd700,shininess:100});
-	var cursors = Array(2)
+	let cursorGeometry = new THREE.EfficientSphereGeometry(0.023);
+	let cursorMaterial = new THREE.MeshPhongMaterial({color:0xffd700,shininess:100});
+	let cursors = Array(2)
 	for(var i = 0; i < 2; i++)
 	{
 		cursors[i] = new THREE.Mesh(cursorGeometry,cursorMaterial)
@@ -126,51 +124,52 @@ function initPanel()
 
 		for(var i = 0; i < handControllers.length; i++)
 		{
-			var intersections = handControllers[i].intersectLaserWithObject(collisionPanel)
+			let intersections = handControllers[i].intersectLaserWithObject(collisionPanel)
 			if( intersections.length )
 			{
-				var intersection = intersections[0].point
+				let intersection = intersections[0].point
 				intersection.divide(panel.scale)
 
-				var fromBelowWithZToLeft = new THREE.Vector2(-intersection.z,intersection.x)
+				let fromBelowWithZToLeft = new THREE.Vector2(-intersection.z,intersection.x)
 				cursors[i].polar = fromBelowWithZToLeft.angle();
 				cursors[i].polar = polarClipToAllowedArea( cursors[i].polar );
 
-				var flattenedOnZPlane = intersection.clone().setComponent(1,0).normalize()
-				var fromSideWithYUpwards = new THREE.Vector2(intersection.dot(flattenedOnZPlane),intersection.y)
+				let flattenedOnZPlane = intersection.clone().setComponent(1,0).normalize()
+				let fromSideWithYUpwards = new THREE.Vector2(intersection.dot(flattenedOnZPlane),intersection.y)
 				cursors[i].azimuthal = fromSideWithYUpwards.angle()
 				cursors[i].azimuthal = azimuthalClipToAllowedArea( cursors[i].azimuthal );
 
-				cursors[i].position.copy( intersections[0].point )
-				// cursors[i].position.copy( anglesToPanel(cursors[i].polar,cursors[i].azimuthal) )
+				cursors[i].position.copy( anglesToPanel(cursors[i].polar,cursors[i].azimuthal) )
 
 				handControllers[i].laser.scale.y = handControllers[i].position.distanceTo( cursors[i].position.clone().applyMatrix4(panel.matrix) )
 			}
 
-			if( handControllers[i].position.length() > panel.scale.x )
-			{
-				panel.scale.setScalar( handControllers[i].position.length() )
-				collisionPanel.scale.copy( panel.scale )
-			}
+			//a bad idea
+			// if( handControllers[i].position.length() > panel.scale.x )
+			// {
+			// 	panel.scale.setScalar( handControllers[i].position.length() )
+			// 	collisionPanel.scale.copy( panel.scale )
+			// }
 		}
 	}
 
-	var onColor = new THREE.Color(0x00FF00)
-	var offColor = new THREE.Color(0xFF0000);
-	var defaultColor = new THREE.Color(0xFFFFFF);
-	var highlightedColor = cursorMaterial.color
+	let onColor = new THREE.Color(0x00FF00)
+	let offColor = new THREE.Color(0xFF0000);
+	let defaultColor = new THREE.Color(0xFFFFFF);
+	let highlightedColor = cursorMaterial.color
 
-	var menus = []; //not really menus are they
+	let menus = []; //not really menus are they
+	let object3dScaleWhenInMenuInLineHeight = 15
 
 	// var audio = new Audio("data/piano/A0-1-48.wav");
 	// audio.play();
 	MenuOnPanel = function(thingsInMenu,polar,azimuthal)
 	{
-		var lineAngularHeight = 0.034;
+		let lineAngularHeight = 0.034;
 
-		var textMeshes = Array(thingsInMenu.length);
-		var widestSignWidth = 0;
-		var totalElementsHeight = 0;
+		let textMeshes = Array(thingsInMenu.length);
+		let widestSignWidth = 0;
+		let totalElementsHeight = 0;
 		for(var i = 0; i < textMeshes.length; i++)
 		{
 			textMeshes[i] = makeTextSign( thingsInMenu[i].string, false, false, true)
@@ -188,16 +187,23 @@ function initPanel()
 			}
 
 			totalElementsHeight++;
-			if(textMeshes[i].rectangularObject3D)
+			if(textMeshes[i].object3d)
 			{
-				totalElementsHeight += textMeshes[i].rectangularObject3D.geometry.vertices[0].y
+				let sourceGeometry = testObject3d.geometry == undefined ? testObject3d.children[0].geometry : testObject3d.geometry
+				sourceGeometry.computeBoundingBox()
+				textMeshes[i].object3d.scale.setScalar(object3dScaleWhenInMenuInLineHeight)
+				textMeshes[i].object3d.height = (sourceGeometry.boundingBox.getSize(new THREE.Vector3())).y * textMeshes[i].object3d.scale.y
+
+				totalElementsHeight += textMeshes[i].object3d.height
 			}
 		}
+		// if(textMeshes.length>1 && textMeshes[1].switchObject !== undefined)console.log("yo")
 
 		//"menu space", scaled by lineAngularHeight
+		let menu = null
 		{
-			var outlineThickness = 0.2;
-			var menu = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth+outlineThickness*2,totalElementsHeight+outlineThickness*2), new THREE.MeshBasicMaterial({color:0x262626}));
+			let outlineThickness = 0.2;
+			menu = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth+outlineThickness*2,totalElementsHeight+outlineThickness*2), new THREE.MeshBasicMaterial({color:0x262626}));
 			menus.push(menu)
 			menu.matrixAutoUpdate = false;
 			menu.parentController = null;
@@ -216,13 +222,24 @@ function initPanel()
 				{
 					textMeshes[i].position.copy( textMeshes[i-1].position )
 					textMeshes[i].position.y -= 1
+					if( textMeshes[i-1].object3d !== undefined)
+					{
+						textMeshes[i].position.y -= textMeshes[i-1].object3d.height
+					}
 				}
 
-				if( textMeshes[i].rectangularObject3D )
+				if( textMeshes[i].object3d )
 				{
-					menu.add(textMeshes[i].rectangularObject3D)
-					textMeshes[i].rectangularObject3D.position.copy(textMeshes[i].position)
-					textMeshes[i].rectangularObject3D.position.y -= 1
+					menu.add(textMeshes[i].object3d)
+					textMeshes[i].object3d.position.copy(textMeshes[i].position)
+					textMeshes[i].object3d.position.y -= textMeshes[i].object3d.height * 0.5
+					textMeshes[i].object3d.position.x = widestSignWidth / 2
+
+					textMeshes[i].object3dFrame = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(1,1), new THREE.MeshBasicMaterial({color:0x3F3D3F}))
+					textMeshes[i].object3dFrame.scale.set(widestSignWidth,textMeshes[i].object3d.height,1)
+					textMeshes[i].object3dFrame.position.copy(textMeshes[i].position)
+					textMeshes[i].object3dFrame.position.y -= textMeshes[i].object3d.height
+					menu.add(textMeshes[i].object3dFrame)
 				}
 
 				if( textMeshes[i].switchObject )
@@ -231,15 +248,15 @@ function initPanel()
 				}
 			}
 
-			var menuBackground = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth,textMeshes.length), new THREE.MeshBasicMaterial({color:0x3F3F3F}));
-			menuBackground.position.set( outlineThickness,outlineThickness,textMeshes[0].position.z / 2 )
-			menu.add( menuBackground )
+			let horizontalFiller = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth,textMeshes[0].position.y), new THREE.MeshBasicMaterial({color:0x3F3F3F}));
+			horizontalFiller.position.set( outlineThickness,outlineThickness,textMeshes[0].position.z / 2 )
+			menu.add( horizontalFiller )
 		}
 
 		if(polar === undefined && azimuthal === undefined)
 		{
 			menu.azimuthal = TAU;
-			var horizontalSpacing = 0.5;
+			let horizontalSpacing = 0.5;
 			menu.polar = menus.length === 1 ? -aroundness / 2 : menus[menus.length-2].polar + horizontalSpacing
 			while(menu.polar > aroundness / 2 )
 			{
@@ -253,7 +270,7 @@ function initPanel()
 			menu.polar = polar
 		}
 
-		var planeAngularHeight = menu.geometry.vertices[1].y * lineAngularHeight;
+		let planeAngularHeight = menu.geometry.vertices[1].y * lineAngularHeight;
 
 		objectsToBeUpdated.push(menu)
 		menu.update = function()
@@ -277,14 +294,14 @@ function initPanel()
 					}
 				}
 
-				if( textMeshes[i].buttonFunction || textMeshes[i].switchObject )
+				for(var j = 0; j < handControllers.length; j++)
 				{
-					for(var j = 0; j < handControllers.length; j++)
+					if( textMeshes[i].buttonFunction || textMeshes[i].switchObject )
 					{
 						if( handControllers[j].intersectLaserWithObject( textMeshes[i] ).length !== 0 )
 						{
 							textMeshes[i].material.color.copy( highlightedColor )
-							if( handControllers[j].button1 && !handControllers[j].button1Old )
+							if( handControllers[j].grippingTop && !handControllers[j].grippingTopOld )
 							{
 								if( textMeshes[i].buttonFunction )
 								{
@@ -297,6 +314,35 @@ function initPanel()
 							}
 						}
 					}
+
+					if( textMeshes[i].object3d )
+					{
+						if( handControllers[j].intersectLaserWithObject( textMeshes[i] ).length !== 0 ||
+							handControllers[j].intersectLaserWithObject( textMeshes[i].object3dFrame ).length !== 0 )
+						{
+							if( handControllers[j].grippingTop && !handControllers[j].grippingTopOld )
+							{
+								textMeshes[i].material.color.copy( highlightedColor )
+
+								menu.remove(textMeshes[i].object3d)
+								handControllers[j].add(textMeshes[i].object3d) 
+
+								textMeshes[i].object3d.position.set(0,0,0)
+								textMeshes[i].object3d.scale.setScalar(1)
+							}
+						}
+					}
+					if( !handControllers[j].grippingTop && handControllers[j].grippingTopOld && 
+						textMeshes[i].object3d && textMeshes[i].object3d.parent === handControllers[j] )
+					{
+						handControllers[j].remove(textMeshes[i].object3d)
+						menu.add(textMeshes[i].object3d)
+
+						textMeshes[i].object3d.position.copy(textMeshes[i].position)
+						textMeshes[i].object3d.position.y -= textMeshes[i].object3d.height * 0.5
+						textMeshes[i].object3d.position.x = widestSignWidth / 2
+						textMeshes[i].object3d.scale.setScalar(object3dScaleWhenInMenuInLineHeight)
+					}
 				}
 			}
 
@@ -304,7 +350,7 @@ function initPanel()
 			{
 				for(var i = 0; i < handControllers.length; i++)
 				{
-					if( handControllers[i].grippingTop && !handControllers[i].grippingTopOld ) //or alternatively, get grabbed if handControllers not grabbing anything. i.e. this goes in panelUpdate. Look in todo!
+					if( handControllers[i].button2 && !handControllers[i].button2Old ) //or alternatively, get grabbed if handControllers not grabbing anything. i.e. this goes in panelUpdate. Look in todo!
 					{
 						if( handControllers[i].intersectLaserWithObject( this ).length !== 0 )
 						{
@@ -321,7 +367,7 @@ function initPanel()
 
 				updateMatrix()
 
-				if( !menu.parentController.grippingTop)
+				if( !menu.parentController.button2)
 				{
 					menu.parentController = null;
 					console.log("polar:", menu.polar,"azimuthal:", menu.azimuthal)
@@ -333,26 +379,28 @@ function initPanel()
 		{
 			menu.azimuthal = azimuthalClipToAllowedArea( menu.azimuthal );
 			menu.azimuthal = azimuthalClipToAllowedArea( menu.azimuthal + planeAngularHeight ) - planeAngularHeight;
-			var planeAngularWidth  = menu.geometry.vertices[1].x * lineAngularHeight;
+			let planeAngularWidth  = menu.geometry.vertices[1].x * lineAngularHeight;
 			menu.polar = polarClipToAllowedArea( menu.polar );
 			menu.polar = polarClipToAllowedArea( menu.polar + planeAngularWidth ) - planeAngularWidth;
 
-			var bl = anglesToPanel(menu.polar, menu.azimuthal).multiplyScalar(0.996)
-			var tl = anglesToPanel(menu.polar, menu.azimuthal + planeAngularHeight).multiplyScalar(0.996)
-			var br = anglesToPanel(menu.polar + planeAngularWidth, menu.azimuthal).multiplyScalar(0.996)
+			let bl = anglesToPanel(menu.polar, menu.azimuthal).multiplyScalar(0.996)
+			let tl = anglesToPanel(menu.polar, menu.azimuthal + planeAngularHeight).multiplyScalar(0.996)
+			let br = anglesToPanel(menu.polar + planeAngularWidth, menu.azimuthal).multiplyScalar(0.996)
 			
-			var bottom = br.clone().sub(bl)
-			var side = tl.clone().sub(bl)
-			var basisZ = new THREE.Vector3().crossVectors(bottom,side).normalize()
-			var basisX = bottom.clone().multiplyScalar(1 / menu.geometry.vertices[1].x)
-			var basisY = side.clone().multiplyScalar(1 / menu.geometry.vertices[1].y)
+			let bottom = br.clone().sub(bl)
+			let side = tl.clone().sub(bl)
+			let basisZ = new THREE.Vector3().crossVectors(bottom,side)
+			let basisX = bottom.clone().multiplyScalar(1 / menu.geometry.vertices[1].x)
+			let basisY = side.clone().multiplyScalar(1 / menu.geometry.vertices[1].y)
 			if( basisX.length() < basisY.length() )
 			{
 				basisY.setLength(basisX.length())
+				basisZ.setLength(basisX.length())
 			}
 			else
 			{
 				basisX.setLength(basisY.length())
+				basisZ.setLength(basisY.length())
 			}
 			menu.matrix.makeBasis(basisX,basisY,basisZ)
 			menu.matrix.setPosition(bl);
@@ -364,7 +412,7 @@ function initPanel()
 
 	addSingleFunctionToPanel = function(f,polar, azimuthal)
 	{
-		var processedFunctionName = f.name;
+		let processedFunctionName = f.name;
 		for(var i = 0; i < processedFunctionName.length; i++)
 		{
 			if( processedFunctionName[i] === processedFunctionName[i].toUpperCase() )
@@ -379,16 +427,23 @@ function initPanel()
 	}
 
 	// initPanelDemo()
+	let testObject3d = new THREE.Mesh(new THREE.SphereGeometry(0.07))
+	testObject3d.onClick = function()
+	{
+		console.log("clicked")
+	}
+	testObject3d.geometry.computeBoundingBox()
 	MenuOnPanel([
 		{string:"Example menu"},
-		{string:"    Switch", switchObject:handControllers[0].controllerModel, switchProperty:"visible"},
-		{string:"    Button", buttonFunction:function(){handControllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random())}}
-	])
+		{string:"    Switch", 	switchObject:	assemblage, switchProperty:"visible"},
+		{string:"    Object3d",	object3d: testObject3d },//object3d could be a graph or rama
+		{string:"    Button", 	buttonFunction:	function(){handControllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random());console.log("example menu item clicked")}},
+	],6.34,6.24)
 }
 
 function initPanelDemo()
 {
-	var fakeStrings = [
+	let fakeStrings = [
 		"merge molecules",
 		"List of all atoms, all residues?",
 		"Your tools, your metrics",
@@ -462,7 +517,7 @@ function initPanelDemo()
 		"				amino acid (i.e. rainbow)",
 	];
 
-	var bunch = [];
+	let bunch = [];
 	for(var i = 0; i < fakeStrings.length; i++)
 	{
 		bunch.push({string:fakeStrings[i]})

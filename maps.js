@@ -11,7 +11,8 @@
 var starProcessingMapData;
 function initMapCreationSystem(visiBox)
 {
-	var worker = new Worker("mapExtractionAndMeshing.js");
+	let worker = new Worker("mapExtractionAndMeshing.js")
+
 	worker.onmessage = function(event)
 	{
 		maps[ event.data.mapIndex ].receiveMessageConcerningSelf( event.data );

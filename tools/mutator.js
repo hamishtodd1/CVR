@@ -44,9 +44,10 @@ function initMutator()
 	var innerCircleRadius = 0.12;
 	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(0.432 * innerCircleRadius, 32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5, side:THREE.DoubleSide}) );
 	var textHeight = innerCircleRadius / 9;
+	let ourPdbLoader = new THREE.PDBLoader()
 	function singleLoop(aaIndex, position)
 	{
-		ourPDBLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
+		ourPdbLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
 			{
 				var newPlaque = plaque.clone();
 				newPlaque.position.copy(position);

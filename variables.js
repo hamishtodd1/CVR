@@ -51,8 +51,6 @@ let objectsToBeUpdated = [];
 let holdables = [];
 let socket = null;
 
-let ourPdbLoader = new THREE.PDBLoader();
-
 let assemblage = new THREE.Group();
 function getAngstrom()
 {

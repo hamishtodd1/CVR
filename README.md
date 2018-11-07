@@ -10,7 +10,7 @@ We hope it will make Coot faster to use! It will be easier to see 3D features, t
 
 ## How do I set it up
 
-You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/file/d/15OHw1VtXu-QXTvmz9qNLut6K_KhDMcMK - make sure to go to chrome://flags and enable webVR AND gamepad extensions). 
+You'll need Windows, an Oculus Rift and a browser running webVR like firefox nightly or chrome canary (make sure to go to chrome://flags and enable webVR AND gamepad extensions). 
 
 1. Run server.py with python 2.7
 2. Start webVR, using the console command --allow-file-access-from-files.

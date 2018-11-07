@@ -1,4 +1,12 @@
 /*
+	TODO (probably, might need to think more)
+		When you want to lay down a new one, read the atoms near your hand.
+		The new, first, residue still gets put in the same place, but we move the assemblage into the right orientation
+
+	How to integrate this shit?
+
+	Should be able to grab any residue. It breaks off
+
 	Grab a terminal residue and you start working out of that
 	Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
 
