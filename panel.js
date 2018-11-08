@@ -161,6 +161,15 @@ function initPanel()
 	let menus = []; //not really menus are they
 	let object3dScaleWhenInMenuInLineHeight = 15
 
+	let menuGapSizeInLineHeights = 2
+	function uniformlyScaleObject3dToMenuGapSize(object3d)
+	{
+		let sourceGeometry = object3d.geometry == undefined ? object3d.children[0].geometry : object3d.geometry
+		sourceGeometry.computeBoundingBox()
+		let object3dHeight = (sourceGeometry.boundingBox.getSize(new THREE.Vector3())).y
+		object3d.scale.setScalar(menuGapSizeInLineHeights/object3dHeight)
+	}
+
 	// var audio = new Audio("data/piano/A0-1-48.wav");
 	// audio.play();
 	MenuOnPanel = function(thingsInMenu,polar,azimuthal)
@@ -189,12 +198,8 @@ function initPanel()
 			totalElementsHeight++;
 			if(textMeshes[i].object3d)
 			{
-				let sourceGeometry = testObject3d.geometry == undefined ? testObject3d.children[0].geometry : testObject3d.geometry
-				sourceGeometry.computeBoundingBox()
-				textMeshes[i].object3d.scale.setScalar(object3dScaleWhenInMenuInLineHeight)
-				textMeshes[i].object3d.height = (sourceGeometry.boundingBox.getSize(new THREE.Vector3())).y * textMeshes[i].object3d.scale.y
-
-				totalElementsHeight += textMeshes[i].object3d.height
+				totalElementsHeight += menuGapSizeInLineHeights
+				uniformlyScaleObject3dToMenuGapSize(textMeshes[i].object3d)				
 			}
 		}
 		// if(textMeshes.length>1 && textMeshes[1].switchObject !== undefined)console.log("yo")
@@ -224,7 +229,7 @@ function initPanel()
 					textMeshes[i].position.y -= 1
 					if( textMeshes[i-1].object3d !== undefined)
 					{
-						textMeshes[i].position.y -= textMeshes[i-1].object3d.height
+						textMeshes[i].position.y -= menuGapSizeInLineHeights
 					}
 				}
 
@@ -232,13 +237,13 @@ function initPanel()
 				{
 					menu.add(textMeshes[i].object3d)
 					textMeshes[i].object3d.position.copy(textMeshes[i].position)
-					textMeshes[i].object3d.position.y -= textMeshes[i].object3d.height * 0.5
+					textMeshes[i].object3d.position.y -= menuGapSizeInLineHeights * 0.5
 					textMeshes[i].object3d.position.x = widestSignWidth / 2
 
 					textMeshes[i].object3dFrame = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(1,1), new THREE.MeshBasicMaterial({color:0x3F3D3F}))
-					textMeshes[i].object3dFrame.scale.set(widestSignWidth,textMeshes[i].object3d.height,1)
+					textMeshes[i].object3dFrame.scale.set(widestSignWidth,menuGapSizeInLineHeights,1)
 					textMeshes[i].object3dFrame.position.copy(textMeshes[i].position)
-					textMeshes[i].object3dFrame.position.y -= textMeshes[i].object3d.height
+					textMeshes[i].object3dFrame.position.y -= menuGapSizeInLineHeights
 					menu.add(textMeshes[i].object3dFrame)
 				}
 
@@ -339,9 +344,9 @@ function initPanel()
 						menu.add(textMeshes[i].object3d)
 
 						textMeshes[i].object3d.position.copy(textMeshes[i].position)
-						textMeshes[i].object3d.position.y -= textMeshes[i].object3d.height * 0.5
+						textMeshes[i].object3d.position.y -= menuGapSizeInLineHeights * 0.5
 						textMeshes[i].object3d.position.x = widestSignWidth / 2
-						textMeshes[i].object3d.scale.setScalar(object3dScaleWhenInMenuInLineHeight)
+						uniformlyScaleObject3dToMenuGapSize(textMeshes[i].object3d)
 					}
 				}
 			}
@@ -439,6 +444,13 @@ function initPanel()
 		{string:"    Object3d",	object3d: testObject3d },//object3d could be a graph or rama
 		{string:"    Button", 	buttonFunction:	function(){handControllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random());console.log("example menu item clicked")}},
 	],6.34,6.24)
+
+	function addToolToPanel(name,object3d)
+	{
+		MenuOnPanel([
+			{string:name,	object3d: testObject3d },
+		],6.34,6.24)
+	}
 }
 
 function initPanelDemo()

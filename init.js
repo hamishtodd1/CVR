@@ -1,17 +1,16 @@
 /*
-	Look in the email from whatsisname
-
-	Do the whole coot tutorial, and the EM one too
-		Can load a map, can load a molecule
-		Fix the atom deletion problems
-		Painter works as "add terminal residue"
-		Refinement
-			Grabbing two ends of a chain defines it as refinement area
-			Force restraints
-		Mutate / everything else sitting there in script
-		Spectation, or at least "Save"
+Do the whole coot tutorial, and the EM one too
+	Can load a map, can load a molecule
+	Fix the atom deletion problems
+	Refinement
+		Grabbing two ends of a chain defines it as refinement area
+		Force restraints
+	Mutate / everything else sitting there in script
+	Spectation, or at least "Save"
 
 TODO for Dec 4th / CCP4
+	Email Lovelace
+	Selection of atoms going up the chain
 	Display manager
 	Add terminal residue
 	Get map from coot
@@ -49,7 +48,7 @@ TODO during PhD
 	"Take screenshot"
 
 Beyond
-	IMOD is also em and might also benefit from
+	IMOD, an EM software with manual manipulation, might also benefit from VRification
 
 Bugs
 	Firefox: sometimes it just doesn't start. setAnimationLoop is set, but loop is not called
@@ -139,12 +138,12 @@ function init()
 		}
 	} ], 1.764, 5.383 )
 
-	setCurrentCameraPositionAsCenter = function()
+	setCurrentHeadPositionAsCenter = function()
 	{
 		renderer.vr.setPositionAsOrigin( camera.position )
 	}
-	addSingleFunctionToPanel(setCurrentCameraPositionAsCenter,6.05,5.38)
-	setCurrentCameraPositionAsCenter() //wanna be accessible from behind the panel?
+	addSingleFunctionToPanel(setCurrentHeadPositionAsCenter,6.05,5.38)
+	setCurrentHeadPositionAsCenter() //wanna be accessible from behind the panel?
 
 	let vrButton = WEBVR.createButton( renderer )
 	document.body.appendChild( vrButton );
@@ -219,7 +218,7 @@ function init()
 			// // initAtomLabeller(),
 			// initRigidBodyMover(),
 			// initNucleicAcidPainter(),
-			initMutator()
+			// initMutator()
 			// initProteinPainter()
 		);
 

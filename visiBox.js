@@ -101,12 +101,11 @@ function initVisiBox()
 		{
 			if(visiBox.corners[i].parent !== visiBox)
 			{
-				var newCornerPosition = new THREE.Vector3()
-				visiBox.corners[ i ].getWorldPosition(newCornerPosition);
-				visiBox.worldToLocal(newCornerPosition);
-				visiBox.scale.x *= ( Math.abs(newCornerPosition.x)-0.5 ) + 1;
-				visiBox.scale.y *= ( Math.abs(newCornerPosition.y)-0.5 ) + 1;
-				visiBox.scale.z *= ( Math.abs(newCornerPosition.z)-0.5 ) + 1;
+				var localGrabbedCornerPosition = visiBox.corners[ i ].getWorldPosition(new THREE.Vector3());
+				visiBox.worldToLocal(localGrabbedCornerPosition);
+				visiBox.scale.x *= ( Math.abs(localGrabbedCornerPosition.x)-0.5 )*2 + 1;
+				visiBox.scale.y *= ( Math.abs(localGrabbedCornerPosition.y)-0.5 ) + 1;
+				visiBox.scale.z *= ( Math.abs(localGrabbedCornerPosition.z)-0.5 ) + 1;
 				
 				visiBox.updateMatrixWorld();
 				
