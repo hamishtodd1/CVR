@@ -1,5 +1,7 @@
 /*
-	TODO edges shouldn't do the silly scaling thing
+	edges shouldn't do the silly scaling thing
+	arguably corner movement should be horizontally mirrored
+	maybe it should be frustum shaped?
 */
 
 function initVisiBox()
@@ -14,20 +16,18 @@ function initVisiBox()
 		return center;
 	}
 	
-	thingsToBeUpdated.push(visiBox)
-	
-	visiBox.position.y = -0.25;
+	visiBox.position.y = -0.3;
 	scene.add(visiBox);
-	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.5
+	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.2
 	visiBox.scale.x = visiBox.scale.y * 1.5
-	visiBox.scale.z = visiBox.scale.y * 1.2
+	visiBox.scale.z = visiBox.scale.y * 2.0
 
 	//when you're resizing
 	// var someSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhongMaterial({color:0xFF0000}));
 	// scene.add(someSphere);
 	// someSphere.position.copy(visiBox.centerInAssemblageSpace())
 
-	var faceToFront = 0.2; //there was that one guy who kept inching back when it restarted. He could have resized the visibox
+	var faceToFront = 0.33; //there was that one guy who kept inching back when it restarted. He could have resized the visibox
 	visiBox.position.z = -visiBox.scale.z / 2 - faceToFront;
 	visiBox.ordinaryParent = scene;
 	visiBox.ordinaryParent.add(visiBox);
@@ -101,12 +101,11 @@ function initVisiBox()
 		{
 			if(visiBox.corners[i].parent !== visiBox)
 			{
-				var newCornerPosition = new THREE.Vector3()
-				visiBox.corners[ i ].getWorldPosition(newCornerPosition);
-				visiBox.worldToLocal(newCornerPosition);
-				visiBox.scale.x *= ( Math.abs(newCornerPosition.x)-0.5 ) + 1;
-				visiBox.scale.y *= ( Math.abs(newCornerPosition.y)-0.5 ) + 1;
-				visiBox.scale.z *= ( Math.abs(newCornerPosition.z)-0.5 ) + 1;
+				var localGrabbedCornerPosition = visiBox.corners[ i ].getWorldPosition(new THREE.Vector3());
+				visiBox.worldToLocal(localGrabbedCornerPosition);
+				visiBox.scale.x *= ( Math.abs(localGrabbedCornerPosition.x)-0.5 )*2 + 1;
+				visiBox.scale.y *= ( Math.abs(localGrabbedCornerPosition.y)-0.5 ) + 1;
+				visiBox.scale.z *= ( Math.abs(localGrabbedCornerPosition.z)-0.5 ) + 1;
 				
 				visiBox.updateMatrixWorld();
 				
@@ -155,8 +154,24 @@ function initVisiBox()
 			this.planes[i].applyMatrix4(visiBox.matrixWorld);
 		}
 	}
+	objectsToBeUpdated.push(visiBox)
 
-	visiBox.corners[0].position.x = 0;
+	let rememberedScale = zeroVector.clone()
+	MenuOnPanel([{
+		string:"Toggle clipping planes", buttonFunction:function()
+		{
+			if( rememberedScale.equals(zeroVector) )
+			{
+				rememberedScale.copy(visiBox.scale)
+				visiBox.scale.setScalar(camera.far*2)
+			}
+			else
+			{
+				visiBox.scale.copy(rememberedScale)
+				rememberedScale.copy(zeroVector)
+			}
+		}
+	}],4.23,5.42)
 	
 	return visiBox;
 }

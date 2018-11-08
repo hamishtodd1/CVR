@@ -30,7 +30,7 @@ function initHandDistance()
 	// 	// newEnvironmentDistancer.update = updateEnvironmentDistancer;
 
 	// 	// holdables.push(newEnvironmentDistancer)
-	// 	// thingsToBeUpdated.push(newEnvironmentDistancer);
+	// 	// objectsToBeUpdated.push(newEnvironmentDistancer);
 	// 	// newEnvironmentDistancer.ordinaryParent = newEnvironmentDistancer.parent;
 	// }
 
@@ -115,7 +115,7 @@ function initHandDistance()
 	}
 	
 	holdables.push(handDistancer)
-	thingsToBeUpdated.push(handDistancer);
+	objectsToBeUpdated.push(handDistancer);
 	scene.add(handDistancer);
 	handDistancer.ordinaryParent = scene;
 
@@ -126,8 +126,12 @@ function initEnvironmentDistance()
 {
 	var environmentDistancer = new THREE.Object3D();
 	
-	var radius = 0.05;
-	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0xFF69B4, opacity: 0.4}));
+	var radius = 0.08;
+	console.log(radius)
+	var ball = new THREE.LineSegments( 
+		new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(radius) ),
+		new THREE.LineBasicMaterial({color:0xFFFFFF, linewidth:3 }) )
+
 	environmentDistancer.add( ball );
 	ball.geometry.computeBoundingSphere();
 	environmentDistancer.boundingSphere = ball.geometry.boundingSphere;
@@ -154,7 +158,7 @@ function initEnvironmentDistance()
 	// 	// newEnvironmentDistancer.update = updateEnvironmentDistancer;
 
 	// 	// holdables.push(newEnvironmentDistancer)
-	// 	// thingsToBeUpdated.push(newEnvironmentDistancer);
+	// 	// objectsToBeUpdated.push(newEnvironmentDistancer);
 	// 	// newEnvironmentDistancer.ordinaryParent = newEnvironmentDistancer.parent;
 	// }
 
@@ -256,7 +260,7 @@ function initEnvironmentDistance()
 	// }
 	
 	holdables.push(environmentDistancer)
-	thingsToBeUpdated.push(environmentDistancer);
+	objectsToBeUpdated.push(environmentDistancer);
 	scene.add(environmentDistancer);
 	environmentDistancer.ordinaryParent = assemblage; //note discrepancy
 

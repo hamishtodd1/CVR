@@ -1,4 +1,8 @@
 /*
+	You want something to show which c-alpha the stats are talking about
+		A sphere with dotted lines going to all the stats. The sphere sits on the
+		How about: all the stats specific to a c-alpha are tiny
+
 	If you recently used the b factors you'll probably use them again
 
 	Pull the ones you're most interested in to the front
@@ -13,33 +17,33 @@
 
 function initStats(visiBoxPosition)
 {
-	var correlationIndicatorsGeometry = new THREE.EfficientSphereBufferGeometry(2.0);
-	new THREE.FileLoader().load(
-		'data/residueCorrelations.txt',
-		function ( data )
-		{
-			var residueCorrelations = eval(data)
-			var correlationIndicators = Array(models[0].carbonAlphaPositions.length);
-			//seem to need to make them one model ;_;
+	// var correlationIndicatorsGeometry = new THREE.EfficientSphereBufferGeometry(2.0);
+	// new THREE.FileLoader().load(
+	// 	'data/residueCorrelations.txt',
+	// 	function ( data )
+	// 	{
+	// 		var residueCorrelations = eval(data)
+	// 		var correlationIndicators = Array(models[0].carbonAlphaPositions.length);
+	// 		//seem to need to make them one model ;_;
 
-			for(var i = 0, il = residueCorrelations.length; i < il; i++)
-			{
-				var nastiness = 2 * clamp(residueCorrelations[i][1]-0.5,0,0.5);
-				correlationIndicators[i] = new THREE.Mesh(correlationIndicatorsGeometry,new THREE.MeshBasicMaterial({
-					// opacity: 1-residueCorrelations[i][1],
-					// transparent:true,
-					color: new THREE.Color(1,1-nastiness,1-nastiness)
-				}));
-				models[0].add(correlationIndicators[i]);
-				models[0].remove(correlationIndicators[i]);
+	// 		for(var i = 0, il = residueCorrelations.length; i < il; i++)
+	// 		{
+	// 			var nastiness = 2 * clamp(residueCorrelations[i][1]-0.5,0,0.5);
+	// 			correlationIndicators[i] = new THREE.Mesh(correlationIndicatorsGeometry,new THREE.MeshBasicMaterial({
+	// 				// opacity: 1-residueCorrelations[i][1],
+	// 				// transparent:true,
+	// 				color: new THREE.Color(1,1-nastiness,1-nastiness)
+	// 			}));
+	// 			models[0].add(correlationIndicators[i]);
+	// 			models[0].remove(correlationIndicators[i]);
 
-				var resNo = residueCorrelations[i][0][2];
-				correlationIndicators[i].position.copy(models[0].carbonAlphaPositions[resNo])
-			}
-			console.log(correlationIndicators[0])
-		},
-		function ( xhr ) {},function ( err ) {}
-	);
+	// 			var resNo = residueCorrelations[i][0][2];
+	// 			correlationIndicators[i].position.copy(models[0].carbonAlphaPositions[resNo])
+	// 		}
+	// 		console.log(correlationIndicators[0])
+	// 	},
+	// 	function ( xhr ) {},function ( err ) {}
+	// );
 
 
 	// new THREE.FileLoader().load(
@@ -61,7 +65,6 @@ function initStats(visiBoxPosition)
 	initBarcharts(visiBoxPosition);
 }
 
-
 //we can do better than bar charts and ramachandran.
 function initBarcharts(visiBoxPosition)
 {
@@ -71,11 +74,8 @@ function initBarcharts(visiBoxPosition)
 		randomData[i] = Math.random();
 	}
 	var randomGraph = Graph(randomData);
-	randomGraph.rotation.y = TAU/4
-	randomGraph.position.x = -ROOM_RADIUS + 0.0001;
-	randomGraph.position.y = -randomGraph.scale.y / 2;
-	randomGraph.scale.multiplyScalar(0.5)
-	randomGraph.position.z = randomGraph.getWorldSpaceWidth()/2
+	randomGraph.position.z = -0.5
+	randomGraph.scale.multiplyScalar(0.05)
 	scene.add(randomGraph)
 
 	{
@@ -93,27 +93,27 @@ function initBarcharts(visiBoxPosition)
 	var atomPositionToPutInCenterOfVisiBox = null;
 	var extraHighlightCountDown = null;
 
-	thingsToBeUpdated.push(randomGraph)
+	objectsToBeUpdated.push(randomGraph)
 	randomGraph.update = function()
 	{
-		//your controllers have a laser
+		//your handControllers have a laser
 		//If the laser is in the rectangular area, it is visible
 		//the bars should change color if they are being pointed at
 		//as should the backgrounds, that lets you drag them
 
-		if(!models.length || !controllers.length)
+		if(!models.length || !handControllers.length)
 		{
 			return;
 		}
 
 		for(var i = 0; i < 2; i++)
 		{
-			var intersections = controllers[i].intersectLaserWithObject(randomGraph.background)
+			var intersections = handControllers[i].intersectLaserWithObject(randomGraph.background)
 			if(intersections.length)
 			{
-				controllers[i].laser.visible = true;
+				handControllers[i].laser.visible = true;
 				
-				if(controllers[i].button1 && !controllers[i].button1Old)
+				if(handControllers[i].button1 && !handControllers[i].button1Old)
 				{
 					positionPointedTo = intersections[0].point;
 					//The rubbish part
@@ -129,7 +129,7 @@ function initBarcharts(visiBoxPosition)
 			}
 			else
 			{
-				controllers[i].laser.visible = false;
+				handControllers[i].laser.visible = false;
 			}
 		}
 
@@ -181,7 +181,6 @@ function initBarcharts(visiBoxPosition)
 function Graph(data)
 {
 	var graph = new THREE.Group;
-	graph.position.z = -0.36
 	// graph.scale.setScalar(0.1)
 	var background = new THREE.Mesh(THREE.OriginCorneredPlaneGeometry(), new THREE.MeshBasicMaterial());
 	background.position.z = -0.0001
@@ -217,11 +216,6 @@ function Graph(data)
 	yAxis.label.rotation.z = TAU/4;
 	graph.add(xAxis.label)
 	graph.add(yAxis.label)
-
-	graph.getWorldSpaceWidth = function()
-	{
-		return background.scale.x * this.scale.x;
-	}
 
 	graph.displayDataset = function(data)
 	{

@@ -11,7 +11,8 @@
 var starProcessingMapData;
 function initMapCreationSystem(visiBox)
 {
-	var worker = new Worker("mapExtractionAndMeshing.js");
+	let worker = new Worker("mapExtractionAndMeshing.js")
+
 	worker.onmessage = function(event)
 	{
 		maps[ event.data.mapIndex ].receiveMessageConcerningSelf( event.data );
@@ -24,7 +25,7 @@ function initMapCreationSystem(visiBox)
 		maps.push(map);
 		assemblage.add(map);
 
-		var isolevel = isDiffMap ? 1.7 : 1.5;
+		var isolevel = isDiffMap ? 3.0 : 1.5;
 		var latestUserCenterOnGrid = null;
 		var waitingOnResponse = false;
 		var mostRecentBlockIsolevel = Infinity; //we care because there might be some recent arrivals whose isolevel is better than most recent
@@ -54,9 +55,9 @@ function initMapCreationSystem(visiBox)
 
 				for(var i = 0; i < 2; i++)
 				{
-					if( Math.abs( controllers[i].thumbStickAxes[1] ) > 0.1 )
+					if( Math.abs( handControllers[i].thumbStickAxes[1] ) > 0.1 )
 					{
-						isolevel += 0.06 * controllers[i].thumbStickAxes[1] * controllers[i].thumbStickAxes[1] * controllers[i].thumbStickAxes[1];
+						isolevel += 0.06 * handControllers[i].thumbStickAxes[1] * handControllers[i].thumbStickAxes[1] * handControllers[i].thumbStickAxes[1];
 						msg.currentCenterOnGrids.length = 0;
 					}
 				}
@@ -101,7 +102,7 @@ function initMapCreationSystem(visiBox)
 				map.unitCellMesh.visible = false;
 				//TODO make it movable? Keep it centered in visibox?
 
-				thingsToBeUpdated.push(map);
+				objectsToBeUpdated.push(map);
 			}
 		}
 

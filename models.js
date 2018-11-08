@@ -99,7 +99,7 @@ Atom.prototype.setLabelVisibility = function(labelVisibility)
 
 		var model = getModelWithImol(this.imol);
 		model.add( this.label );
-		thingsToBeUpdated.push(this.label);
+		objectsToBeUpdated.push(this.label.update);
 	}
 	
 	if(this.label !== undefined)
@@ -169,7 +169,7 @@ function initModelCreationSystem( visiBoxPlanes)
 	var nSphereVertices = atomGeometry.vertices.length;
 	var nSphereFaces = atomGeometry.faces.length;
 
-	makeModelFromCootString = function( modelStringCoot, thingsToBeUpdated, visiBoxPlanes, callback )
+	makeModelFromCootString = function( modelStringCoot, visiBoxPlanes, callback )
 	{
 		//position, isHydrogen, spec, "residue"
 		var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
@@ -277,16 +277,16 @@ function initModelCreationSystem( visiBoxPlanes)
 		var bufferGeometry = moleculeMesh.geometry;
 
 		var atomColors = Array(10);
-		for(var i = 0; i < atomColors.length; i++)
-		{
-			atomColors[i] = new THREE.Color( 0.2,0.2,0.2 );
-		}
-		atomColors[0].setRGB(72/255,193/255,103/255); //carbon
-		atomColors[1].setRGB(0.8,0.8,0.2); //sulphur
-		atomColors[2].setRGB(0.8,0.2,0.2); //oxygen
-		atomColors[3].setRGB(0.2,0.4,0.8); //nitrogen
-		atomColors[6].setRGB(1.0,165/255,0.0); //phosphorus
-		atomColors[9].setRGB(1.0,1.0,1.0); //hydrogen
+		atomColors[0] = standardAtomColors["carbon"]
+		atomColors[1] = standardAtomColors["sulphur"]
+		atomColors[2] = standardAtomColors["oxygen"]
+		atomColors[3] = standardAtomColors["nitrogen"]
+		atomColors[4] = new THREE.Color( 0.2,0.2,0.2 )
+		atomColors[5] = new THREE.Color( 0.2,0.2,0.2 )
+		atomColors[6] = standardAtomColors["phosphorus"]
+		atomColors[7] = new THREE.Color( 0.2,0.2,0.2 )
+		atomColors[8] = new THREE.Color( 0.2,0.2,0.2 )
+		atomColors[9] = standardAtomColors["hydrogen"]
 
 		var bondData;
 		if( bondDataFromCoot )
@@ -328,7 +328,7 @@ function initModelCreationSystem( visiBoxPlanes)
 				}
 			}
 
-			console.error(JSON.stringify(bondData))
+			// console.error(JSON.stringify(bondData))
 		}
 
 		var numberOfCylinders = 0;

@@ -82,7 +82,7 @@ function initAtomDeleter()
 	//heh but what if you want a tool in each hand?
 	atomDeleter.onLetGo = turnOffAllHighlights;
 	
-	thingsToBeUpdated.push(atomDeleter);
+	objectsToBeUpdated.push(atomDeleter);
 	holdables.push(atomDeleter)
 	scene.add(atomDeleter);
 	atomDeleter.ordinaryParent = atomDeleter.parent;
@@ -153,7 +153,7 @@ function initResidueDeleter()
 
 	residueDeleter.onLetGo = turnOffAllHighlights;
 	
-	thingsToBeUpdated.push(residueDeleter);
+	objectsToBeUpdated.push(residueDeleter);
 	holdables.push(residueDeleter)
 	scene.add(residueDeleter);
 	residueDeleter.ordinaryParent = residueDeleter.parent;

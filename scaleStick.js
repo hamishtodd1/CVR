@@ -12,15 +12,15 @@ function initScaleStick()
 	scene.add(scaleStick);
 	scaleStick.update = function()
 	{
-		this.visible = (controllers[0].grippingSide && controllers[1].grippingSide);
+		this.visible = (handControllers[0].grippingSide && handControllers[1].grippingSide);
 
-		var direction = controllers[1].position.clone().sub(controllers[0].position).normalize();
+		var direction = handControllers[1].position.clone().sub(handControllers[0].position).normalize();
 		
 		var newY = direction.clone().multiplyScalar(getAngstrom());
-		redirectCylinder(this, controllers[0].position, newY)
+		redirectCylinder(this, handControllers[0].position, newY)
 
 		clippingPlane.normal.copy( direction ).negate();
-		clippingPlane.constant = controllers[1].position.dot( direction );
+		clippingPlane.constant = handControllers[1].position.dot( direction );
 	}
-	thingsToBeUpdated.push( scaleStick );
+	objectsToBeUpdated.push( scaleStick );
 }

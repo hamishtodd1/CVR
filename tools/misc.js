@@ -36,7 +36,7 @@ function initAtomLabeller()
 		}
 	}
 	
-	thingsToBeUpdated.push(atomLabeller);
+	objectsToBeUpdated.push(atomLabeller);
 	holdables.push(atomLabeller)
 	scene.add(atomLabeller);
 	atomLabeller.ordinaryParent = atomLabeller.parent;
@@ -85,7 +85,7 @@ function initPointer()
 		}
 	}
 
-	thingsToBeUpdated.push(pointer);
+	objectsToBeUpdated.push(pointer);
 	holdables.push(pointer);
 	pointer.ordinaryParent = scene;
 

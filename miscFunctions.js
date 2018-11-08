@@ -1,3 +1,21 @@
+function objectNotAppearingTest(obj)
+{
+	console.log("parent: ",obj.parent)
+	console.log("visible: ",obj.visible)
+	console.log("scale: ",obj.scale)
+	console.log("position: ",obj.position)
+	if(obj.isMesh)
+	{
+		console.log(obj.geometry.vertices)
+		console.log("opacity: ",obj.material.opacity)
+		console.log("sidedness: ",obj.material.side)
+	}
+	else
+	{
+		console.log("children: ",obj.children.length)
+	}
+}
+
 //to be called every frame from the start
 function checkForNewGlobals()
 {

@@ -44,12 +44,14 @@ function initMutator()
 	var innerCircleRadius = 0.12;
 	var plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(0.432 * innerCircleRadius, 32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5, side:THREE.DoubleSide}) );
 	var textHeight = innerCircleRadius / 9;
+	let ourPdbLoader = 
 	function singleLoop(aaIndex, position)
 	{
-		ourPDBLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
+		ourPdbLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
 			{
 				var newPlaque = plaque.clone();
 				newPlaque.position.copy(position);
+				newPlaque.visible = false
 				mutator.add( newPlaque );
 
 				mutator.AAs[aaIndex] = makeModelFromElementsAndCoords(geometryAtoms.elements,geometryAtoms.attributes.position.array)
@@ -132,7 +134,7 @@ function initMutator()
 		label.visible = this.parent === scene;
 	}
 	
-	thingsToBeUpdated.push(mutator);
+	// objectsToBeUpdated.push(mutator);
 	holdables.push(mutator);
 	scene.add(mutator);
 	return mutator;

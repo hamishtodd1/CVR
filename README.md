@@ -8,15 +8,9 @@ This is, or will be, ["Coot"](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/co
 
 We hope it will make Coot faster to use! It will be easier to see 3D features, to specify intended atom detinations, and to navigate some of the information you need to use Coot (because you have more "screen space"). It will also be easier to train people to use.
 
-## What's the schedule
-
-Beta starts on October 15th 2018. Build should be guaranteed stable (and more usable!) as of July 29th 2018.
-
 ## How do I set it up
 
-This is pre-beta so you're not really supposed to :) but if you are super eager, and don't mind that there are very few features and no guarantee of stability...
-
-You'll need Windows, an Oculus Rift and webVR (I recommend this build https://drive.google.com/file/d/15OHw1VtXu-QXTvmz9qNLut6K_KhDMcMK - make sure to go to chrome://flags and enable webVR AND gamepad extensions). 
+You'll need Windows, an Oculus Rift and a browser running webVR like firefox nightly or chrome canary (make sure to go to chrome://flags and enable webVR AND gamepad extensions). 
 
 1. Run server.py with python 2.7
 2. Start webVR, using the console command --allow-file-access-from-files.
@@ -42,3 +36,21 @@ But no to all "Cardboard" headsets including Daydream and GearVR. In the history
 ## Will you have feature <x> from Coot?
 
 Yes, I really hope to implement that! In principle I could have other things too :3
+
+## Why don't you use Unity / Unreal?
+
+I do use three.js, which is a graphics api. In comparison with that, Unity/Unreal:
+
+-Longer to compile and load
+-Weird UI for development
+-Fairly frequent frustrating bugs and plugin issues
+-Much larger download for users (threejs is 500KB)
+-More complicated API
+-Selfish motivation: I am more able to develop my programming skills with threejs
+
+Reasons why many people use Unity/Unreal instead of three.js (or gtk or ogre):
+-API offers many, many more features for dealing with animations, particles, sound effects, pathfinding AI
+-*If* you want those things, they will be handled pretty efficiently, in comparison with you writing them yourself, unless you are extremely experienced with writing those things
+-The UI is very useful for setting up large environments with lots of objects in them
+
+All this is to say: Unity/Unreal are for making video games in the mould of modern-day video games. I.e. you have a team of between 3 and 300 people, the majority of whom can't program, pouring work into a "virtual world". This isn't much like the goals of Coot.
