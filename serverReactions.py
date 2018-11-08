@@ -30,12 +30,11 @@ def connect(self):
 	# mapMsg['dataString'] = temporaryFile
 	# self.write_message( mapMsg )
 
-def command(self, msgContainer):
-	msg = eval(msgContainer)
-
+def command(self, msg):
 	if msg["command"] == "deleteAtom":
 		delete_atom(msg["imol"],msg["chainId"],msg["resNo"],msg["insertionCode"],msg["name"],msg["altloc"]);
-		self.write_message(msgContainer);
+		print("warning, this used to say self.write_message(msgContainer)")
+		self.write_message(msg);
 
 	if msg["command"] == "newResidue"
 		add_residue_with_atoms(msg["imol"],msg["chainId"],msg["atoms"])
@@ -76,12 +75,6 @@ def command(self, msgContainer):
 		
 		print(returnMsg)
 		# self.write_message(returnMsg)	
-
-	elif msg["command"] == "getDirectoryContents"
-		print("hmm")
-		returnMsg = {"command":"directoryContents"}
-		returnMsg["filenames"] = listdir(".")
-		self.write_message(returnMsg)		
 
 	#--------------Spectation stuff
 	elif msg["command"] == "requestingSpectatorData":

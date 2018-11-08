@@ -2,6 +2,8 @@ import tornado.ioloop
 import tornado.web
 import tornado.websocket
 
+from os import listdir
+
 try:
 	coot_version()
 except NameError:
@@ -32,8 +34,15 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 			self.write_message({"command":"loadTutorialModelAndData"})
 
 	def on_message(self, msgContainer):
-		if runningInCoot == True:
-			serverReactions.command(self, msgContainer)
+		msg = eval(msgContainer)
+
+		if msg["command"] == "pdbAndMapFilenames":
+			returnMsg = {"command":"pdbAndMapFilenames"}
+			returnMsg["filenames"] = listdir("./modelsAndMaps")
+			self.write_message(returnMsg)	
+
+		elif runningInCoot == True:
+			serverReactions.command(self, msg)
 
 	def on_close(self):
 		print('Closed connection')

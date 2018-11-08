@@ -166,7 +166,7 @@ function init()
 
 		//not just fileloader
 		let req = new XMLHttpRequest();
-		req.open('GET', 'data/tutorial.map', true);
+		req.open('GET', 'modelsAndMaps/tutorial.map', true);
 		req.responseType = 'arraybuffer';
 		req.onreadystatechange = function()
 		{
@@ -177,7 +177,7 @@ function init()
 		};
 		req.send(null);
 
-		new THREE.FileLoader().load( "data/tutorialGetBondsRepresentation.txt",
+		new THREE.FileLoader().load( "modelsAndMaps/tutorialGetBondsRepresentation.txt",
 			function( modelDataString )
 			{
 				makeModelFromCootString( modelDataString, visiBox.planes );
@@ -202,6 +202,8 @@ function init()
 	socket.onopen = function()
 	{
 		let thingsToSpaceOut = []; //can do better than that now
+
+		initFileNavigator()
 
 		let visiblePlace = visiBox.position.clone()
 		// assemblage.worldToLocal(visiblePlace)
