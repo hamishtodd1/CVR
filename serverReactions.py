@@ -10,7 +10,8 @@ from coot import *
 # pdbFileString = "/home/htodd/CVR/data/drugIsInteresting.pdb";
 handle_read_draw_molecule_with_recentre(pdbFileString, 1)
 
-make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
+# mtzFileString = "/home/htodd/CVR/data/tutorial.mtz"
+# make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
 # mapFileString = "/home/htodd/CVR/data/drugIsInteresting.map";
 # handle_read_ccp4_map( mapFileString, 0 ) #second arg is whether it's a difference map
 
