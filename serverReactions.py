@@ -74,7 +74,11 @@ def command(self, msg):
 		returnMsg["atomList"] = residue_info_py(msg["imol"],msg["chainId"], msg["resNo"], msg["insertionCode"] );
 		
 		print(returnMsg)
-		# self.write_message(returnMsg)	
+		# self.write_message(returnMsg)
+
+	elif msg["command"] == "save":
+		#have them select an atom?
+		write_pdb_file(msg["imol"],"VR_SESSION_MODEL.pdb")
 
 	#--------------Spectation stuff
 	elif msg["command"] == "requestingSpectatorData":

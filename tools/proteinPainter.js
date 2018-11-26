@@ -37,21 +37,7 @@
 
 function initProteinPainter()
 {
-	var proteinPainter = new THREE.Object3D();
-	scene.add(proteinPainter)
-	
-	var radius = 0.05;
-	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0x00FF00, opacity: 0.7}));
-	proteinPainter.add( ball );
-	ball.geometry.computeBoundingSphere();
-	proteinPainter.boundingSphere = ball.geometry.boundingSphere;
-
-	holdables.push(proteinPainter)
-
-	var label = makeTextSign( "ProteinPainter" );
-	label.position.z = radius;
-	label.scale.setScalar(radius/3)
-	proteinPainter.add(label);
+	let proteinPainter = Tool(0x00FF00)
 
 	//different segments. Do not screw around lightly, their positions are expected to be where they currently are
 	{
@@ -175,32 +161,19 @@ function initProteinPainter()
 
 	var activeSideChainAndHydrogen = null;
 
-	objectsToBeUpdated.push(proteinPainter)
-	proteinPainter.ordinaryParent = scene;
-	proteinPainter.update = function()
+	proteinPainter.whileHeld = function(positionInAssemblage)
 	{
-		label.visible = this.parent === scene;
-
-		if(this.parent === this.ordinaryParent)
-		{
-			return;
-		}
-
-		var ourPosition = this.getWorldPosition(new THREE.Vector3());
-		assemblage.updateMatrixWorld();
-		assemblage.worldToLocal(ourPosition);
-
 		if( this.parent.button1 )
 		{
 			if( amides.length === 0 )
 			{
 				//TODO you might be wanting to continue the chain
 
-				var newAmide = createActiveAmideAtPosition(ourPosition)
+				var newAmide = createActiveAmideAtPosition(positionInAssemblage)
 				newAmide.add(nTerminus.clone())
 			}
 
-			if( ourPosition.distanceTo(activeAmide.position) > amideDiagonalLength )
+			if( positionInAssemblage.distanceTo(activeAmide.position) > amideDiagonalLength )
 			{
 				var newAmidePosition = nextCAlpha.clone();
 				activeAmide.updateMatrixWorld();
@@ -216,7 +189,7 @@ function initProteinPainter()
 				activeSideChainAndHydrogen = newSideChainAndHydrogen;
 			}
 
-			var vectorToFollow = ourPosition.clone().sub(activeAmide.position);
+			var vectorToFollow = positionInAssemblage.clone().sub(activeAmide.position);
 
 			// var nitrogenDirection = cBeta.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion).normalize()
 			// var tau = vectorToFollow.angleTo(nitrogenDirection);

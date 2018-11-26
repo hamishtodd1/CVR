@@ -1,91 +1,67 @@
 //TODO turning white is a bad way to highlight, they're inside a ball
 function initAtomDeleter()
 {
-	var atomDeleter = new THREE.Object3D();
-	
-	var radius = 0.05;
-	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.7}));
-	atomDeleter.add( ball );
-	ball.geometry.computeBoundingSphere();
-	atomDeleter.boundingSphere = ball.geometry.boundingSphere;
-
-	var label = makeTextSign( "Atom deleter" );
-	label.position.z = radius;
-	label.scale.setScalar(radius/3)
-	atomDeleter.add(label);
+	var atomDeleter = Tool(0xFF0000)
 
 	var highlightColor = new THREE.Color(1,1,1);
+
+	//probably various things can highlight something, be sure to always do cleanup
+	//heh but what if you want a tool in each hand?
+	atomDeleter.onLetGo = turnOffAllHighlights;
 	
-	atomDeleter.update = function()
+	atomDeleter.whileHeld = function(assemblagePosition)
 	{
 		if( models.length === 0 )
 		{
 			return;
 		}
 
-		label.visible = this.parent === scene;
+		var ourRadiusSq = sq( this.boundingSphere.radius / getAngstrom() );
 
-		var ourRadiusSq = sq( radius / getAngstrom() );
-
-		if(this.parent !== scene)
+		//request is now fixed
+		if( this.parent.button1 && !this.parent.button1Old )
 		{
-			//request is now fixed
-			if( this.parent.button1 && !this.parent.button1Old )
+			for(var i = 0; i < models.length; i++)
 			{
-				for(var i = 0; i < models.length; i++)
+				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 				{
-					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					if( models[i].atoms[j].selected )
 					{
-						if( models[i].atoms[j].selected )
-						{
-							var msg = {command:"deleteAtom"};
-							models[i].atoms[j].assignAtomSpecToObject( msg );
-							socket.send(JSON.stringify(msg));
-						}
+						var msg = {command:"deleteAtom"};
+						models[i].atoms[j].assignAtomSpecToObject( msg );
+						socket.send(JSON.stringify(msg));
 					}
 				}
 			}
-			else
+		}
+		else
+		{
+			for(var i = 0; i < models.length; i++)
 			{
-				for(var i = 0; i < models.length; i++)
+				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 				{
-					var ourPosition = this.getWorldPosition();
-					models[i].updateMatrixWorld();
-					models[i].worldToLocal(ourPosition);
-					
-					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					if( models[i].atoms[j].position.distanceToSquared( assemblagePosition ) < ourRadiusSq )
 					{
-						if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
+						if(!models[i].atoms[j].selected)
 						{
-							if(!models[i].atoms[j].selected)
-							{
-								console.log("selecting?")
-								models[i].atoms[j].selected = true;
-								models[i].colorAtom(models[i].atoms[j], highlightColor);
-							}
+							// console.log("selecting?")
+							//bug was apparently being fixed here
+							models[i].atoms[j].selected = true;
+							models[i].colorAtom(models[i].atoms[j], highlightColor);
 						}
-						else
+					}
+					else
+					{
+						if( models[i].atoms[j].selected )
 						{
-							if( models[i].atoms[j].selected )
-							{
-								models[i].atoms[j].selected = false;
-								models[i].colorAtom( models[i].atoms[j] );
-							}
+							models[i].atoms[j].selected = false;
+							models[i].colorAtom( models[i].atoms[j] );
 						}
 					}
 				}
 			}
 		}
-	}
-
-	//probably various things can highlight something, be sure to always do cleanup
-	//heh but what if you want a tool in each hand?
-	atomDeleter.onLetGo = turnOffAllHighlights;
-	
-	objectsToBeUpdated.push(atomDeleter);
-	holdables.push(atomDeleter)
-	scene.add(atomDeleter);
-	atomDeleter.ordinaryParent = atomDeleter.parent;
+	}	
 
 	return atomDeleter;
 }
@@ -93,70 +69,51 @@ function initAtomDeleter()
 //seems to have a bug if you delete two residues at the same time
 function initResidueDeleter()
 {
-	var residueDeleter = new THREE.Object3D();
-	
-	var radius = 0.05;
-	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0xFF0000, opacity: 0.7}));
-	residueDeleter.add( ball );
-	ball.geometry.computeBoundingSphere();
-	residueDeleter.boundingSphere = ball.geometry.boundingSphere;
+	var residueDeleter = Tool(0xFF0000)
 
-	var label = makeTextSign( "Residue deleter" );
-	label.position.z = radius;
-	label.scale.setScalar(radius/3)
-	residueDeleter.add(label);
+	residueDeleter.onLetGo = turnOffAllHighlights;	
 
-	residueDeleter.update = function()
+	residueDeleter.whileHeld = function()
 	{
 		if( models.length === 0 )
 		{
 			return;
 		}
 
-		label.visible = this.parent === scene;
+		var ourRadiusSq = sq( this.boundingSphere.radius / getAngstrom() );
 
-		var ourRadiusSq = sq( radius / getAngstrom() );
-
-		if(this.parent !== scene)
-		{
-			if( this.parent.button1 && !this.parent.button1Old )
-			{	
-				for(var i = 0; i < models.length; i++)
+		if( this.parent.button1 && !this.parent.button1Old )
+		{	
+			for(var i = 0; i < models.length; i++)
+			{
+				if(!logged)
 				{
-					if(!logged)
-						console.log("yo")
-					logged = 1
-					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					console.log("we appear to have been trying to test something that happens now")
+				}
+				logged = 1
+				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+				{
+					if( models[i].atoms[j].selected )
 					{
-						if( models[i].atoms[j].selected )
+						for(var k = 0, kl = models[i].atoms.length; k < kl; k++)
 						{
-							for(var k = 0, kl = models[i].atoms.length; k < kl; k++)
+							if(models[i].atoms[k].resNo === models[i].atoms[j].resNo)
 							{
-								if(models[i].atoms[k].resNo === models[i].atoms[j].resNo)
-								{
-									//would be more efficient on coot side to delete all at once
-									var msg = {command:"deleteAtom"};
-									models[i].atoms[k].assignAtomSpecToObject( msg );
-									socket.send(JSON.stringify(msg));
-								}
+								//would be more efficient on coot side to delete all at once
+								var msg = {command:"deleteAtom"};
+								models[i].atoms[k].assignAtomSpecToObject( msg );
+								socket.send(JSON.stringify(msg));
 							}
 						}
 					}
 				}
 			}
-			else
-			{
-				highlightResiduesOverlappingSphere(this, ourRadiusSq)
-			}
+		}
+		else
+		{
+			highlightResiduesOverlappingSphere(this, ourRadiusSq)
 		}
 	}
-
-	residueDeleter.onLetGo = turnOffAllHighlights;
-	
-	objectsToBeUpdated.push(residueDeleter);
-	holdables.push(residueDeleter)
-	scene.add(residueDeleter);
-	residueDeleter.ordinaryParent = residueDeleter.parent;
 
 	return residueDeleter;
 }

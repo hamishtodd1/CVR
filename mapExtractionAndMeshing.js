@@ -8,7 +8,7 @@ var typeColors = {
 	map_neg: 0x8B2E2E,
 }
  
-const blockRadius = 7;
+const blockRadius = 7; //yo
 
 var centerOffsets = [];
 for(var i = -1; i <= 1; i++) {

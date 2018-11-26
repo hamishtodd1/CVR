@@ -21,7 +21,7 @@ function establishAttachment(child, intendedParent)
 	}
 }
 
-function loop( maps, models, handControllers, visiBox )
+function loop( visiBox )
 {
 	frameDelta = ourClock.getDelta();
 	frameCount++;

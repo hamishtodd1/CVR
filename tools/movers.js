@@ -12,6 +12,7 @@
 
 
 //you know so well what your hand is doing, do you HAVE to have refinement turned on for this?
+//It's more that the "rigid mover" should be the default tool. Maybe it only appears when you stick your hands in
 function initRigidBodyMover()
 {
 	/*
@@ -29,66 +30,47 @@ function initRigidBodyMover()
 			python_representation(imol) - you get a list of chain, chains have list of residues, residues have list of atoms, atoms have list of atom-properties.  You can find your chain by chain-id, and look for the residue numbers in that chain.
 	*/
 
-	var rigidBodyMover = new THREE.Object3D();
 	var ball = new THREE.LineSegments( 
-		new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(1) ),
+		new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(0.1) ),
 		new THREE.LineBasicMaterial({color:0xFFFFFF, linewidth:3 }) );
-	rigidBodyMover.add(ball);
-	rigidBodyMover.scale.setScalar(0.1)
-	ball.geometry.computeBoundingSphere();
-	rigidBodyMover.boundingSphere = ball.geometry.boundingSphere;
-
-	var label = makeTextSign( "Rigid Mover" );
-	label.position.z = 1;
-	label.scale.setScalar(1/3)
-	rigidBodyMover.add(label);
+	var rigidMover = Tool(ball)
 
 	var capturedAtoms = [];
 	var localCapturedAtomPositions = [];
 
-	rigidBodyMover.update = function()
+	rigidMover.whileHeld = function(positionInAssemblage)
 	{
-		label.visible = this.parent === scene;
-
-		if(this.parent !== this.ordinaryParent)
+		if( this.parent.button1 )
 		{
-			if( this.parent.button1 )
-			{
-				this.parent.updateMatrixWorld();
+			this.parent.updateMatrixWorld();
 
-				if( !this.parent.button1Old )
+			if( !this.parent.button1Old )
+			{
+				var localRadiusSq = sq(ball.geometry.boundingSphere.radius * this.scale.x / getAngstrom())
+				for(var i = 0; i < models.length; i++)
 				{
-					var localRadiusSq = sq(this.scale.x / getAngstrom())
-					for(var i = 0; i < models.length; i++)
+					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 					{
-						var ourPosition = new THREE.Vector3();
-						this.getWorldPosition(ourPosition);
-						models[i].updateMatrixWorld();
-						models[i].worldToLocal(ourPosition);
-						
-						for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+						if(models[i].atoms[j].position.distanceToSquared( positionInAssemblage ) < localRadiusSq )
 						{
-							if(models[i].atoms[j].position.distanceToSquared( ourPosition ) < localRadiusSq )
-							{
-								capturedAtoms.push(models[i].atoms[j]);
-								localCapturedAtomPositions.push(models[i].atoms[j].position.clone());
-								models[i].localToWorld(localCapturedAtomPositions[localCapturedAtomPositions.length-1]);
-								this.parent.worldToLocal(localCapturedAtomPositions[localCapturedAtomPositions.length-1]);
-							}
+							capturedAtoms.push(models[i].atoms[j]);
+							localCapturedAtomPositions.push(models[i].atoms[j].position.clone());
+							models[i].localToWorld(localCapturedAtomPositions[localCapturedAtomPositions.length-1]);
+							this.parent.worldToLocal(localCapturedAtomPositions[localCapturedAtomPositions.length-1]);
 						}
 					}
 				}
+			}
 
-				for(var i = 0, il = capturedAtoms.length; i < il; i++)
-				{
-					var model = getModelWithImol(capturedAtoms[i].imol);
-					model.updateMatrixWorld()
-					
-					var newAtomPosition = localCapturedAtomPositions[i].clone();
-					this.parent.localToWorld(newAtomPosition);
-					model.worldToLocal(newAtomPosition);
-					model.setAtomRepresentationPosition(capturedAtoms[i], newAtomPosition)
-				}
+			for(var i = 0, il = capturedAtoms.length; i < il; i++)
+			{
+				var model = getModelWithImol(capturedAtoms[i].imol);
+				model.updateMatrixWorld()
+				
+				var newAtomPosition = localCapturedAtomPositions[i].clone();
+				this.parent.localToWorld(newAtomPosition);
+				model.worldToLocal(newAtomPosition);
+				model.setAtomRepresentationPosition(capturedAtoms[i], newAtomPosition)
 			}
 		}
 
@@ -111,12 +93,7 @@ function initRigidBodyMover()
 		}
 	}
 
-	holdables.push(rigidBodyMover)
-	scene.add(rigidBodyMover);
-	rigidBodyMover.ordinaryParent = rigidBodyMover.parent;
-	objectsToBeUpdated.push(rigidBodyMover);
-
-	return rigidBodyMover;
+	return rigidMover;
 }
 
 function initAutoRotamer()
@@ -126,60 +103,35 @@ function initAutoRotamer()
 	 * This is a specific tool because Coot has specific suggestions. But why shouldn't it have suggestions for an arbitrary atom?
 	 */
 
-	var autoRotamer = new THREE.Object3D();
+	var autoRotamer = Tool(0x00FF00)
 	
-	var radius = 0.05;
-	var ball = new THREE.Mesh(new THREE.EfficientSphereBufferGeometry(radius), new THREE.MeshLambertMaterial({transparent:true,color:0x00FF00, opacity: 0.7}));
-	autoRotamer.add( ball );
-	ball.geometry.computeBoundingSphere();
-	autoRotamer.boundingSphere = ball.geometry.boundingSphere;
+	autoRotamer.onLetGo = turnOffAllHighlights;
 
-	var label = makeTextSign( "Auto rotamer" );
-	label.position.z = radius;
-	label.scale.setScalar(radius/3)
-	autoRotamer.add(label);
-	
-	autoRotamer.update = function()
+	autoRotamer.whileHeld = function(positionInAssemblage)
 	{
-		label.visible = this.parent === scene;
+		var ourRadiusSq = sq( this.boundingSphere.radius / getAngstrom() );
 
-		var ourRadiusSq = sq( radius / getAngstrom() );
-
-		if(this.parent !== scene )
+		if( this.parent.button1 && !this.parent.button1Old )
 		{
-			if( this.parent.button1 && !this.parent.button1Old )
+			for(var i = 0; i < models.length; i++)
 			{
-				for(var i = 0; i < models.length; i++)
+				for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 				{
-					var ourPosition = this.getWorldPosition();
-					models[i].updateMatrixWorld();
-					models[i].worldToLocal(ourPosition);
-					
-					for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+					if( models[i].atoms[j].position.distanceToSquared( positionInAssemblage ) < ourRadiusSq )
 					{
-						if( models[i].atoms[j].position.distanceToSquared( ourPosition ) < ourRadiusSq )
-						{
-							var msg = {command:"autoFitBestRotamer"};
-							models[i].atoms[j].assignAtomSpecToObject( msg );
-							socket.send(JSON.stringify(msg));
-							//TODO this gets sent more than you would like
-						}
+						var msg = {command:"autoFitBestRotamer"};
+						models[i].atoms[j].assignAtomSpecToObject( msg );
+						socket.send(JSON.stringify(msg));
+						//TODO this gets sent more than you would like
 					}
 				}
 			}
-			else
-			{
-				highlightResiduesOverlappingSphere(this, ourRadiusSq)
-			}
+		}
+		else
+		{
+			highlightResiduesOverlappingSphere(this, ourRadiusSq)
 		}
 	}
-
-	autoRotamer.onLetGo = turnOffAllHighlights;
-	
-	objectsToBeUpdated.push(autoRotamer);
-	holdables.push(autoRotamer)
-	scene.add(autoRotamer);
-	autoRotamer.ordinaryParent = autoRotamer.parent;
 
 	return autoRotamer;
 }

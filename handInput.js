@@ -1,4 +1,4 @@
-//somewhere in here is the red ball
+//could change the lasers so there's two each and they come at angles like TV antenna
 
 function initHandInput()
 {

@@ -31,15 +31,39 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 		if runningInCoot == True:
 			serverReactions.connect(self)
 		else:
-			self.write_message({"command":"loadTutorialModelAndData"})
+			self.write_message({"command":"you aren't connected to coot"})
 
 	def on_message(self, msgContainer):
-		msg = eval(msgContainer)
+		msg = eval(msgContainer) #TODO unsecure
 
 		if msg["command"] == "pdbAndMapFilenames":
 			returnMsg = {"command":"pdbAndMapFilenames"}
 			returnMsg["filenames"] = listdir("./modelsAndMaps")
-			self.write_message(returnMsg)	
+			self.write_message(returnMsg)
+
+		if msg["command"] == "loadPolarAndAzimuthals":
+
+			if runningInCoot == True:
+				print("HEY WE NEED TO WORK OUT WHAT TO DO INSTEAD OF THE BELOW")
+			src = "settings/"
+
+			file = open( src + "polarAndAzimuthals.txt","r" )				
+			returnMsg = {"command":"polarAndAzimuthals"}
+			returnMsg["polarAndAzimuthals"] = file.read()
+			file.close()
+			self.write_message(returnMsg)
+
+		if msg["command"] == "savePolarAndAzimuthals":
+
+			if runningInCoot == True:
+				print("HEY WE NEED TO WORK OUT WHAT TO DO")
+			src = "settings/"
+
+			print(msg["polarAndAzimuthals"])
+
+			file = open( src + "polarAndAzimuthals.txt","w" )
+			file.write( str(msg["polarAndAzimuthals"]) )
+			file.close()
 
 		elif runningInCoot == True:
 			serverReactions.command(self, msg)

@@ -36,9 +36,15 @@ function initMapCreationSystem(visiBox)
 
 			if( !waitingOnResponse )
 			{
+				let assemblageSpaceFocalPoint = visiBox.position.clone()
+				//when zoomed out the map is a bit far back. You can do better than the below though
+				// assemblageSpaceFocalPoint.z += 0.0009 / getAngstrom()
+				assemblage.updateMatrixWorld();
+				var center = assemblage.worldToLocal( assemblageSpaceFocalPoint );
+
 				var msg = {
 					isolevel,
-					userCenterOffGrid: visiBox.centerInAssemblageSpace().toArray(),
+					userCenterOffGrid: assemblageSpaceFocalPoint.toArray(),
 					chickenWire: false,
 					currentCenterOnGrids: []
 				};
@@ -201,13 +207,13 @@ function initMapCreationSystem(visiBox)
 				geo.addAttribute( 'position',	new THREE.BufferAttribute( nonWireframeGeometricPrimitives.positionArray, 3 ) );
 				geo.addAttribute( 'normal',		new THREE.BufferAttribute( nonWireframeGeometricPrimitives.normalArray, 3 ) );
 				
-				var transparent = new THREE.Mesh( geo,
-					new THREE.MeshPhongMaterial({
-						color: color, //less white or bluer. Back should be less blue because nitrogen
-						clippingPlanes: visiBox.planes,
-						transparent:true,
-						opacity:0.36
-					}));
+				// var transparent = new THREE.Mesh( geo,
+				// 	new THREE.MeshPhongMaterial({
+				// 		color: color, //less white or bluer. Back should be less blue because nitrogen
+				// 		clippingPlanes: visiBox.planes,
+				// 		transparent:true,
+				// 		opacity:0.36
+				// 	}));
 				var back = new THREE.Mesh( geo,
 					new THREE.MeshPhongMaterial({
 						color: color,
@@ -228,7 +234,10 @@ function initMapCreationSystem(visiBox)
 						}));
 				}
 
-				return new THREE.Group().add(wireframe,transparent,back)
+				return new THREE.Group().add(
+					wireframe,
+					// transparent,
+					back)
 			}
 		}
 

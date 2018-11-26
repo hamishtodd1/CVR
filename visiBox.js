@@ -8,26 +8,18 @@ function initVisiBox()
 {
 	var visiBox = new THREE.Object3D();
 
-	visiBox.centerInAssemblageSpace = function()
-	{
-		var center = this.position.clone();
-		assemblage.updateMatrixWorld();
-		assemblage.worldToLocal( center );
-		return center;
-	}
-	
-	visiBox.position.y = -0.3;
+	visiBox.position.y = -0.24;
 	scene.add(visiBox);
-	visiBox.scale.y = Math.abs(visiBox.position.y) * 1.2
-	visiBox.scale.x = visiBox.scale.y * 1.5
-	visiBox.scale.z = visiBox.scale.y * 2.0
+	visiBox.scale.y = 0.36
+	visiBox.scale.x = 0.54
+	visiBox.scale.z = 0.56
 
 	//when you're resizing
 	// var someSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhongMaterial({color:0xFF0000}));
 	// scene.add(someSphere);
 	// someSphere.position.copy(visiBox.centerInAssemblageSpace())
 
-	var faceToFront = 0.33; //there was that one guy who kept inching back when it restarted. He could have resized the visibox
+	var faceToFront = 0.3; //there was that one guy who kept inching back when it restarted. He could have resized the visibox
 	visiBox.position.z = -visiBox.scale.z / 2 - faceToFront;
 	visiBox.ordinaryParent = scene;
 	visiBox.ordinaryParent.add(visiBox);

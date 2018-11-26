@@ -71,6 +71,7 @@ Atom.prototype.assignAtomSpecToObject = function(msg)
 	msg.chainId = this.chainId;
 	msg.resNo = this.resNo;
 	msg.insertionCode = this.insertionCode;
+	
 	msg.name = this.name;
 	msg.altloc = this.altloc;
 }

@@ -1,34 +1,33 @@
 /*
-Do the whole coot tutorial, and the EM one too
-	Can load a map, can load a molecule
-	Fix the atom deletion problems
-	Refinement
-		Grabbing two ends of a chain defines it as refinement area
-		Force restraints
-	Mutate / everything else sitting there in script
-	Spectation, or at least "Save"
-
-TODO for Dec 4th / CCP4
-	Email Lovelace
+TODO for CCP4SW
+	Back and forth
+	Do need to do these "onletgo" things
 	Selection of atoms going up the chain
-	Display manager
 	Add terminal residue
 	Get map from coot
 	Refinement
 	Check autofit rotamer works
 	Loaded from a webpage
 	Stuff in "Measures"
+	"Easy stuff"
+		Other easy booleans eg crystal box?
+		Mutate / everything else sitting there in script
+		Display manager
 	
 TODO during PhD
+	Coot tutorial including EM tutorial
+	Fix the atom deletion problems
+	Email Lovelace
+	Refinement
+		Grabbing two ends of a chain defines it as refinement area
+		Force restraints
+	Save
 	Everything in "panel demo"
 	Octree selection
 	"undo"
 		Just coot undo, then get the result? Full refresh
 		Button on controller reserved
 		Flash or something
-	Place atom at pointer
-		Should replace ligand builder, "add oxt to residue"
-		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
 	Complex-to-look-at 3D things
 		Alt conformers; opacity?
 		Manually aligning tomograms?
@@ -40,17 +39,20 @@ TODO during PhD
 	probe dots
 	Selection of rotamers
 	"Carbon alpha mode"(/skeletonize?), often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
-	bug with some residues highlighting many residues?
 	NMR data should totally be in there, a set of springs
 	Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
 	ambient occlusion maps for all?
 	Copy and paste 3D blocks of atoms
 	"Take screenshot"
+	Place atom at pointer
+		Should replace ligand builder, "add oxt to residue"
+		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
 
 Beyond
 	IMOD, an EM software with manual manipulation, might also benefit from VRification
 
 Bugs
+	bug with some residues highlighting many residues?
 	Firefox: sometimes it just doesn't start. setAnimationLoop is set, but loop is not called
 
 VR Games to get maybe
@@ -100,11 +102,13 @@ function init()
 	let maps = [];
 	let atoms = null; //because fixed length
 
+	initSocket();
 	initPanel();
+	initMiscPanelButtons();
 	
 	let visiBox = initVisiBox();
 	assemblage.position.copy(visiBox.position)
-	assemblage.scale.setScalar( 0.028 ); //0.045, 0.028 is nice, 0.01 fits on screen
+	assemblage.scale.setScalar( 0.04 ); //0.04 means no visibox wasted, 0.028 is nice, 0.01 fits on screen
 	scene.add(assemblage);
 	
 	let windowResize = function()
@@ -121,22 +125,10 @@ function init()
 	// initMonomerReceiver()
 	// initMenus();
 	// initSpecatorRepresentation();
-	initSocket();
 	initModelCreationSystem(visiBox.planes);
 	initMapCreationSystem(visiBox)
 	// initStats(visiBox.position);
 	initHandInput()
-
-	let timePanel = MenuOnPanel( [ {
-		string: new Date().toLocaleTimeString(),
-		additionalUpdate: function()
-		{
-			if( frameCount % 30 === 0 )
-			{
-				this.material.setText( new Date().toLocaleTimeString() )
-			}
-		}
-	} ], 1.764, 5.383 )
 
 	setCurrentHeadPositionAsCenter = function()
 	{
@@ -156,81 +148,41 @@ function init()
 		}
 	}, false );
 
-	function loadTutorialModelAndData()
+	socket.commandReactions["you aren't connected to coot"] = function()
 	{
-		//probably insufficient, do more here
-		for(let i = assemblage.children.length-1; i >-1; i--)
-		{
-			assemblage.children[i].dispose()
-		}
-
-		//not just fileloader
-		let req = new XMLHttpRequest();
-		req.open('GET', 'modelsAndMaps/tutorial.map', true);
-		req.responseType = 'arraybuffer';
-		req.onreadystatechange = function()
-		{
-			if (req.readyState === 4)
-			{
-				Map( req.response, false);
-			}
-		};
-		req.send(null);
-
-		new THREE.FileLoader().load( "modelsAndMaps/tutorialGetBondsRepresentation.txt",
-			function( modelDataString )
-			{
-				makeModelFromCootString( modelDataString, visiBox.planes );
-			}
-		);
+		nonCootConnectedInit(visiBox)
 	}
-	addSingleFunctionToPanel(loadTutorialModelAndData, 4.23,5.38);
-	socket.commandReactions["loadTutorialModelAndData"] = loadTutorialModelAndData
-
 	socket.commandReactions["model"] = function(msg)
 	{
 		makeModelFromCootString( msg.modelDataString, visiBox.planes );
 	}
 	socket.commandReactions["map"] = function(msg)
 	{
-		//TODO get the default isolevel from coot
-		// let newMap = Map( msg["dataString"], false, visiBox );
-		// maps.push(newMap);
-		// assemblage.add(newMap)
+		let newMap = Map( msg["dataString"], false, visiBox );
+		maps.push(newMap);
+		assemblage.add(newMap)
 	}
 
 	socket.onopen = function()
 	{
-		let thingsToSpaceOut = []; //can do better than that now
+		// initFileNavigator()
 
-		initFileNavigator()
+		// //maybe better if they were all cubes? Atoms are spheres.
+		// //coot specific
+		// // initRefiner()
 
-		let visiblePlace = visiBox.position.clone()
-		// assemblage.worldToLocal(visiblePlace)
-		thingsToSpaceOut.push(
-			// //coot specific
-			// // initAtomDeleter(),
-			// // initResidueDeleter(),
-			// // initEnvironmentDistance(),
-			// initAutoRotamer(),
-			// initRefiner(),
+		// initEnvironmentDistances()
+		
+		// initAutoRotamer()
+		// initRigidBodyMover()
+		// initAtomLabeller()
+		// // initMutator()
+		// initAtomDeleter()
+		// initResidueDeleter()		
+		// initProteinPainter()
+		// initNewAtomRoster()
 
-			// initPointer(),
-			// initProbeDotter(),
-			// // initAtomLabeller(),
-			// initRigidBodyMover(),
-			// initNucleicAcidPainter(),
-			// initMutator()
-			// initProteinPainter()
-		);
-
-		initNewAtomRoster()
-
-		let toolSpacing = 0.15;
-		for(let i = 0; i < thingsToSpaceOut.length; i++)
-		{
-			thingsToSpaceOut[i].position.set( toolSpacing * (-thingsToSpaceOut.length/2+i),-0.4,-0.16);
-		}
+		socket.send(JSON.stringify({command:"loadPolarAndAzimuthals"}))
 
 		let loopCallString = getStandardFunctionCallString(loop);
 		renderer.setAnimationLoop( function()
