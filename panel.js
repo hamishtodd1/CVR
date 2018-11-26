@@ -407,13 +407,25 @@ function initPanel()
 				menu.polar = menu.parentController.cursor.polar;
 				menu.azimuthal = menu.parentController.cursor.azimuthal;
 
+				{
+					let polarAndAzimuthals = Array(menus.length * 2)
+					for(let i = 0; i < menus.length; i++)
+					{
+						polarAndAzimuthals[i*2+0] = menus[i].polar
+						polarAndAzimuthals[i*2+1] = menus[i].azimuthal
+					}
+
+					let msg = {}
+					msg.command = "savePolarAndAzimuthals"
+					msg.polarAndAzimuthals = polarAndAzimuthals
+					socket.send(JSON.stringify(msg))
+				}
+
 				updateMatrix()
 
 				if( !menu.parentController.button2)
 				{
 					menu.parentController = null;
-					console.log("polar:", parseFloat(menu.polar).toPrecision(3),"azimuthal:", parseFloat(menu.azimuthal).toPrecision(3))
-					//you want to be saving these things
 				}
 			}
 		}
@@ -449,6 +461,12 @@ function initPanel()
 			menu.matrix.setPosition(bl);
 		}
 		updateMatrix()
+		menu.setPolarAndAzimuthal = function(newPolar,newAzimuthal)
+		{
+			this.polar = newPolar
+			this.azimuthal = newAzimuthal
+			updateMatrix()
+		}
 
 		return menu
 	}
@@ -520,35 +538,15 @@ function initPanel()
 	// 	{string:"    Button", 	buttonFunction:	function(){handControllers[0].controllerModel.material.color.setRGB(Math.random(),Math.random(),Math.random());console.log("example menu item clicked")}},
 	// ],6.34,6.24)
 
-
-	MenuOnPanel([
-		{string:"Save window setup", buttonFunction: function()
-		{
-			let polarAndAzimuthals = Array(menus.length * 2)
-			for(let i = 0; i < menus.length; i++)
-			{
-				polarAndAzimuthals[i*2+0] = menus[i].polar
-				polarAndAzimuthals[i*2+1] = menus[i].azimuthal
-			}
-			console.log(polarAndAzimuthals)
-
-			let msg = {}
-			msg.command = "savePolarAndAzimuthals"
-			msg.polarAndAzimuthals = polarAndAzimuthals
-			socket.send(JSON.stringify(msg))
-		}
-	}])
-
 	socket.commandReactions.polarAndAzimuthals = function(msg)
 	{
 		let polarAndAzimuthals = eval(msg.polarAndAzimuthals)
-		console.log(polarAndAzimuthals)
 		for(let i = 0; i < polarAndAzimuthals.length/2 && i < menus.length; i++)
 		{
-			if( menus[i].polar !== polarAndAzimuthals[i*2+0] )
-				console.log(menus[i].polar, polarAndAzimuthals[i*2+0])
-			menus[i].polar = polarAndAzimuthals[i*2+0]
-			menus[i].azimuthal = polarAndAzimuthals[i*2+1]
+			menus[i].setPolarAndAzimuthal(
+				polarAndAzimuthals[i*2+0],
+				polarAndAzimuthals[i*2+1]
+				)
 		}
 
 		return true

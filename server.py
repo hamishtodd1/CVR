@@ -59,8 +59,6 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 				print("HEY WE NEED TO WORK OUT WHAT TO DO")
 			src = "settings/"
 
-			print(msg["polarAndAzimuthals"])
-
 			file = open( src + "polarAndAzimuthals.txt","w" )
 			file.write( str(msg["polarAndAzimuthals"]) )
 			file.close()
