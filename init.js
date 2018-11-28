@@ -1,8 +1,6 @@
 /*
 TODO for CCP4SW
-	Back and forth
-	Do need to do these "onletgo" things
-	Selection of atoms going up the chain
+	Video outlining features
 	Add terminal residue
 	Get map from coot
 	Refinement
@@ -13,8 +11,15 @@ TODO for CCP4SW
 		Other easy booleans eg crystal box?
 		Mutate / everything else sitting there in script
 		Display manager
+	Back and forth
 	
 TODO during PhD
+	Complex-to-look-at 3D things
+		Alt conformers; opacity?
+		Manually aligning tomograms?
+		Anisotropic atoms? There may be some interesting stuff here
+		NCS; Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
+		Those little webbings on Coot's amide planes
 	Coot tutorial including EM tutorial
 	Fix the atom deletion problems
 	Email Lovelace
@@ -28,12 +33,6 @@ TODO during PhD
 		Just coot undo, then get the result? Full refresh
 		Button on controller reserved
 		Flash or something
-	Complex-to-look-at 3D things
-		Alt conformers; opacity?
-		Manually aligning tomograms?
-		Anisotropic atoms? There may be some interesting stuff here
-		NCS; Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
-		Those little webbings on Coot's amide planes
 	easy: "hand distances"
 	Non-vr head movement sensetivity demo
 	probe dots
@@ -50,10 +49,14 @@ TODO during PhD
 
 Beyond
 	IMOD, an EM software with manual manipulation, might also benefit from VRification
+	Radio
 
-Bugs
+Bugs/checks
+	Sometimes you start it and you're below the floor
+	Sometimes you start it and the hands don't work
 	bug with some residues highlighting many residues?
 	Firefox: sometimes it just doesn't start. setAnimationLoop is set, but loop is not called
+	"onletgo" things
 
 VR Games to get maybe
 	UI interest
@@ -165,22 +168,23 @@ function init()
 
 	socket.onopen = function()
 	{
-		// initFileNavigator()
+		initFileNavigator()
 
-		// //maybe better if they were all cubes? Atoms are spheres.
-		// //coot specific
-		// // initRefiner()
+		//maybe better if they were all cubes? Atoms are spheres.
+		//coot specific
+		// initRefiner()
 
-		// initEnvironmentDistances()
+		initEnvironmentDistances()
 		
-		// initAutoRotamer()
+		initAutoRotamer()
 		// initRigidBodyMover()
-		// initAtomLabeller()
-		// // initMutator()
-		// initAtomDeleter()
-		// initResidueDeleter()		
-		// initProteinPainter()
-		// initNewAtomRoster()
+		initChainRigidBodyMover()
+		initAtomLabeller()
+		// initMutator()
+		initAtomDeleter()
+		initResidueDeleter()
+		initProteinPainter()
+		initNewAtomRoster()
 
 		socket.send(JSON.stringify({command:"loadPolarAndAzimuthals"}))
 

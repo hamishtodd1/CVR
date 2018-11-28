@@ -8,45 +8,39 @@ function initVisiBox()
 {
 	var visiBox = new THREE.Object3D();
 
-	visiBox.position.y = -0.24;
 	scene.add(visiBox);
-	visiBox.scale.y = 0.36
+	visiBox.scale.y = 0.42
 	visiBox.scale.x = 0.54
 	visiBox.scale.z = 0.56
 
-	//when you're resizing
-	// var someSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhongMaterial({color:0xFF0000}));
-	// scene.add(someSphere);
-	// someSphere.position.copy(visiBox.centerInAssemblageSpace())
-
-	var faceToFront = 0.3; //there was that one guy who kept inching back when it restarted. He could have resized the visibox
+	var faceToFront = 0.3;
 	visiBox.position.z = -visiBox.scale.z / 2 - faceToFront;
-	visiBox.ordinaryParent = scene;
-	visiBox.ordinaryParent.add(visiBox);
+	visiBox.position.y = -0.34;
+	visiBox.rotation.x = -(TAU / 4 - Math.atan(visiBox.position.z/visiBox.position.y) )
 	
-	var ourSquareGeometry = new THREE.RingGeometry( 0.9 * Math.sqrt( 2 ) / 2, Math.sqrt( 2 ) / 2,4,1);
-	ourSquareGeometry.applyMatrix( new THREE.Matrix4().makeRotationZ( TAU / 8 ) );
+	let ourSquareGeometry = new THREE.Geometry()
+	ourSquareGeometry.vertices.push(new THREE.Vector3(0.5,0.5,0),new THREE.Vector3(0.5,-0.5,0),new THREE.Vector3(-0.5,-0.5,0),new THREE.Vector3(-0.5,0.5,0))
 	visiBox.planes = [];
 	var faces = Array(6);
 	for(var i = 0; i < 6; i++)
 	{
-		faces[i] = new THREE.Mesh(ourSquareGeometry, new THREE.MeshLambertMaterial({color:0x333333,transparent:true, opacity:0.5, side:THREE.DoubleSide}) );
+		faces[i] = new THREE.LineLoop( ourSquareGeometry, new THREE.MeshLambertMaterial({color:0x333333}) );
 		visiBox.add( faces[i] );
 		if( i === 1 ) faces[i].rotation.x = TAU/2;
 		if( i === 2 ) faces[i].rotation.x = TAU/4;
 		if( i === 3 ) faces[i].rotation.x = -TAU/4;
 		if( i === 4 ) faces[i].rotation.y = TAU/4;
 		if( i === 5 ) faces[i].rotation.y = -TAU/4;
+
 		faces[i].position.set(0,0,0.5);
 		faces[i].position.applyEuler( faces[i].rotation );
 		
 		visiBox.planes.push( new THREE.Plane() );
 	}
 	
-	//there's an argument for doing this with sides rather than corners, but corners are easier to aim for and give more power?
 	{
 		visiBox.corners = Array(8);
-		var cornerGeometry = new THREE.EfficientSphereBufferGeometry(1);
+		var cornerGeometry = new THREE.BoxBufferGeometry(1);
 		cornerGeometry.computeBoundingSphere();
 		var cornerMaterial = new THREE.MeshLambertMaterial({color: 0x00FFFF});
 		visiBox.updateMatrix();
@@ -83,9 +77,6 @@ function initVisiBox()
 		}
 	}
 
-	var cornerRadius = 0.01;
-	
-	//TODO resize with two corners at once
 	visiBox.update = function()
 	{
 		visiBox.updateMatrixWorld();
@@ -116,6 +107,7 @@ function initVisiBox()
 		}
 		
 		var facesVisible = false;
+		var cornerRadius = 0.01;
 		var cornerScale = new THREE.Vector3(cornerRadius/visiBox.scale.x,cornerRadius/visiBox.scale.y,cornerRadius/visiBox.scale.z);
 		for(var i = 0; i < visiBox.corners.length; i++)
 		{

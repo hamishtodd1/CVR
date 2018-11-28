@@ -110,6 +110,8 @@ function initPanel()
 			// shininess:100,
 			// specular:0xFFFFFF,
 			flatShading:true,
+			transparent:true,
+			opacity:0.01
 		})
 	);
 	for(let i = 0; i < panel.geometry.vertices.length; i++)

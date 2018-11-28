@@ -1,14 +1,85 @@
 /* 
-	Mover 
-		Both hands come together to make a sphere appear
-		Bit of kinematics?
-		Refine by default
+	Want highlighting
 
- * Ok here: 
- * Regularizer is pinch
+	Regularizer is pinch
  */
 
 
+ function initChainRigidBodyMover()
+ {
+ 	var ball = new THREE.LineSegments( 
+ 		new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(0.05) ),
+ 		new THREE.LineBasicMaterial({color:0xFFFFFF, linewidth:3 }) );
+ 	var rigidMover = Tool(ball)
+
+ 	var capturedAtoms = [];
+ 	var localCapturedAtomPositions = [];
+
+ 	rigidMover.whileHeld = function(positionInAssemblage)
+ 	{
+ 		if( this.parent.button1 )
+ 		{
+ 			this.parent.updateMatrixWorld();
+
+ 			if( capturedAtoms.length === 0 )
+ 			{
+ 				let parentClosestAtom = getClosestAtomToWorldPosition(this.parent.getWorldPosition())
+ 				let otherHandClosestAtom = getClosestAtomToWorldPosition(handControllers[1-handControllers.indexOf(this.parent)].getWorldPosition())
+
+ 				if(otherHandClosestAtom.imol === parentClosestAtom.imol)
+ 				{
+ 					let lowerResNo = parentClosestAtom.resNo < otherHandClosestAtom.resNo ? parentClosestAtom.resNo : otherHandClosestAtom.resNo
+ 					let higherResNo =parentClosestAtom.resNo < otherHandClosestAtom.resNo ? otherHandClosestAtom.resNo : parentClosestAtom.resNo
+
+ 					let model = getModelWithImol(parentClosestAtom.imol)
+ 					for(var i = 0, il = model.atoms.length; i < il; i++)
+ 					{
+ 						if( lowerResNo <= model.atoms[i].resNo && model.atoms[i].resNo <= higherResNo )
+ 						{
+ 							capturedAtoms.push( model.atoms[i] );
+ 							localCapturedAtomPositions.push( model.atoms[i].position.clone() );
+ 							model.localToWorld( localCapturedAtomPositions[localCapturedAtomPositions.length-1] );
+ 							this.parent.worldToLocal( localCapturedAtomPositions[localCapturedAtomPositions.length-1] );
+ 						}
+ 					}
+ 				}
+ 			}
+ 			else
+ 			{
+ 				for(var i = 0, il = capturedAtoms.length; i < il; i++)
+ 				{
+ 					var model = getModelWithImol(capturedAtoms[i].imol);
+ 					model.updateMatrixWorld()
+ 					
+ 					var newAtomPosition = localCapturedAtomPositions[i].clone();
+ 					this.parent.localToWorld(newAtomPosition);
+ 					model.worldToLocal(newAtomPosition);
+ 					model.setAtomRepresentationPosition(capturedAtoms[i], newAtomPosition)
+ 				}
+ 			}
+ 		}
+
+ 		if( !this.parent.button1 && this.parent.button1Old )
+ 		{
+ 			for(var i = 0, il = capturedAtoms.length; i < il; i++)
+ 			{
+ 				var msg = {
+ 					command: "moveAtom",
+ 					x: capturedAtoms[i].position.x,
+ 					y: capturedAtoms[i].position.y,
+ 					z: capturedAtoms[i].position.z
+ 				};
+ 				capturedAtoms[i].assignAtomSpecToObject( msg );
+ 				socket.send(JSON.stringify(msg));
+ 			}
+
+ 			capturedAtoms = [];
+ 			localCapturedAtomPositions = [];
+ 		}
+ 	}
+
+ 	return rigidMover;
+ }
 
 
 //you know so well what your hand is doing, do you HAVE to have refinement turned on for this?
@@ -31,7 +102,7 @@ function initRigidBodyMover()
 	*/
 
 	var ball = new THREE.LineSegments( 
-		new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(0.1) ),
+		new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(0.05) ),
 		new THREE.LineBasicMaterial({color:0xFFFFFF, linewidth:3 }) );
 	var rigidMover = Tool(ball)
 

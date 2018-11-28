@@ -133,7 +133,7 @@ function initRefiner()
 			if( this.parent.button1 && this.parent.button2 )
 			{
 				//this.matrix.clone.multiply( new THREE.Matrix4().getInverse(oldMatrix) );
-				// var closestAtom = getClosestAtom(this.getWorldPosition());
+				// var closestAtom = getClosestAtomToWorldPosition(this.getWorldPosition());
 				// closestAtom.assignAtomSpecToObject(msg);
 
 				// var deltaVector = this.position.clone().sub(oldPosition);
@@ -164,22 +164,21 @@ function initRefiner()
 	return autoRefiner;
 }
 
-function getClosestAtom(p)
+function getClosestAtomToWorldPosition(p)
 {
 	var closestAtom = null;
 	var closestDistSq = Infinity;
-	for(var i = 0; i < 1; i++)
+	for(var i = 0; i < models.length; i++)
 	{
-		var localPosition = p.clone();
-		models[i].updateMatrixWorld();
-		models[i].worldToLocal(localPosition);
+		var localPosition = models[i].worldToLocal(p.clone());
 
 		for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
 		{
-			if( models[i].atoms[j].position.distanceToSquared( localPosition ) < closestDistSq )
+			let distSq = models[i].atoms[j].position.distanceToSquared( localPosition )
+			if( distSq < closestDistSq )
 			{
 				closestAtom = models[i].atoms[j];
-				closestDistSq = models[i].atoms[j].position.distanceToSquared( localPosition );
+				closestDistSq = distSq
 			}
 		}
 	}

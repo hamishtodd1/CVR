@@ -201,6 +201,7 @@ function initModelCreationSystem( visiBoxPlanes)
 	    	var atomDataFromCoot = cootArray[0];
 			var bondDataFromCoot = cootArray[1];
 	    }
+	    console.log(atomDataFromCoot)
 		
 		var numberOfAtoms = 0;
 		for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
