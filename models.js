@@ -141,7 +141,7 @@ function changeBondBetweenAtomsToDouble(bondData, atomA, atomB)
 	}
 }
 
-function initModelCreationSystem( visiBoxPlanes)
+function initModelCreationSystem()
 {
 	var cylinderSides = 15;
 
@@ -170,7 +170,7 @@ function initModelCreationSystem( visiBoxPlanes)
 	var nSphereVertices = atomGeometry.vertices.length;
 	var nSphereFaces = atomGeometry.faces.length;
 
-	makeModelFromCootString = function( modelStringCoot, visiBoxPlanes, callback )
+	makeModelFromCootString = function( modelStringCoot, callback )
 	{
 		//position, isHydrogen, spec, "residue"
 		var modelStringTranslated = modelStringCoot.replace(/(\()|(\))|(Fa)|(Tr)|(1 "model")/g, function(str,p1,p2,p3,p4,p5,p6,p7)
@@ -273,7 +273,7 @@ function initModelCreationSystem( visiBoxPlanes)
 
 		if(clip)
 		{
-			moleculeMesh.material.clippingPlanes = visiBoxPlanes;
+			moleculeMesh.material.clippingPlanes = visiBox.planes;
 		}
 
 		var bufferGeometry = moleculeMesh.geometry;

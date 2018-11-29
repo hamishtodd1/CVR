@@ -15,7 +15,7 @@
 
 */
 
-function initStats(visiBoxPosition)
+function initStats()
 {
 	// var correlationIndicatorsGeometry = new THREE.EfficientSphereBufferGeometry(2.0);
 	// new THREE.FileLoader().load(
@@ -62,11 +62,11 @@ function initStats(visiBoxPosition)
 	// {'restraint': {'restraint_type': 'Bond', 'sigma': 0.019, 'target_value': 1.458, 'fixed_atom_flags': [0, 0]}, 'atom_indices': [0, 1], 'distortion_score': 3.551691954394837, 'residue_spec': [True, 'A', 1, '']}
 	// {'restraint': {'restraint_type': 'NBC', 'sigma': 0.02, 'target_value': 2.64, 'fixed_atom_flags': [0, 0]}, 'atom_indices': [1392, 1394], 'distortion_score': -0.07484748222726961, 'residue_spec': [True, 'B', 87, '']},
 
-	initBarcharts(visiBoxPosition);
+	initBarcharts();
 }
 
 //we can do better than bar charts and ramachandran.
-function initBarcharts(visiBoxPosition)
+function initBarcharts()
 {
 	var randomData = Array(37);
 	for(var i = 0; i < randomData.length; i++)
@@ -144,7 +144,7 @@ function initBarcharts(visiBoxPosition)
 			assemblage.updateMatrixWorld();
 			assemblage.localToWorld(positionToPutInCenterOfVisiBox);
 
-			var centerOfVisiBox = visiBoxPosition.clone();
+			var centerOfVisiBox = visiBox.position.clone();
 			var displacement = centerOfVisiBox.clone().sub(positionToPutInCenterOfVisiBox)
 
 			assemblage.position.add(displacement.clone().multiplyScalar(0.05));

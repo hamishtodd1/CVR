@@ -104,14 +104,14 @@ function initPanel()
 	}
 
 	let quadsWide = 2,quadsTall = 2;
-	let panel = new THREE.Mesh( new THREE.PlaneGeometry(aroundness,downness,32,16),
+	panel = new THREE.Mesh( new THREE.PlaneGeometry(aroundness,downness,32,16),
 		new THREE.MeshPhongMaterial({
 			color:0x666666,
 			// shininess:100,
 			// specular:0xFFFFFF,
 			flatShading:true,
-			transparent:true,
-			opacity:0.01
+			// transparent:true,
+			// opacity:0.01
 		})
 	);
 	for(let i = 0; i < panel.geometry.vertices.length; i++)
@@ -598,35 +598,6 @@ function initPanel()
 
 			//Haven't been through "Ligand" or "Extensions". Various things in "validate"
 			//list of the buttons on your controller, you drag things in to make them do stuff
-
-			"Display manager", //master switches needed for all
-			"	Visibility",
-			"	Delete",
-			"	Map",
-			"		isDiffmap",
-			"		Active for refinement",
-			"		Color",// (have a wheel)
-			"		Contour level scrolls",
-			//"		Opacity",
-			"		Block size (puke warning)",
-			"		Sample rate",
-			"		Chickenwire",
-			"		Show unit cell",
-			"	Molecule",
-			"		Show symmetry atoms",
-			"		Which one is affected by undo",
-			"		Which one gets atoms and chains added to it",
-			"		Carbon color",
-			"		Display methods",
-			"			Bond radius",
-			"			atom radiuse",
-			"			cAlpha only",
-			"			Waters visible",
-			"			Color by",
-			"				B factors / occupancy / other metric",
-			"				Chain",
-			"				Atom (default)",
-			"				amino acid (i.e. rainbow)",
 		];
 
 		let bunch = [];

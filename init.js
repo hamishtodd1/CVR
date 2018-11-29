@@ -109,8 +109,8 @@ function init()
 	initPanel();
 	initMiscPanelButtons();
 	
-	let visiBox = initVisiBox();
-	assemblage.position.copy(visiBox.position)
+	initVisiBox();
+	assemblage.position.z = -0.9
 	assemblage.scale.setScalar( 0.04 ); //0.04 means no visibox wasted, 0.028 is nice, 0.01 fits on screen
 	scene.add(assemblage);
 	
@@ -128,9 +128,9 @@ function init()
 	// initMonomerReceiver()
 	// initMenus();
 	// initSpecatorRepresentation();
-	initModelCreationSystem(visiBox.planes);
-	initMapCreationSystem(visiBox)
-	// initStats(visiBox.position);
+	initModelCreationSystem();
+	initMapCreationSystem()
+	// initStats();
 	initHandInput()
 
 	setCurrentHeadPositionAsCenter = function()
@@ -153,17 +153,18 @@ function init()
 
 	socket.commandReactions["you aren't connected to coot"] = function()
 	{
-		nonCootConnectedInit(visiBox)
+		nonCootConnectedInit()
 	}
 	socket.commandReactions["model"] = function(msg)
 	{
-		makeModelFromCootString( msg.modelDataString, visiBox.planes );
+		makeModelFromCootString( msg.modelDataString );
 	}
 	socket.commandReactions["map"] = function(msg)
 	{
-		let newMap = Map( msg["dataString"], false, visiBox );
-		maps.push(newMap);
-		assemblage.add(newMap)
+		console.error("do something here")
+		// let newMap = Map( msg["dataString"], false );
+		// maps.push(newMap);
+		// assemblage.add(newMap)
 	}
 
 	socket.onopen = function()

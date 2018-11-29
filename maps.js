@@ -1,5 +1,14 @@
 'use strict';
 /*
+	Man this was dumb. The center of a cube? madman.
+
+	For each cube in the assemblage
+		We test whether it is in the visiBox
+		We test which of 9 z-penetrating columns it is in
+		If it's not textured we request it
+
+	This is a compsci kind of thing. There is a pool
+
 	TODO
 		there is a "cubicles" thing in uglymol's molecules that was good for searching?
 		would be nice to have the opacity drop off away from the center
@@ -9,7 +18,7 @@
 */
 
 var starProcessingMapData;
-function initMapCreationSystem(visiBox)
+function initMapCreationSystem()
 {
 	let worker = new Worker("mapExtractionAndMeshing.js")
 
@@ -36,15 +45,15 @@ function initMapCreationSystem(visiBox)
 
 			if( !waitingOnResponse )
 			{
-				let assemblageSpaceFocalPoint = visiBox.position.clone()
-				//when zoomed out the map is a bit far back. You can do better than the below though
-				// assemblageSpaceFocalPoint.z += 0.0009 / getAngstrom()
+				let center = new THREE.Vector3(0,0,-1 )
+				visiBox.localToWorld(center)
+				center.setLength((visiBox.scale.z + panel.scale.z )/2)
 				assemblage.updateMatrixWorld();
-				var center = assemblage.worldToLocal( assemblageSpaceFocalPoint );
+				assemblage.worldToLocal( center );
 
 				var msg = {
 					isolevel,
-					userCenterOffGrid: assemblageSpaceFocalPoint.toArray(),
+					userCenterOffGrid: center.toArray(),
 					chickenWire: false,
 					currentCenterOnGrids: []
 				};
@@ -136,7 +145,7 @@ function initMapCreationSystem(visiBox)
 					blocks.push(child);
 				}
 			});
-			if(!blocks.length)
+			if( blocks.length === 0 )
 			{
 				return;
 			}

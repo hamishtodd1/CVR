@@ -1,4 +1,4 @@
-function nonCootConnectedInit(visiBox)
+function nonCootConnectedInit()
 {
 	//not just fileloader
 	let req = new XMLHttpRequest();
@@ -16,7 +16,7 @@ function nonCootConnectedInit(visiBox)
 	new THREE.FileLoader().load( "modelsAndMaps/tutorialGetBondsRepresentation.txt",
 		function( modelDataString )
 		{
-			makeModelFromCootString( modelDataString, visiBox.planes );
+			makeModelFromCootString( modelDataString);
 		}
 	);
 }
