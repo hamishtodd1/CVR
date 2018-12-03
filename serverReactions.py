@@ -7,7 +7,7 @@ from os import listdir
 from coot import *
 # import json
 
-# pdbFileString = "/home/htodd/CVR/data/drugIsInteresting.pdb";
+pdbFileString = "/home/htodd/CVR/modelsAndMaps/drugIsInteresting.pdb";
 handle_read_draw_molecule_with_recentre(pdbFileString, 1)
 
 # mtzFileString = "/home/htodd/CVR/data/tutorial.mtz"
@@ -37,7 +37,7 @@ def command(self, msg):
 		print("warning, this used to say self.write_message(msgContainer)")
 		self.write_message(msg);
 
-	if msg["command"] == "newResidue"
+	if msg["command"] == "newResidue":
 		add_residue_with_atoms(msg["imol"],msg["chainId"],msg["atoms"])
 
 	elif msg["command"] == "getEnvironmentDistances":

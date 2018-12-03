@@ -43,9 +43,9 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 		if msg["command"] == "loadPolarAndAzimuthals":
 
-			if runningInCoot == True:
-				print("HEY WE NEED TO WORK OUT WHAT TO DO INSTEAD OF THE BELOW")
 			src = "settings/"
+			if runningInCoot == True:
+				src = "CVR/settings/" #hacky
 
 			file = open( src + "polarAndAzimuthals.txt","r" )				
 			returnMsg = {"command":"polarAndAzimuthals"}
@@ -55,9 +55,9 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 		if msg["command"] == "savePolarAndAzimuthals":
 
-			if runningInCoot == True:
-				print("HEY WE NEED TO WORK OUT WHAT TO DO")
 			src = "settings/"
+			if runningInCoot == True:
+				src = "CVR/settings/" #hacky
 
 			file = open( src + "polarAndAzimuthals.txt","w" )
 			file.write( str(msg["polarAndAzimuthals"]) )
