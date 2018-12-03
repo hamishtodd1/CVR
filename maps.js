@@ -1,6 +1,7 @@
 'use strict';
 /*
 	Man this was dumb. The center of a cube? madman.
+	It was based on the hope that
 
 	For each cube in the assemblage
 		We test whether it is in the visiBox
@@ -117,7 +118,9 @@ function initMapCreationSystem()
 				map.unitCellMesh.visible = false;
 				//TODO make it movable? Keep it centered in visibox?
 
+				//so this is where we're "done" apparently, quite hacky
 				objectsToBeUpdated.push(map);
+				addMapDisplayManager(map)
 			}
 		}
 
@@ -212,6 +215,8 @@ function initMapCreationSystem()
 			}
 			else
 			{
+				let block = new THREE.Group()
+
 				var geo = new THREE.BufferGeometry();
 				geo.addAttribute( 'position',	new THREE.BufferAttribute( nonWireframeGeometricPrimitives.positionArray, 3 ) );
 				geo.addAttribute( 'normal',		new THREE.BufferAttribute( nonWireframeGeometricPrimitives.normalArray, 3 ) );
@@ -223,30 +228,35 @@ function initMapCreationSystem()
 				// 		transparent:true,
 				// 		opacity:0.36
 				// 	}));
-				var back = new THREE.Mesh( geo,
+				// block.add(block.transparent)
+
+				block.back = new THREE.Mesh( geo,
 					new THREE.MeshPhongMaterial({
 						color: color,
 						clippingPlanes: visiBox.planes,
 						side: isDiffMap && relativeIsolevel < 0 ? THREE.FrontSide : THREE.BackSide //probably?
 					}));
+				block.add(block.back)
+				if(map.children.length > 1 && map.children[1].back !== undefined)
+				{
+					block.back.visible = map.children[1].back.visible
+				}
 
 				if(wireframeGeometricPrimitives !== undefined)
 				{
 					//super high quality
-					var wireframe = wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives,color);
+					block.wireframe = wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives,color);
 				}
 				else
 				{
-					var wireframe = new THREE.LineSegments( new THREE.WireframeGeometry( geo ),
+					block.wireframe = new THREE.LineSegments( new THREE.WireframeGeometry( geo ),
 						new THREE.LineBasicMaterial({
 							clippingPlanes: visiBox.planes
 						}));
 				}
+				block.add(block.wireframe)
 
-				return new THREE.Group().add(
-					wireframe,
-					// transparent,
-					back)
+				return block
 			}
 		}
 
@@ -316,9 +326,15 @@ function initMapCreationSystem()
 		}
 		geometry.addAttribute('position', new THREE.BufferAttribute(pos, 3));
 
-		var colors = new Float32Array([ 1,0,0,1,0.66667,0,0,1,0,0.66667,1,0,0,0,1,0,0.66667,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 ]);
+		var colors = new Float32Array([ 1,0,0,1,0.66667,0,0,1,0,0.66667,1,0,0,0,1,0,0.66667,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 ]);
 		geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-		return new THREE.LineSegments( geometry, new THREE.LineBasicMaterial({vertexColors: THREE.VertexColors, linewidth:1}) );
+		let material = new THREE.LineBasicMaterial({
+			vertexColors: THREE.VertexColors,
+			linewidth:1,
+			clippingPlanes: visiBox.planes,
+		})
+
+		return new THREE.LineSegments( geometry, material );
 	}
 }

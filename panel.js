@@ -2,6 +2,13 @@
 	TODO
 		reproduce current graph
 		display manager
+		Put another cursor on it... the mouse...
+		You only click the things if you can see em
+
+	Maybe you should have dotted lines on the surface that are a voronoi or whatever for the menus
+	And if you click inside the dotted lines, that's clicking that menu item
+
+	Just keep cursors within a slightly truncated area
 
 	Shortcut system
 		the balls stay on the panel (do that)
@@ -65,7 +72,7 @@ function initPanel()
 		return vec
 	}
 	
-	let aroundness = 4.1;
+	let aroundness = 3.99;
 	let downness = 0.9;
 	function polarClipToAllowedArea(polar)
 	{
@@ -191,11 +198,15 @@ function initPanel()
 	let object3dScaleWhenInMenuInLineHeight = 15
 
 	let menuGapSizeInLineHeights = 2
-	function uniformlyScaleObject3dToMenuGapSize(object3d)
+	function getObject3dBoundingBox(object3d)
 	{
 		let sourceGeometry = object3d.geometry == undefined ? object3d.children[0].geometry : object3d.geometry
 		sourceGeometry.computeBoundingBox()
-		let object3dHeight = (sourceGeometry.boundingBox.getSize(new THREE.Vector3())).y
+		return sourceGeometry.boundingBox
+	}
+	function uniformlyScaleObject3dToMenuGapSize(object3d)
+	{
+		let object3dHeight = (getObject3dBoundingBox(object3d).getSize(new THREE.Vector3())).y
 		object3d.scale.setScalar(menuGapSizeInLineHeights/object3dHeight)
 	}
 
@@ -265,9 +276,26 @@ function initPanel()
 				if( textMeshes[i].object3d )
 				{
 					menu.add(textMeshes[i].object3d)
-					textMeshes[i].object3d.position.copy(textMeshes[i].position)
-					textMeshes[i].object3d.position.y -= menuGapSizeInLineHeights * 0.5
-					textMeshes[i].object3d.position.x = widestSignWidth / 2
+
+					textMeshes[i].object3dOrdinaryPosition = textMeshes[i].position.clone()
+					textMeshes[i].object3dOrdinaryPosition.y -= menuGapSizeInLineHeights * 0.5
+					textMeshes[i].object3dOrdinaryPosition.x = widestSignWidth / 2
+
+					let bBox = getObject3dBoundingBox(textMeshes[i].object3d)
+					if( bBox.min.length() < 0.01)
+					{
+						let offset = bBox.getSize(new THREE.Vector3()).multiplyScalar(0.5)
+						offset.multiply(textMeshes[i].object3d.scale)
+						if(textMeshes[i].object3d.geometry == undefined ) //hacky
+						{
+							offset.multiply(textMeshes[i].object3d.children[0].scale)
+						}
+						offset.z = 0
+						textMeshes[i].object3dOrdinaryPosition.sub(offset)
+						textMeshes[i].object3dOrdinaryPosition.z = 0.001
+					}
+
+					textMeshes[i].object3d.position.copy(textMeshes[i].object3dOrdinaryPosition)
 
 					textMeshes[i].object3dFrame = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(1,1), new THREE.MeshBasicMaterial({color:0x3F3D3F}))
 					textMeshes[i].object3dFrame.scale.set(widestSignWidth,menuGapSizeInLineHeights,1)
@@ -279,6 +307,8 @@ function initPanel()
 				if( textMeshes[i].switchObject )
 				{
 					textMeshes[i].material.color.copy( textMeshes[i].switchObject[textMeshes[i].switchProperty] ? onColor : offColor)
+					if( maps.length > 0 &&  textMeshes[i].switchObject === maps[0] )
+						console.log("yo")
 				}
 			}
 
@@ -382,9 +412,7 @@ function initPanel()
 							textMeshes[i].object3d.onLetGo()
 						}
 
-						textMeshes[i].object3d.position.copy(textMeshes[i].position)
-						textMeshes[i].object3d.position.y -= menuGapSizeInLineHeights * 0.5
-						textMeshes[i].object3d.position.x = widestSignWidth / 2
+						textMeshes[i].object3d.position.copy(textMeshes[i].object3dOrdinaryPosition)
 						uniformlyScaleObject3dToMenuGapSize(textMeshes[i].object3d)
 					}
 				}

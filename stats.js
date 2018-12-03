@@ -74,8 +74,6 @@ function initBarcharts()
 		randomData[i] = Math.random();
 	}
 	var randomGraph = Graph(randomData);
-	randomGraph.position.z = -0.5
-	randomGraph.scale.multiplyScalar(0.05)
 	scene.add(randomGraph)
 
 	{
@@ -97,7 +95,6 @@ function initBarcharts()
 	randomGraph.update = function()
 	{
 		//your handControllers have a laser
-		//If the laser is in the rectangular area, it is visible
 		//the bars should change color if they are being pointed at
 		//as should the backgrounds, that lets you drag them
 
@@ -110,9 +107,7 @@ function initBarcharts()
 		{
 			var intersections = handControllers[i].intersectLaserWithObject(randomGraph.background)
 			if(intersections.length)
-			{
-				handControllers[i].laser.visible = true;
-				
+			{				
 				if(handControllers[i].button1 && !handControllers[i].button1Old)
 				{
 					positionPointedTo = intersections[0].point;
@@ -126,10 +121,6 @@ function initBarcharts()
 					requestCommencementTime = ourClock.getElapsedTime();
 					extraHighlightCountDown = 0.98;
 				}
-			}
-			else
-			{
-				handControllers[i].laser.visible = false;
 			}
 		}
 
@@ -176,11 +167,15 @@ function initBarcharts()
 			}
 		}
 	}
+
+	MenuOnPanel([{string:"Graph                             ", object3d: randomGraph }])
 }
 
 function Graph(data)
 {
 	var graph = new THREE.Group;
+	var graphHeight = 0.8;
+
 	// graph.scale.setScalar(0.1)
 	var background = new THREE.Mesh(THREE.OriginCorneredPlaneGeometry(), new THREE.MeshBasicMaterial());
 	background.position.z = -0.0001
@@ -195,7 +190,6 @@ function Graph(data)
 	xAxis.scale.y = axisThickness;
 	yAxis.scale.x = axisThickness;
 
-	var graphHeight = 0.8;
 	yAxis.scale.y = graphHeight + axisThickness;
 
 	var graphOffset = new THREE.Vector3( (1-graphHeight)/2, (1-graphHeight)/2, 0.00001);

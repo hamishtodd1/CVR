@@ -1,17 +1,29 @@
 /*
+Video
+	Maybe different data? EM...
+	Make data visible
+	Make molecule visible
+	Show stats thing
+	Paint
+	Rigid sphere
+	Rigid chain
+	Autofit rotamer
+	Change chickenwire so you can talk about new representation?
+	Change isolevel
+
 TODO for CCP4SW
 	Video outlining features
-	Add terminal residue
-	Get map from coot
-	Refinement
-	Check autofit rotamer works
-	Loaded from a webpage
-	Stuff in "Measures"
+	Bar chart
+	Highlighting
 	"Easy stuff"
 		Other easy booleans eg crystal box?
 		Mutate / everything else sitting there in script
 		Display manager
+	Add terminal residue
+	Refinement
 	Back and forth
+	Loaded from a webpage
+	Get map from coot
 	
 TODO during PhD
 	Complex-to-look-at 3D things
@@ -102,10 +114,23 @@ function init()
 	document.body.appendChild( renderer.domElement );
 	renderer.vr.enabled = true;
 
-	let maps = [];
-	let atoms = null; //because fixed length
-
 	initSocket();
+	socket.commandReactions["you aren't connected to coot"] = function()
+	{
+		nonCootConnectedInit()
+	}
+	socket.commandReactions["model"] = function(msg)
+	{
+		makeModelFromCootString( msg.modelDataString );
+	}
+	socket.commandReactions["map"] = function(msg)
+	{
+		console.error("do something here")
+		// let newMap = Map( msg["dataString"], false );
+		// maps.push(newMap);
+		// assemblage.add(newMap)
+	}
+
 	initPanel();
 	initMiscPanelButtons();
 	
@@ -130,8 +155,9 @@ function init()
 	// initSpecatorRepresentation();
 	initModelCreationSystem();
 	initMapCreationSystem()
-	// initStats();
-	initHandInput()
+	initStats();
+	initHands()
+	initDisplayManager()
 
 	setCurrentHeadPositionAsCenter = function()
 	{
@@ -151,22 +177,6 @@ function init()
 		}
 	}, false );
 
-	socket.commandReactions["you aren't connected to coot"] = function()
-	{
-		nonCootConnectedInit()
-	}
-	socket.commandReactions["model"] = function(msg)
-	{
-		makeModelFromCootString( msg.modelDataString );
-	}
-	socket.commandReactions["map"] = function(msg)
-	{
-		console.error("do something here")
-		// let newMap = Map( msg["dataString"], false );
-		// maps.push(newMap);
-		// assemblage.add(newMap)
-	}
-
 	socket.onopen = function()
 	{
 		initFileNavigator()
@@ -178,8 +188,8 @@ function init()
 		initEnvironmentDistances()
 		
 		initAutoRotamer()
-		// initRigidBodyMover()
-		initChainRigidBodyMover()
+		initRigidSphereMover()
+		initRigidChainMover()
 		initAtomLabeller()
 		// initMutator()
 		initAtomDeleter()

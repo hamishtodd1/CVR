@@ -12,36 +12,60 @@ function initVisiBox()
 
 	let faceToFront = 0.3;
 
-	visiBox.scale.y = 0.16
-	visiBox.scale.x = 0.27
-	visiBox.scale.z = 0.28
-
-	visiBox.rotation.x = -TAU * 0.09
+	visiBox.scale.x = 0.23
+	visiBox.scale.y = 0.17
+	visiBox.scale.z = 0.39
+	visiBox.rotation.x = -0.48
 
 	let d = 99999
 	visiBox.geometry.vertices.push(
-		new THREE.Vector3(1,1,-1), new THREE.Vector3(1,-1,-1),new THREE.Vector3(1,-1,-1),new THREE.Vector3(d,-d,-d),
-		new THREE.Vector3(1,-1,-1), new THREE.Vector3(-1,-1,-1), new THREE.Vector3(-1,-1,-1), new THREE.Vector3(-d,-d,-d),
-		new THREE.Vector3(-1,-1,-1), new THREE.Vector3(-1,1,-1), new THREE.Vector3(-1,1,-1), new THREE.Vector3(-d,d,-d),
-		new THREE.Vector3(-1,1,-1),new THREE.Vector3(1,1,-1),new THREE.Vector3(1,1,-1),new THREE.Vector3(d,d,-d) )
+		new THREE.Vector3(-1,1,-1),	new THREE.Vector3(1,1,-1),	new THREE.Vector3(1,1,-1),	new THREE.Vector3(d,d,-d),
+		new THREE.Vector3(1,1,-1), 	new THREE.Vector3(1,-1,-1),	new THREE.Vector3(1,-1,-1),	new THREE.Vector3(d,-d,-d),
+		new THREE.Vector3(1,-1,-1), new THREE.Vector3(-1,-1,-1),new THREE.Vector3(-1,-1,-1),new THREE.Vector3(-d,-d,-d),
+		new THREE.Vector3(-1,-1,-1),new THREE.Vector3(-1,1,-1), new THREE.Vector3(-1,1,-1), new THREE.Vector3(-d,d,-d) )
 
 	let faces = Array(5);
 	let planes = []
-	let squareGeometry = new THREE.PlaneGeometry(0.6,0.6)
+	let faceMaterial = new THREE.MeshBasicMaterial({
+		color:0xFFFFFF,
+		// transparent:true,
+		// opacity:0.9
+	})
 	for(let i = 0; i < faces.length; i++)
 	{
-		faces[i] = new THREE.Mesh( squareGeometry,new THREE.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:0.3}) );
+		faces[i] = new THREE.Mesh( new THREE.PlaneGeometry(2,2), faceMaterial );
 		faces[i].visible = false
 		visiBox.add( faces[i] );
-		if( i === 0 ) faces[i].position.z = -1
-		if( i === 1 ) faces[i].rotation.x = TAU/8;
-		if( i === 2 ) faces[i].rotation.x = -TAU/8;
-		if( i === 3 ) faces[i].rotation.y = TAU/8;
-		if( i === 4 ) faces[i].rotation.y = -TAU/8;
 		
 		planes.push( new THREE.Plane() );
 		visiBox.planes.push(planes[i])
+
+		if(i)
+		{
+			faces[i].geometry.vertices[0].set(-d,	d*Math.sqrt(2),0)
+			faces[i].geometry.vertices[1].set(d,	d*Math.sqrt(2),0)
+			faces[i].geometry.vertices[2].set(-1,	1*Math.sqrt(2),0)
+			faces[i].geometry.vertices[3].set(1,	1*Math.sqrt(2),0)
+		}
 	}
+
+	faces[0].position.z = -1
+	faces[0].visible = false
+
+	faces[1].rotation.x = -TAU/8;
+
+	faces[2].rotation.x = -TAU/8-TAU/4;
+	faces[2].rotation.y = TAU/2;
+
+	faces[3].rotation.x = -TAU/8;
+	faces[4].rotation.x = -3*TAU/8;
+
+	faces[3].rotation.z = TAU/4;
+	faces[4].rotation.z = TAU/4;
+	faces[3].rotation.order = "ZYX"
+
+	faces[4].rotation.y = TAU/2;
+	faces[4].rotation.order = "ZXY"
 
 	{
 		visiBox.corners = Array(4);
@@ -76,31 +100,33 @@ function initVisiBox()
 	objectsToBeUpdated.push(visiBox)
 	visiBox.update = function()
 	{
-		visiBox.updateMatrixWorld();
 		for(let i = 0; i < visiBox.corners.length; i++)
 		{
 			if(visiBox.corners[i].parent !== visiBox)
 			{
-				let localGrabbedCornerPosition = visiBox.corners[i].getWorldPosition( new THREE.Vector3() )
+				let localGrabbedCornerPosition = new THREE.Vector3()
+
+				let top = visiBox.corners[i].intendedPositionInVisiBox.y > 0
+
+				let oldFov = 2*Math.atan(visiBox.scale.y/visiBox.scale.z)
+
+				let projectedOnX0World = visiBox.corners[i].getWorldPosition( new THREE.Vector3() ).setComponent(0,0)
+				let opposingFrameWorld = visiBox.localToWorld(new THREE.Vector3(0,top?-1:1,-1))
+				let newFov = projectedOnX0World.angleTo(opposingFrameWorld)
+
+				let angleIncrease = newFov - oldFov
+				visiBox.rotation.x += angleIncrease/2 * (top?1:-1)
+
+				visiBox.updateMatrixWorld();
+				visiBox.corners[i].getWorldPosition( localGrabbedCornerPosition )
 				visiBox.worldToLocal(localGrabbedCornerPosition);
 
-				visiBox.scale.x *= localGrabbedCornerPosition.x
-				visiBox.scale.y *= localGrabbedCornerPosition.y
+				visiBox.scale.x *= Math.abs(localGrabbedCornerPosition.x)
 				visiBox.scale.z *= -localGrabbedCornerPosition.z
-				//urgh do you want off-center on the y?
+				visiBox.scale.y *= Math.abs(localGrabbedCornerPosition.y)
 
-
-				//x is mirrored
-				//y is just 
-
-				// let localGrabbedCornerPosition = visiBox.corners[ i ].getWorldPosition(new THREE.Vector3());
-				// visiBox.worldToLocal(localGrabbedCornerPosition);
-				// visiBox.scale.x *= ( Math.abs(localGrabbedCornerPosition.x)-0.5 )*2 + 1;
-				// visiBox.scale.y *= ( Math.abs(localGrabbedCornerPosition.y)-0.5 ) + 1;
-				// visiBox.scale.z *= ( Math.abs(localGrabbedCornerPosition.z)-0.5 ) + 1;
-				
 				visiBox.updateMatrixWorld();
-				
+
 				break;
 			}
 		}

@@ -251,6 +251,8 @@ function initModelCreationSystem()
 			assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
 		}
 
+		addModelDisplayManager(model)
+
 		return model;
 	}
 

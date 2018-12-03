@@ -5,7 +5,7 @@
  */
 
 
- function initChainRigidBodyMover()
+ function initRigidChainMover()
  {
  	var ball = new THREE.LineSegments( 
  		new THREE.WireframeGeometry(new THREE.EfficientSphereGeometry(0.05) ),
@@ -84,7 +84,7 @@
 
 //you know so well what your hand is doing, do you HAVE to have refinement turned on for this?
 //It's more that the "rigid mover" should be the default tool. Maybe it only appears when you stick your hands in
-function initRigidBodyMover()
+function initRigidSphereMover()
 {
 	/*
 		Replaces peptide flipper and sidechainflipper.
