@@ -1,55 +1,37 @@
 /*
-Video
-	Maybe different data? EM...
-	Make data visible
-	Make molecule visible
-	Show stats thing
-	Paint
-	Rigid sphere
-	Rigid chain
-	Autofit rotamer
-	Change chickenwire so you can talk about new representation?
-	Change isolevel
-
 TODO for CCP4SW
-	Video outlining features
 	Bar chart
-	Highlighting
-	"Easy stuff"
-		Other easy booleans eg crystal box?
-		Mutate / everything else sitting there in script
-		Display manager
+	Highlighting working better
+	Mutate / everything else sitting there in script
 	Add terminal residue
 	Refinement
-	Back and forth
+		Force restraints
 	Loaded from a webpage
 	Get map from coot
+	Back and forth
+	Coot tutorial including EM tutorial
+	Email Lovelace
+	Save
+	"undo"
+		Just coot undo, then get the result? Full refresh
+		Button on controller reserved
+		Flash or something
+	Selection of rotamers
 	
 TODO during PhD
 	Complex-to-look-at 3D things
+		probe dots
 		Alt conformers; opacity?
 		Manually aligning tomograms?
 		Anisotropic atoms? There may be some interesting stuff here
 		NCS; Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
 		Those little webbings on Coot's amide planes
-	Coot tutorial including EM tutorial
 	Fix the atom deletion problems
-	Email Lovelace
-	Refinement
-		Grabbing two ends of a chain defines it as refinement area
-		Force restraints
-	Save
 	Everything in "panel demo"
 	Octree selection
-	"undo"
-		Just coot undo, then get the result? Full refresh
-		Button on controller reserved
-		Flash or something
 	easy: "hand distances"
 	Non-vr head movement sensetivity demo
-	probe dots
-	Selection of rotamers
-	"Carbon alpha mode"(/skeletonize?), often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
+	"Carbon alpha mode" (/skeletonize?), often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
 	NMR data should totally be in there, a set of springs
 	Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
 	ambient occlusion maps for all?
@@ -126,6 +108,13 @@ function init()
 	socket.commandReactions["map"] = function(msg)
 	{
 		console.error("do something here")
+		// let newMap = Map( msg["dataString"], false );
+		// maps.push(newMap);
+		// assemblage.add(newMap)
+	}
+	socket.commandReactions["mapFilename"] = function(msg)
+	{
+		loadFakeMap(msg.mapFilename)
 		// let newMap = Map( msg["dataString"], false );
 		// maps.push(newMap);
 		// assemblage.add(newMap)

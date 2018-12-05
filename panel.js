@@ -307,8 +307,6 @@ function initPanel()
 				if( textMeshes[i].switchObject )
 				{
 					textMeshes[i].material.color.copy( textMeshes[i].switchObject[textMeshes[i].switchProperty] ? onColor : offColor)
-					if( maps.length > 0 &&  textMeshes[i].switchObject === maps[0] )
-						console.log("yo")
 				}
 			}
 

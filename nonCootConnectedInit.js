@@ -1,17 +1,6 @@
 function nonCootConnectedInit()
 {
-	//not just fileloader
-	let req = new XMLHttpRequest();
-	req.open('GET', 'modelsAndMaps/tutorial.map', true);
-	req.responseType = 'arraybuffer';
-	req.onreadystatechange = function()
-	{
-		if (req.readyState === 4)
-		{
-			Map( req.response, false);
-		}
-	};
-	req.send(null);
+	loadFakeMap("tutorial.map")
 
 	new THREE.FileLoader().load( "modelsAndMaps/tutorialGetBondsRepresentation.txt",
 		function( modelDataString )
@@ -19,4 +8,20 @@ function nonCootConnectedInit()
 			makeModelFromCootString( modelDataString);
 		}
 	);
+}
+
+function loadFakeMap(filename)
+{
+	//not just fileloader?
+	let req = new XMLHttpRequest();
+	req.open('GET', 'modelsAndMaps/' + filename, true);
+	req.responseType = 'arraybuffer';
+	req.onreadystatechange = function()
+	{
+		if (req.readyState === 4)
+		{
+			Map( req.response );
+		}
+	};
+	req.send(null);
 }
