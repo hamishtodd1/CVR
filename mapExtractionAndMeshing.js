@@ -7,21 +7,10 @@ var typeColors = {
 	map_pos: 0x298029,
 	map_neg: 0x8B2E2E,
 }
- 
-const blockRadius = 7; //yo
 
-var centerOffsets = [];
-for(var i = -1; i <= 1; i++) {
-for(var j = -1; j <= 1; j++) {
-for(var k = -1; k <= 1; k++) {
-	centerOffsets.push([ i*blockRadius*2, j*blockRadius*2, k*blockRadius*2]);
-}
-}
-}
-centerOffsets.sort(function (vec1,vec2)
-{
-	return vecLengthSq(vec1) - vecLengthSq(vec2);
-});
+let blockRadius = null 
+let centerOffsets = [];
+
 // centerOffsets = [[0,0,0]]
 var centerOnGridsToBeSent = [];
 
@@ -56,7 +45,23 @@ onmessage = function(event)
 		mapMirror.isolevel = Infinity;
 		mapMirror.chickenWire = null;
 
-		mapMirror.postMessageConcerningSelf({ orthogonalMatrix:	mapMirror.unit_cell.orth });
+		blockRadius = msg.blockRadius
+
+		for(var i = -1; i <= 1; i++) {
+		for(var j = -1; j <= 1; j++) {
+		for(var k = -1; k <= 1; k++) {
+			centerOffsets.push([ i*blockRadius*2, j*blockRadius*2, k*blockRadius*2]);
+		}
+		}
+		}
+		centerOffsets.sort(function (vec1,vec2)
+		{
+			return vecLengthSq(vec1) - vecLengthSq(vec2);
+		});
+
+		mapMirror.postMessageConcerningSelf({
+			orthogonalMatrix:	mapMirror.unit_cell.orth
+		}); 
 	}
 
 	if(msg.userCenterOffGrid)
@@ -127,10 +132,10 @@ onmessage = function(event)
 
 				meshDatum.color = typeColors[mapMirror.displayTypes[i]];
 
-				meshDatum.relativeIsolevel = mapMirror.displayTypes[i] === 'map_neg'? -mapMirror.isolevel : mapMirror.isolevel;
+				meshDatum.relativeIsolevel = mapMirror.displayTypes[i] === 'map_neg' ? -mapMirror.isolevel : mapMirror.isolevel;
 				var absoluteIsolevel = meshDatum.relativeIsolevel * mapMirror.stats.rms + mapMirror.stats.mean;
 
-				mapMirror.extract_block( msg.centerOnGrid );
+				mapMirror.extract_block( msg.centerOnGrid, false );
 				meshDatum.wireframeGeometricPrimitives = wireframeMarchingCubes(
 					mapMirror.block._size[0],	mapMirror.block._size[1],	mapMirror.block._size[2],
 					mapMirror.block._values,	mapMirror.block._points,	absoluteIsolevel );
@@ -138,12 +143,12 @@ onmessage = function(event)
 				if( !mapMirror.chickenWire )
 				{
 					var additionForEncompassment = mapMirror.displayTypes[i] === 'map_neg' ? -0.02 : 0.08;
-					var nonWireframeAbsoluteIsolevel = ( meshDatum.relativeIsolevel + additionForEncompassment ) * mapMirror.stats.rms + mapMirror.stats.mean;
+					var solidAbsoluteIsolevel = ( meshDatum.relativeIsolevel + additionForEncompassment ) * mapMirror.stats.rms + mapMirror.stats.mean;
 
 					mapMirror.extract_block( msg.centerOnGrid,true );
-					meshDatum.nonWireframeGeometricPrimitives = solidMarchingCubes(
+					meshDatum.solidGeometricPrimitives = solidMarchingCubes(
 						mapMirror.block._size[0],	mapMirror.block._size[1],	mapMirror.block._size[2],
-						mapMirror.block._values,	mapMirror.block._points,	nonWireframeAbsoluteIsolevel );
+						mapMirror.block._values,	mapMirror.block._points,	solidAbsoluteIsolevel );
 				}
 			}
 
@@ -170,7 +175,7 @@ function wireframeMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 		cubeOffsets.push(v[0] + size_z * (v[1] + size_y * v[2]));
 	}
 
-	var seg_table = (method === 'notSquarish' ? segTable : segTable2);
+	var seg_table = squarishSegTable; // nonSquarishSegTable exists
 	var vertexIndicesForThisCube = new Array(12);
 	var p0 = [0, 0, 0];
 	var cornerPositions = [p0, p0, p0, p0, p0, p0, p0, p0];
@@ -217,7 +222,7 @@ function wireframeMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 				vertices.push(	p1[0] + (p2[0] - p1[0]) * mu,
 								p1[1] + (p2[1] - p1[1]) * mu,
 								p1[2] + (p2[2] - p1[2]) * mu);
-				vertexIndicesForThisCube[i] = vertex_count++;
+				vertexIndicesForThisCube[i] = vertex_count++; //jeez is it really just the numbers in order?
 			}
 		}
 		var t = seg_table[cubeindex];
@@ -227,6 +232,7 @@ function wireframeMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 	}
 	}
 	}
+	//again worst case is 12 * (radius*2)^3
 
 	return {vertices:vertices,segments:segments};
 }
@@ -238,10 +244,10 @@ function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 		return;
 	}
 
-	let maxVerticesInCube = 12 //3 in threejsMC, but that overflowed! They may have known something
-	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * maxVerticesInCube );
-	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * maxVerticesInCube );
-	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * maxVerticesInCube );
+	let maxCoordsInCube = 12 //3 in threejsMC, but that overflowed! They may have known something
+	solidMcScope.positionArray = new Float32Array( (size_x-3) * (size_y-3) * (size_z-3) * maxCoordsInCube );
+	solidMcScope.normalArray   = new Float32Array( (size_x-3) * (size_y-3) * (size_z-3) * maxCoordsInCube );
+	solidMcScope.normalOnCorners   = new Float32Array( size_x * size_y * size_z * 3 )
 	solidMcScope.count = 0;
 	solidMcScope.values = values;
 
@@ -258,6 +264,7 @@ function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 	// for (var x = 3; x < sample+1; x++) {
 	// for (var y = 0; y < 1; y++) {
 	// for (var z = 0; z < 1; z++) {
+	//not 0 and -1 because we got extra in the extract for the normals
 	for (var x = 1; x < size_x - 2; x++) {
 	for (var y = 1; y < size_y - 2; y++) {
 	for (var z = 1; z < size_z - 2; z++) {
@@ -346,7 +353,7 @@ MapMirror.prototype.extract_block = function extract_block ( centerOnGrid, extra
 	var grid = this.grid;
 	var unit_cell = this.unit_cell;
 
-	var extractedRadius = extraForNormals === undefined ? blockRadius:blockRadius+1
+	var extractedRadius = extraForNormals ? blockRadius+1:blockRadius
 	var grid_min = [ centerOnGrid[0] - extractedRadius, centerOnGrid[1] - extractedRadius, centerOnGrid[2] - extractedRadius];
 	var grid_max = [ centerOnGrid[0] + extractedRadius, centerOnGrid[1] + extractedRadius, centerOnGrid[2] + extractedRadius];
 	
@@ -577,7 +584,7 @@ function polygonize(
 function insertVertexInterpolatedOverX( q, offset, isol, p, p2, valp1, valp2 )
 {
 	var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
-		nc = solidMcScope.normalCache;
+		nc = solidMcScope.normalOnCorners;
 
 	solidMcScope.vlist[ offset + 0 ] = lerp( p[0], p2[0], mu );
 	solidMcScope.vlist[ offset + 1 ] = lerp( p[1], p2[1], mu );
@@ -591,7 +598,7 @@ function insertVertexInterpolatedOverX( q, offset, isol, p, p2, valp1, valp2 )
 function insertVertexInterpolatedOverY( q, q2, offset, isol, p, p2, valp1, valp2 )
 {
 	var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
-		nc = solidMcScope.normalCache;
+		nc = solidMcScope.normalOnCorners;
 
 	solidMcScope.vlist[ offset + 0 ] = lerp( p[0], p2[0], mu );
 	solidMcScope.vlist[ offset + 1 ] = lerp( p[1], p2[1], mu );
@@ -606,7 +613,7 @@ function insertVertexInterpolatedOverY( q, q2, offset, isol, p, p2, valp1, valp2
 function insertVertexInterpolatedOverZ( q, q2, offset, isol, p, p2, valp1, valp2 )
 {
 	var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
-		nc = solidMcScope.normalCache;
+		nc = solidMcScope.normalOnCorners;
 
 	solidMcScope.vlist[ offset + 0 ] = lerp( p[0], p2[0], mu );
 	solidMcScope.vlist[ offset + 1 ] = lerp( p[1], p2[1], mu );
@@ -622,12 +629,12 @@ function compNorm( q )
 {
 	var q3 = q * 3;
 
-	if ( solidMcScope.normalCache[ q3 ] === 0.0 )
+	if( solidMcScope.normalOnCorners[ q3 + 0 ] === 0.0 )
 	{
 		var q3 = q*3;
-		solidMcScope.normalCache[ q3 + 0 ] = solidMcScope.values[ q - solidMcScope.cubeOffsets[1] ] - solidMcScope.values[ q + solidMcScope.cubeOffsets[1] ];
-		solidMcScope.normalCache[ q3 + 1 ] = solidMcScope.values[ q - solidMcScope.cubeOffsets[3] ] - solidMcScope.values[ q + solidMcScope.cubeOffsets[3] ];
-		solidMcScope.normalCache[ q3 + 2 ] = solidMcScope.values[ q - solidMcScope.cubeOffsets[4] ] - solidMcScope.values[ q + solidMcScope.cubeOffsets[4] ];
+		solidMcScope.normalOnCorners[ q3 + 0 ] = solidMcScope.values[ q - solidMcScope.cubeOffsets[1] ] - solidMcScope.values[ q + solidMcScope.cubeOffsets[1] ];
+		solidMcScope.normalOnCorners[ q3 + 1 ] = solidMcScope.values[ q - solidMcScope.cubeOffsets[3] ] - solidMcScope.values[ q + solidMcScope.cubeOffsets[3] ];
+		solidMcScope.normalOnCorners[ q3 + 2 ] = solidMcScope.values[ q - solidMcScope.cubeOffsets[4] ] - solidMcScope.values[ q + solidMcScope.cubeOffsets[4] ];
 	}
 }
 
@@ -639,7 +646,7 @@ function lerp( a, b, t )
 var solidMcScope = 
 {
 	values: null,
-	normalCache: null,
+	normalOnCorners: null,
 	count: 0,
 	positionArray: null,
 	normalArray: null,
@@ -1235,7 +1242,7 @@ var triTable = [
       []];
 
 // generated from classical triTable by tools/isolut.py
-var segTable = [
+var nonSquarishSegTable = [
 	[],
 	[],
 	[1, 9],
@@ -1493,7 +1500,7 @@ var segTable = [
 	[],
 	[]];
 
-var segTable2 = [
+var squarishSegTable= [
 	[],
 	[],
 	[1, 9],

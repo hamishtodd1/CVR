@@ -5,6 +5,10 @@
 		When an atom is deleted, you make an "orphan" sphere and cylinder with all vertices 0
 		When an atom is added, go through the spheres and cylinders and find orphans
 
+	Raycasting
+		Hybrid demo https://github.com/gam0022/webgl-sandbox/blob/master/raymarching_hybrid.html https://gam0022.net/webgl/#raymarching_hybrid
+
+
  * Change color of carbons as you go down the chain, to give you landmarks. This is interesting. Useful though?
  */
 
@@ -201,7 +205,6 @@ function initModelCreationSystem()
 	    	var atomDataFromCoot = cootArray[0];
 			var bondDataFromCoot = cootArray[1];
 	    }
-	    console.log(atomDataFromCoot)
 		
 		var numberOfAtoms = 0;
 		for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
