@@ -140,6 +140,7 @@ function initPanel()
 	let cursorGeometry = new THREE.EfficientSphereGeometry(0.023);
 	let cursorMaterial = new THREE.MeshPhongMaterial({color:0xffd700,shininess:100});
 	let cursors = Array(2)
+	let interpolatingIndex = 0
 	for(let i = 0; i < 2; i++)
 	{
 		cursors[i] = new THREE.Mesh(cursorGeometry,cursorMaterial)
@@ -147,7 +148,15 @@ function initPanel()
 		cursors[i].azimuthal = 0;
 		handControllers[i].cursor = cursors[i]
 		panel.add(cursors[i])
-	}
+
+		cursors[i].interpolatingAzimuthals = Array(7)
+		cursors[i].interpolatingPolars = Array( cursors[i].interpolatingAzimuthals.length )
+		for(let j = 0; j < cursors[i].interpolatingAzimuthals.length; j++)
+		{
+			cursors[i].interpolatingAzimuthals[j] = 0
+			cursors[i].interpolatingPolars[j] = 0
+		}
+	}	
 
 	updatePanel = function()
 	{
@@ -167,16 +176,32 @@ function initPanel()
 				intersection.divide(panel.scale)
 
 				let fromBelowWithZToLeft = new THREE.Vector2(-intersection.z,intersection.x)
-				cursors[i].polar = fromBelowWithZToLeft.angle();
-				cursors[i].polar = polarClipToAllowedArea( cursors[i].polar );
+				cursors[i].interpolatingPolars[interpolatingIndex] = fromBelowWithZToLeft.angle();
+				cursors[i].interpolatingPolars[interpolatingIndex] = polarClipToAllowedArea( cursors[i].interpolatingPolars[interpolatingIndex] );
 
 				let flattenedOnZPlane = intersection.clone().setComponent(1,0).normalize()
 				let fromSideWithYUpwards = new THREE.Vector2(intersection.dot(flattenedOnZPlane),intersection.y)
-				cursors[i].azimuthal = fromSideWithYUpwards.angle()
-				cursors[i].azimuthal = azimuthalClipToAllowedArea( cursors[i].azimuthal );
+				cursors[i].interpolatingAzimuthals[interpolatingIndex] = fromSideWithYUpwards.angle()
+				cursors[i].interpolatingAzimuthals[interpolatingIndex] = azimuthalClipToAllowedArea( cursors[i].interpolatingAzimuthals[interpolatingIndex] );
+
+				cursors[i].azimuthal = 0
+				cursors[i].polar = 0
+				for(let j = 0; j < cursors[i].interpolatingAzimuthals.length; j++)
+				{
+					cursors[i].azimuthal += cursors[i].interpolatingAzimuthals[j] / cursors[i].interpolatingAzimuthals.length
+					cursors[i].polar += cursors[i].interpolatingPolars[j] / cursors[i].interpolatingAzimuthals.length
+				}
+
+				if(i===1)
+				{
+					interpolatingIndex++
+					if( interpolatingIndex >= cursors[i].interpolatingAzimuthals.length )
+					{
+						interpolatingIndex = 0
+					}
+				}
 
 				cursors[i].position.copy( anglesToPanel(cursors[i].polar,cursors[i].azimuthal) )
-
 				handControllers[i].laser.scale.y = handControllers[i].position.distanceTo( cursors[i].position.clone().applyMatrix4(panel.matrix) )
 			}
 

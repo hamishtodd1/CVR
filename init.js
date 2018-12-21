@@ -1,21 +1,34 @@
 /*
+Your thoughts about video processing might be silly. Likely there will be an api in future, an api for
+
+UI for AR will be huge. In principle some simple app doing something that a thousand apps already do could make a lot of money
+
 TODO for CCP4SW
-	Bar chart
-	Highlighting working better
 	Mutate / everything else sitting there in script
-	Add terminal residue
 	Refinement
 		Force restraints
+	Highlighting working better
+	Add terminal residue
+	Ramachandran for painter
 	Loaded from a webpage
 	Get map from coot
 	Back and forth
 	Coot tutorial including EM tutorial
-	Email Lovelace
+		Change map color
+		Unmodelled blobs
+		"Density fit analysis"
+		Merge
+			Urgh that's a ballache, have to make sure it works perfectly with coot
+		Fit loop
+		Refmac
+		Waters
+		Symmetry atoms
 	Save
 	"undo"
 		Just coot undo, then get the result? Full refresh
 		Button on controller reserved
 		Flash or something
+		Hydrogen hiding really should be automatic
 	Selection of rotamers
 	
 TODO during PhD
@@ -64,7 +77,7 @@ VR Games to get maybe
 	Fun
 		Superhypercube
 		thumper
-		form
+		Hotdogs, horseshoes and hand grenades
 		violent stuff
 			superhot		
 			Sairento
@@ -78,8 +91,8 @@ Maya
 	reddit/bluecollarwomen
 	http://www.nts.org.uk/wildlifesurvey/
 	http://www.wildlifeinformation.co.uk/about_volunteering.php
-*/
 
+*/
 
 function init()
 {
@@ -99,7 +112,7 @@ function init()
 	initSocket();
 	socket.commandReactions["you aren't connected to coot"] = function()
 	{
-		nonCootConnectedInit()
+		// nonCootConnectedInit()
 	}
 	socket.commandReactions["model"] = function(msg)
 	{
@@ -170,21 +183,24 @@ function init()
 	{
 		initFileNavigator()
 
-		//maybe better if they were all cubes? Atoms are spheres.
-		//coot specific
-		// initRefiner()
+		// //maybe better if they were all cubes? Atoms are spheres.
+		// //coot specific
+		// // initRefiner()
+		// initAutoRotamer()
 
-		initEnvironmentDistances()
+		// initEnvironmentDistances()
 		
-		initAutoRotamer()
 		initRigidSphereMover()
 		initRigidChainMover()
-		initAtomLabeller()
-		// initMutator()
-		initAtomDeleter()
-		initResidueDeleter()
 		initProteinPainter()
-		initNewAtomRoster()
+
+		// initAtomLabeller()
+		// initMutator()
+		// initAtomDeleter()
+		// initResidueDeleter()
+		// initNewAtomRoster()
+
+		// initRamachandran()
 
 		socket.send(JSON.stringify({command:"loadPolarAndAzimuthals"}))
 

@@ -32,8 +32,9 @@ var elementToNumber = {
 		S: 1,
 		O: 2,
 		N: 3,
+		Cl:4, //WARNING: NOT SURE ABOUT THIS!!!
 		P: 6,
-		H: 9
+		H: 9,
 }
 
 function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc)
@@ -229,6 +230,9 @@ function initModelCreationSystem()
 			}
 		}
 
+		//ok so you want the above to just give you bond data and model atoms
+		//which are then fed into the below
+
 		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
 		model.carbonAlphaPositions = [];
 		for(var i = 0, il = model.atoms.length; i < il; i++)
@@ -240,6 +244,12 @@ function initModelCreationSystem()
 		}
 		
 		model.imol = model.atoms[0].imol;
+		
+		putModelInAssemblage(model)
+	}
+
+	putModelInAssemblage = function(model)
+	{
 		assemblage.add(model);
 		models.push(model);
 
@@ -259,13 +269,18 @@ function initModelCreationSystem()
 		return model;
 	}
 
-	makeModelFromElementsAndCoords = function(elements,coords)
+	atomArrayFromElementsAndCoords = function(elements,coords)
 	{
 		var atoms = Array(elements.length);
 		for(var i = 0; i < atoms.length; i++)
 		{
 			atoms[i] = new Atom( elements[i], new THREE.Vector3().fromArray(coords,3*i) );
 		}
+		return atoms
+	}
+	makeModelFromElementsAndCoords = function(elements,coords)
+	{
+		let atoms = atomArrayFromElementsAndCoords(elements,coords)
 		return makeMoleculeMesh( atoms, false );
 	}
 
@@ -309,10 +324,8 @@ function initModelCreationSystem()
 			}
 			if( atoms.length > 100 )
 			{
-				console.error("Sure you want to compute bonds for ", atoms.length, " atoms?")
-			}
-			else
-			{
+				console.warn("We've been requested to calculate bond distances for ", atoms.length, " atoms =/")
+
 				for( var i = 0, il = atoms.length; i < il; i++ )
 				{
 					for( var j = i+1, jl = atoms.length; j < jl; j++)
