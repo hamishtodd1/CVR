@@ -4,15 +4,23 @@ Your thoughts about video processing might be silly. Likely there will be an api
 UI for AR will be huge. In principle some simple app doing something that a thousand apps already do could make a lot of money
 
 TODO for CCP4SW
-	Mutate / everything else sitting there in script
+	Mutate
+	Everything else sitting there in script
 	Refinement
 		Force restraints
 	Highlighting working better
 	Add terminal residue
-	Ramachandran for painter
-	Loaded from a webpage
-	Get map from coot
-	Back and forth
+	Ramachandran for painter (but then you need sequence)
+	Selection of rotamers
+
+TODO to make it independent of coot
+	Loaded from a webpage (ask Ivan)
+	Socket not needed
+	Correct PDB export
+		You are "just" modifying the positions of existing atoms, and...
+		adding a new chain
+	
+TODO during PhD
 	Coot tutorial including EM tutorial
 		Change map color
 		Unmodelled blobs
@@ -23,15 +31,13 @@ TODO for CCP4SW
 		Refmac
 		Waters
 		Symmetry atoms
-	Save
 	"undo"
 		Just coot undo, then get the result? Full refresh
 		Button on controller reserved
 		Flash or something
 		Hydrogen hiding really should be automatic
-	Selection of rotamers
-	
-TODO during PhD
+	Get map from coot
+	Save
 	Complex-to-look-at 3D things
 		probe dots
 		Alt conformers; opacity?
@@ -55,6 +61,7 @@ TODO during PhD
 		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
 
 Beyond
+	Back and forth
 	IMOD, an EM software with manual manipulation, might also benefit from VRification
 	Radio
 
@@ -112,7 +119,7 @@ function init()
 	initSocket();
 	socket.commandReactions["you aren't connected to coot"] = function()
 	{
-		// nonCootConnectedInit()
+		nonCootConnectedInit()
 	}
 	socket.commandReactions["model"] = function(msg)
 	{

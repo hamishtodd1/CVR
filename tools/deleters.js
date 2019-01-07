@@ -61,7 +61,9 @@ function initAtomDeleter()
 				}
 			}
 		}
-	}	
+	}
+
+	//highlighting is out there
 
 	return atomDeleter;
 }

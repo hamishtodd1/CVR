@@ -106,6 +106,8 @@ function initRigidSphereMover()
 		new THREE.LineBasicMaterial({color:0xFFFFFF, linewidth:3 }) );
 	var rigidMover = Tool(ball)
 
+	rigidMover.onLetGo = turnOffAllHighlights;
+
 	var capturedAtoms = [];
 	var localCapturedAtomPositions = [];
 
@@ -143,6 +145,10 @@ function initRigidSphereMover()
 				model.worldToLocal(newAtomPosition);
 				model.setAtomRepresentationPosition(capturedAtoms[i], newAtomPosition)
 			}
+		}
+		else
+		{
+			// highlightAtomsOverlappingSphere(this, sq(ball.geometry.boundingSphere.radius * this.scale.x / getAngstrom()) )
 		}
 
 		if( !this.parent.button1 && this.parent.button1Old )
