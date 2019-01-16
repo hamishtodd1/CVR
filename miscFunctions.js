@@ -260,6 +260,10 @@ THREE.Quaternion.prototype.getAxisWithAngleAsLength = function()
 	axis.setLength(2 * Math.acos(this.w));
 	return axis;
 }
+THREE.Quaternion.prototype.getInverse = function(scalar)
+{
+	return this.clone().conjugate()
+}
 THREE.Quaternion.prototype.multiplyScalar = function(scalar)
 {
 	this.x *= scalar;

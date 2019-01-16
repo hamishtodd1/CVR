@@ -219,13 +219,13 @@ function initProteinPainter()
 						activeSideChainAndHydrogen = sideChainAndHydrogens[indexOfAmideToChangeTo-1]
 					}
 
-					// amides.pop()
-					// sideChainAndHydrogens.pop()
+					amides.pop()
+					sideChainAndHydrogens.pop()
 				}
 			}
 
 			let toolQuaternionInAssemblage = proteinPainter.quaternion.clone().premultiply( proteinPainter.parent.quaternion )
-			toolQuaternionInAssemblage.premultiply( assemblage.quaternion.inverse() )
+			toolQuaternionInAssemblage.premultiply( assemblage.quaternion.getInverse() )
 			activeAmide.quaternion.copy(toolQuaternionInAssemblage)
 
 			//repelling
