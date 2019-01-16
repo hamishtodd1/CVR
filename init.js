@@ -3,13 +3,9 @@ Your thoughts about video processing might be silly. Likely there will be an api
 
 UI for AR will be huge. In principle some simple app doing something that a thousand apps already do could make a lot of money
 
-TODO for CCP4SW
-	Mutate
-	Everything else sitting there in script
-	Refinement
-		Force restraints
+TODO
 	Highlighting working better
-	Add terminal residue
+	Protein painter can start from current chain
 	Ramachandran for painter (but then you need sequence)
 	Selection of rotamers
 
@@ -21,6 +17,11 @@ TODO to make it independent of coot
 		adding a new chain
 	
 TODO during PhD
+	Refinement
+		Force restraints
+	Everything else sitting there in script
+	If you want those metrics you probably have to get them from coot
+	Mutate
 	Coot tutorial including EM tutorial
 		Change map color
 		Unmodelled blobs

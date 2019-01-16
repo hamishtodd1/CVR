@@ -560,18 +560,25 @@ function initPanel()
 		objectsToBeUpdated.push(tool);
 		tool.update = function()
 		{
-			if(handControllers.indexOf(this.parent) !== -1)
+			if(handControllers.indexOf(tool.parent) !== -1)
 			{
-				var positionInAssemblage = this.getWorldPosition(new THREE.Vector3());
+				var positionInAssemblage = tool.getWorldPosition(new THREE.Vector3());
 				assemblage.updateMatrixWorld();
 				assemblage.worldToLocal(positionInAssemblage);
 
-				this.whileHeld(positionInAssemblage)
+				tool.whileHeld(positionInAssemblage)
 			}
 		}
 
-		let stack = new Error().stack;
-		let name = (stack.split("at init"))[1].split(" (")[0]
+		let fakeError = new Error()
+		if(fakeError.stack)
+		{
+			var name = (fakeError.stack.split("at init"))[1].split(" (")[0]
+		}
+		else
+		{
+			var name = "firefox is bad for naming things"
+		}
 
 		MenuOnPanel([{string:name, object3d: tool }])
 
