@@ -104,10 +104,6 @@ def command(self, msg):
 		if startedStatus == False:
 			print("disallowed refinement???")
 
-	elif msg["command"] == "requestingIntermediateAtoms":
-		#did we decide to just do this periodically? :/
-		sendIntermediateRepresentation(self)
-
 	elif msg["command"] == "ceaseRefinement":
 		sendIntermediateRepresentation(self)
 		accept_regularizement()
@@ -133,6 +129,8 @@ def sendIntermediateRepresentation(self):
 		self.write_message(returnMsg)
 	else:
 		print("but not sending it")
+
+#set_python_draw_function( sendIntermediateRepresentation(self) ) #
 
 def getStats(imol):
 	# cis_peptides()

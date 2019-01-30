@@ -1,21 +1,6 @@
-function nonCootConnectedInit()
+function fakeCootConnectedInit()
 {
-	loadFakeMap = function(filename)
-	{
-		//not just fileloader?
-		let req = new XMLHttpRequest();
-		req.open('GET', 'modelsAndMaps/' + filename, true);
-		req.responseType = 'arraybuffer';
-		req.onreadystatechange = function()
-		{
-			if (req.readyState === 4)
-			{
-				Map( req.response );
-			}
-		};
-		req.send(null);
-	}
-	loadFakeMap("tutorial.map")
+	loadMap("tutorial.map")
 
 	new THREE.FileLoader().load( "modelsAndMaps/tutorialGetBondsRepresentation.txt",
 		function( modelDataString )
@@ -23,7 +8,26 @@ function nonCootConnectedInit()
 			makeModelFromCootString( modelDataString);
 		}
 	);
+}
 
+function loadMap(filename)
+{
+	//not just fileloader?
+	let req = new XMLHttpRequest();
+	req.open('GET', 'modelsAndMaps/' + filename, true);
+	req.responseType = 'arraybuffer';
+	req.onreadystatechange = function()
+	{
+		if (req.readyState === 4)
+		{
+			Map( req.response );
+		}
+	};
+	req.send(null);
+}
+
+function nonCootConnectedInit()
+{
 	//TODO until there's files in there, don't initialize and just have a sign
 
 	let dragTextBoxSign = makeTextSign("drop to read file")
@@ -82,14 +86,13 @@ function nonCootConnectedInit()
 				let text = evt.target.result
 				pdbString = text
 
-				let loader = new THREE.PDBLoader()
-				let atomsAndBonds = loader.parsePDB( text );
-				loader.createModel( atomsAndBonds, function(carbonAlphas, geometryAtoms, geometryBonds)
-				{
-					let atoms = atomArrayFromElementsAndCoords(geometryAtoms.elements,geometryAtoms.attributes.position.array)
-					let model = makeMoleculeMesh( atoms, true );
-					putModelInAssemblage(model)
-				} )
+				let atomsAndBonds = parsePdb( text );
+				let geometryAtoms = createModel( atomsAndBonds ).geometryAtoms
+
+				let atoms = atomArrayFromElementsAndCoords( geometryAtoms.elements, geometryAtoms.attributes.position.array)
+				let model = makeMoleculeMesh( atoms, true );
+
+				putModelInAssemblage(model)
 			};
 			reader.readAsText(file);
 		}

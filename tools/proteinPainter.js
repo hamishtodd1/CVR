@@ -1,5 +1,6 @@
 /*
 	TODO (probably, might need to think more)
+		Tau dial
 		When you want to lay down a new one, read the atoms near your hand.
 			Should be able to grab any residue. It breaks off
 			Grab a terminal residue and you start working out of that
@@ -36,6 +37,34 @@
 
 function initProteinPainter()
 {
+	let rama = Ramachandran()
+	objectsToBeUpdated.push(rama)
+	scene.add(rama)
+	rama.update = function()
+	{
+		if(amides.length >= 2)
+		{
+			rama.position.copy(activeAmide.position)
+
+			let previousNitrogenLocation = cBeta.clone().negate().add(nextCAlpha)
+			let previousAmide = amides[ amides.indexOf(activeAmide) - 1 ]
+			previousNitrogenLocation.applyMatrix( previousAmide.matrix )
+			previousNitrogenLocation.sub(activeAmide.position)
+
+			let nextCBeta = cBeta.clone().applyQuaternion(activeAmide.quaternion)
+			
+			
+
+			//when you put a new amide in, the rama moves
+			let phi = 0
+			let psi = 0
+		}
+		else
+		{
+			rama.visible = false
+		}
+	}
+
 	let proteinPainterMesh = new THREE.Mesh(new THREE.CylinderBufferGeometry(0.08,0.08,0.002,32), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.5}))
 	proteinPainterMesh.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(TAU/4))
 	let proteinPainter = Tool(proteinPainterMesh)
@@ -219,14 +248,25 @@ function initProteinPainter()
 						activeSideChainAndHydrogen = sideChainAndHydrogens[indexOfAmideToChangeTo-1]
 					}
 
-					amides.pop()
-					sideChainAndHydrogens.pop()
+					removeAndRecursivelyDispose(amides.pop())
+					removeAndRecursivelyDispose(sideChainAndHydrogens.pop())
 				}
 			}
 
 			let toolQuaternionInAssemblage = proteinPainter.quaternion.clone().premultiply( proteinPainter.parent.quaternion )
 			toolQuaternionInAssemblage.premultiply( assemblage.quaternion.getInverse() )
+			//buuut we want to make sure that angle is TET angle
+			//could have you holding a transparent copy. Or at least a plane at this orientation
 			activeAmide.quaternion.copy(toolQuaternionInAssemblage)
+			{
+				let activeAmideCBeta = cBeta.clone().applyQuaternion(activeAmide.quaternion)
+				let previousAmideNitrogen = cBeta.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion).normalize()
+				let tauAngle = activeAmideCBeta.angleTo(previousAmideNitrogen)
+
+				let axis = activeAmideCBeta.clone().cross(previousAmideNitrogen).normalize()
+
+				//TODO finish!
+			}
 
 			//repelling
 			if(activeSideChainAndHydrogen)
@@ -259,15 +299,20 @@ function initProteinPainter()
 		let newCTerminus = cTerminus.clone();
 		newCTerminus.quaternion.copy(activeAmide.quaternion)
 		newCTerminus.position.copy(activeAmide.position)
+		while( activeAmide.children.length )
+		{
+			newCTerminus.add(activeAmide.children[0]);
+		}
 
 		assemblage.add(newCTerminus);
 		assemblage.remove(activeAmide);
-		//TODO you're removing it but not deleting
-		console.log(activeAmide.children.length) //how does it get there?
-		for(let i = 0; i < activeAmide.children.length; i++)
+		removeAndRecursivelyDispose(amides.pop())
+		if( sideChainAndHydrogens.length > 0 )
 		{
-			newCTerminus.add(activeAmide.children[i]);
+			removeAndRecursivelyDispose(sideChainAndHydrogens.pop())
 		}
+
+		//make the thing a chain in its own right
 
 		activeAmide = null;
 		amides = [];

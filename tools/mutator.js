@@ -28,42 +28,41 @@ function initMutator()
 	let innerCircleRadius = 0.12;
 	let plaque = new THREE.Mesh( new THREE.CircleBufferGeometry(0.432 * innerCircleRadius, 32), new THREE.MeshBasicMaterial({color:0xF0F000, transparent: true, opacity:0.5, side:THREE.DoubleSide}) );
 	let textHeight = innerCircleRadius / 9;
-	let ourPdbLoader = new THREE.PDBLoader()
 	let aasAllLoaded = false
 	function singleLoop(aaIndex, position)
 	{
-		ourPdbLoader.load( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
+		loadPdb( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
+		{
+			let newPlaque = plaque.clone();
+			newPlaque.position.copy(position);
+			newPlaque.visible = false
+			mutator.add( newPlaque );
+
+			mutator.AAs[aaIndex] = makeModelFromElementsAndCoords(geometryAtoms.elements,geometryAtoms.attributes.position.array)
+			
+			mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
+			newPlaque.add( mutator.AAs[aaIndex] );
+			
+			let nameMesh = makeTextSign( aaNames[aaIndex] );
+			nameMesh.scale.setScalar(textHeight);
+			nameMesh.position.copy(mutator.AAs[aaIndex].position)
+			nameMesh.position.y -= 0.014;
+			nameMesh.position.z = 0.01;
+			newPlaque.add(nameMesh);
+
+			for(let i = 0, il = mutator.AAs.length; i < il; i++)
 			{
-				let newPlaque = plaque.clone();
-				newPlaque.position.copy(position);
-				newPlaque.visible = false
-				mutator.add( newPlaque );
-
-				mutator.AAs[aaIndex] = makeModelFromElementsAndCoords(geometryAtoms.elements,geometryAtoms.attributes.position.array)
-				
-				mutator.AAs[aaIndex].scale.setScalar(0.01); //it can stay at this too
-				newPlaque.add( mutator.AAs[aaIndex] );
-				
-				let nameMesh = makeTextSign( aaNames[aaIndex] );
-				nameMesh.scale.setScalar(textHeight);
-				nameMesh.position.copy(mutator.AAs[aaIndex].position)
-				nameMesh.position.y -= 0.014;
-				nameMesh.position.z = 0.01;
-				newPlaque.add(nameMesh);
-
-				for(let i = 0, il = mutator.AAs.length; i < il; i++)
+				if(!mutator.AAs[i])
 				{
-					if(!mutator.AAs[i])
-					{
-						return;
-					}
+					return;
 				}
-				aasAllLoaded = true
-				mutator.onLetGo()
-			},
-			function ( xhr ) {}, //progression function
-			function ( xhr ) { console.error( "couldn't load PDB (maybe something about .txt): ", aaNames[aaIndex]  );
-		});
+			}
+			aasAllLoaded = true
+			mutator.onLetGo()
+		},
+		function ( xhr ) {}, //progression function
+		function ( xhr ) { console.error( "couldn't load PDB (maybe something about .txt): ", aaNames[aaIndex]  );
+	});
 	}
 	let numInLayer1 = 7;
 	for(let i = 0, il = mutator.AAs.length; i < il; i++)

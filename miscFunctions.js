@@ -1,3 +1,22 @@
+function padLeft(str, desiredLength)
+{
+	let paddingAmt = desiredLength - str.length
+	for(let i = 0; i < paddingAmt; i++)
+	{
+		str = " " + str
+	}
+	return str
+}
+function padRight(str, desiredLength)
+{
+	let paddingAmt = desiredLength - str.length
+	for(let i = 0; i < paddingAmt; i++)
+	{
+		str = str + " "
+	}
+	return str
+}
+
 function objectNotAppearingTest(obj)
 {
 	console.log("parent: ",obj.parent)
@@ -354,11 +373,15 @@ function randomPerpVector(ourVector){
 
 function removeAndRecursivelyDispose(obj)
 {
-	obj.parent.remove(obj);
+	while( obj.children.length )
+	{
+		removeAndRecursivelyDispose(obj.children[0])
+	}
+	
+	if(obj.parent)
+	{
+		obj.parent.remove(obj);
+	}
 	if (obj.geometry) { obj.geometry.dispose(); }
 	if (obj.material) { obj.material.dispose(); }
-	for(var i = 0; i < obj.children.length; i++)
-	{
-		removeAndRecursivelyDispose(obj.children[i])
-	}
 }

@@ -1,10 +1,9 @@
-function initRamachandran()
+function Ramachandran()
 {
 	let rama = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(TAU,TAU),new THREE.MeshBasicMaterial())
 	rama.scale.multiplyScalar(0.01)
 	let resolution = 72
 	rama.position.z = -0.3
-	scene.add(rama)
 	
 	let ramaArray = new Uint8Array(sq(resolution)*3)
 	for(let i = 0; i < resolution; i++)
@@ -24,6 +23,8 @@ function initRamachandran()
 
 	let point = new THREE.Mesh(new THREE.SphereGeometry( TAU/resolution*2 ));
 	rama.add(point)
+
+	return rama
 
 	//CLEARLY the better thing to do is have spheres of the size that ramachandran used
 
