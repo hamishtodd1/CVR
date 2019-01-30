@@ -21,7 +21,7 @@ def connect(self):
 	modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) ) #does it need to be in a string? environment distances didn't need to be
 	self.write_message( modelMsg )
 
-	mapMsg = {'command':"mapFilename",'mapFilename':'data/drugIsInteresting.map'}
+	mapMsg = {'command':"mapFilename",'mapFilename':'drugIsInteresting.map'}
 	self.write_message( mapMsg )
 
 	# mapMsg = {'command':"map"}
