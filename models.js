@@ -5,6 +5,10 @@
 		When an atom is deleted, you make an "orphan" sphere and cylinder with all vertices 0
 		When an atom is added, go through the spheres and cylinders and find orphans
 
+	Raycasting
+		Hybrid demo https://github.com/gam0022/webgl-sandbox/blob/master/raymarching_hybrid.html https://gam0022.net/webgl/#raymarching_hybrid
+
+
  * Change color of carbons as you go down the chain, to give you landmarks. This is interesting. Useful though?
  */
 
@@ -28,104 +32,11 @@ var elementToNumber = {
 		S: 1,
 		O: 2,
 		N: 3,
+		Cl:4, //WARNING: NOT SURE ABOUT THIS!!!
 		P: 6,
-		H: 9
+		H: 9,
 }
 
-function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc)
-{
-	this.position = position;
-
-	this.selected = false;
-
-	this.bondPartners = [];
-	this.bondFirstVertexIndices = [];
-
-	this.extraBondPartners = [];
-	this.extraBondFirstVertexIndices = [];
-
-	this.imol = imol;
-	this.chainId = chainId;
-	this.resNo = resNo;
-	this.insertionCode = insertionCode;
-	this.name = name;
-	this.altloc = altloc;
-
-	if(typeof element === "number") //there are a lot of these things, best to keep it as a number
-	{
-		this.element = element;
-	}
-	else
-	{
-		this.element = elementToNumber[ element ];
-	}
-
-	if(this.element === undefined)
-	{
-		console.error("unrecognized element: ", element)
-	}
-}
-Atom.prototype.assignAtomSpecToObject = function(msg)
-{
-	msg.imol = this.imol;
-	msg.chainId = this.chainId;
-	msg.resNo = this.resNo;
-	msg.insertionCode = this.insertionCode;
-	
-	msg.name = this.name;
-	msg.altloc = this.altloc;
-}
-Atom.prototype.assignResidueSpecToMessage = function(msg)
-{
-	msg.imol = this.imol;
-	msg.chainId = this.chainId;
-	msg.resNo = this.resNo;
-	msg.insertionCode = this.insertionCode;
-}
-Atom.prototype.setLabelVisibility = function(labelVisibility)
-{
-	if( this.label === undefined && labelVisibility)
-	{
-		var labelString = "";
-		labelString += this.imol + ",";
-		labelString += this.chainId + ",";
-		labelString += this.resNo + ",";
-		labelString += this.insertionCode + ",";
-		labelString += this.name + ",";
-		labelString += this.altloc + ",";
-
-		this.label = makeTextSign(labelString);
-		this.label.position.copy(this.position);
-		this.label.update = updateLabel;
-
-		var model = getModelWithImol(this.imol);
-		model.add( this.label );
-		objectsToBeUpdated.push(this.label.update);
-	}
-	
-	if(this.label !== undefined)
-	{
-		this.label.visible = labelVisibility;
-	}
-}
-function updateLabel()
-{
-	this.scale.setScalar( 0.06 * Math.sqrt(this.position.distanceTo(camera.position)));
-	
-	this.parent.updateMatrixWorld()
-	
-	camera.updateMatrix();
-	var cameraUp = yVector.clone().applyQuaternion(camera.quaternion);
-	var parentWorldPosition = new THREE.Vector3();
-	this.parent.getWorldPosition(parentWorldPosition);
-	cameraUp.add(parentWorldPosition)
-	this.parent.worldToLocal(cameraUp)
-	this.up.copy(cameraUp);
-
-	var localCameraPosition = camera.position.clone()
-	this.parent.worldToLocal(localCameraPosition);
-	this.lookAt(localCameraPosition);
-}
 function changeBondBetweenAtomsToDouble(bondData, atomA, atomB)
 {
 	for(var j = 0; j < bondData.length; j++)
@@ -201,7 +112,6 @@ function initModelCreationSystem()
 	    	var atomDataFromCoot = cootArray[0];
 			var bondDataFromCoot = cootArray[1];
 	    }
-	    console.log(atomDataFromCoot)
 		
 		var numberOfAtoms = 0;
 		for(var i = 0, il = atomDataFromCoot.length; i < il; i++ )
@@ -226,6 +136,9 @@ function initModelCreationSystem()
 			}
 		}
 
+		//ok so you want the above to just give you bond data and model atoms
+		//which are then fed into the below
+
 		var model = makeMoleculeMesh(modelAtoms, true, bondDataFromCoot);
 		model.carbonAlphaPositions = [];
 		for(var i = 0, il = model.atoms.length; i < il; i++)
@@ -237,6 +150,12 @@ function initModelCreationSystem()
 		}
 		
 		model.imol = model.atoms[0].imol;
+		
+		putModelInAssemblage(model)
+	}
+
+	putModelInAssemblage = function(model)
+	{
 		assemblage.add(model);
 		models.push(model);
 
@@ -256,13 +175,18 @@ function initModelCreationSystem()
 		return model;
 	}
 
-	makeModelFromElementsAndCoords = function(elements,coords)
+	atomArrayFromElementsAndCoords = function(elements,coords)
 	{
 		var atoms = Array(elements.length);
 		for(var i = 0; i < atoms.length; i++)
 		{
 			atoms[i] = new Atom( elements[i], new THREE.Vector3().fromArray(coords,3*i) );
 		}
+		return atoms
+	}
+	makeModelFromElementsAndCoords = function(elements,coords)
+	{
+		let atoms = atomArrayFromElementsAndCoords(elements,coords)
 		return makeMoleculeMesh( atoms, false );
 	}
 
@@ -306,10 +230,8 @@ function initModelCreationSystem()
 			}
 			if( atoms.length > 100 )
 			{
-				console.error("Sure you want to compute bonds for ", atoms.length, " atoms?")
-			}
-			else
-			{
+				console.warn("We've been requested to calculate bond distances for ", atoms.length, " atoms =/")
+
 				for( var i = 0, il = atoms.length; i < il; i++ )
 				{
 					for( var j = i+1, jl = atoms.length; j < jl; j++)

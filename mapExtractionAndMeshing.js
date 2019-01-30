@@ -52,15 +52,6 @@ onmessage = function(event)
 		var mapMirror = mapMirrors[ msg.mapIndex ] = new MapMirror();
 		mapMirror.from_ccp4(msg.arrayBuffer); //pdbe and dsn9 exist
 
-		if(msg.isDiffMap)
-		{
-			mapMirror.displayTypes = ['map_pos', 'map_neg'];
-		}
-		else
-		{
-			mapMirror.displayTypes = ['map_den'];
-		}
-
 		mapMirror.userCenterOnGrid = [Infinity,Infinity,Infinity];
 		mapMirror.isolevel = Infinity;
 		mapMirror.chickenWire = null;
@@ -71,6 +62,15 @@ onmessage = function(event)
 	if(msg.userCenterOffGrid)
 	{
 		var mapMirror = mapMirrors[msg.mapIndex];
+
+		if(msg.isDiffMap)
+		{
+			mapMirror.displayTypes = ['map_pos', 'map_neg'];
+		}
+		else
+		{
+			mapMirror.displayTypes = ['map_den'];
+		}
 
 		var possiblyNewUserCenterOnGrid = mapMirror.getPointOnGrid(msg.userCenterOffGrid);
 		for(var i = 0; i < 3; i++)
@@ -238,13 +238,10 @@ function solidMarchingCubes(size_x,size_y,size_z, values, points, isolevel)
 		return;
 	}
 
-	//TODO formerly 12 was frikkin 3
-	//setting to 9 because it should be divisible by 9
-	//threejsMC seemed confident they wouldn't be overflowed. They were. Come here if the surface is somehow cut off
-	//maybe it was clever about how it divided stuff up?
-	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * 9 );
-	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * 9 );
-	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * 9 );
+	let maxVerticesInCube = 12 //3 in threejsMC, but that overflowed! They may have known something
+	solidMcScope.positionArray = new Float32Array( size_x * size_y * size_z * maxVerticesInCube );
+	solidMcScope.normalArray   = new Float32Array( size_x * size_y * size_z * maxVerticesInCube );
+	solidMcScope.normalCache   = new Float32Array( size_x * size_y * size_z * maxVerticesInCube );
 	solidMcScope.count = 0;
 	solidMcScope.values = values;
 

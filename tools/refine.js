@@ -69,12 +69,6 @@ function initRefiner()
 
 		if(this.parent !== scene )
 		{
-			//oh what a terrible way to do it
-			// if( this.parent.button1 && frameCount % 10 === 0 )
-			// {
-			// 	socket.send(JSON.stringify({ command: "requestingIntermediateAtoms" }));
-			// }
-
 			if( this.parent.button1 && !this.parent.button1Old )
 			{
 				for(var i = 0; i < 1; i++)

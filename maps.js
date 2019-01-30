@@ -1,9 +1,16 @@
 'use strict';
 /*
 	Man this was dumb. The center of a cube? madman.
-	It was based on the hope that
+	It was based on the idea that
+		if the zoom level is right
+		you can be moving smoothly in any 3D direction
+		and you'll never see uncontoured molecule
 
-	For each cube in the assemblage
+	Ideally (apart from a shader...)
+
+	At least pre-allocate for god's sake
+
+	Better: for each cube in the assemblage
 		We test whether it is in the visiBox
 		We test which of 9 z-penetrating columns it is in
 		If it's not textured we request it
@@ -18,7 +25,6 @@
 		When you have multiple maps, urgh, only want them one at a time too
 */
 
-var starProcessingMapData;
 function initMapCreationSystem()
 {
 	let worker = new Worker("mapExtractionAndMeshing.js")
@@ -28,17 +34,24 @@ function initMapCreationSystem()
 		maps[ event.data.mapIndex ].receiveMessageConcerningSelf( event.data );
 	}
 
-	Map = function(arrayBuffer, isDiffMap)
+	Map = function(arrayBuffer)
 	{
-		// isDiffMap = true;
-		var map = new THREE.Group();
+		let map = new THREE.Group();
 		maps.push(map);
 		assemblage.add(map);
 
-		var isolevel = isDiffMap ? 3.0 : 1.5;
-		var latestUserCenterOnGrid = null;
-		var waitingOnResponse = false;
-		var mostRecentBlockIsolevel = Infinity; //we care because there might be some recent arrivals whose isolevel is better than most recent
+		let isDiffMap = false
+		map.toggleDiffMap = function()
+		{
+			isDiffMap = !isDiffMap
+			isolevel = isDiffMap ? 3.0 : 1.5;
+		}
+
+		let isolevel = isDiffMap ? 3.0 : 1.5;
+
+		let latestUserCenterOnGrid = null;
+		let waitingOnResponse = false;
+		let mostRecentBlockIsolevel = Infinity; //we care because there might be some recent arrivals whose isolevel is better than most recent
 
 		map.update = function()
 		{
@@ -48,18 +61,19 @@ function initMapCreationSystem()
 			{
 				let center = new THREE.Vector3(0,0,-1 )
 				visiBox.localToWorld(center)
-				center.setLength((visiBox.scale.z + panel.scale.z )/2)
+				// center.setLength((visiBox.scale.z + panel.scale.z )/2)
 				assemblage.updateMatrixWorld();
 				assemblage.worldToLocal( center );
 
-				var msg = {
+				let msg = {
 					isolevel,
 					userCenterOffGrid: center.toArray(),
 					chickenWire: false,
-					currentCenterOnGrids: []
+					currentCenterOnGrids: [],
+					isDiffMap:isDiffMap
 				};
 
-				for(var i = 0; i < map.children.length; i++)
+				for(let i = 0; i < map.children.length; i++)
 				{
 					if(map.children[i] === map.unitCellMesh) continue;
 
@@ -69,7 +83,7 @@ function initMapCreationSystem()
 					}
 				}
 
-				for(var i = 0; i < 2; i++)
+				for(let i = 0; i < 2; i++)
 				{
 					if( Math.abs( handControllers[i].thumbStickAxes[1] ) > 0.1 )
 					{
@@ -94,17 +108,17 @@ function initMapCreationSystem()
 
 			if( msg.centerOnGrid )
 			{
-				for(var i = 0; i < msg.meshData.length; i++)
+				for(let i = 0; i < msg.meshData.length; i++)
 				{
-					var meshDatum = msg.meshData[i];
-					var newBlock = geometricPrimitivesToMesh(meshDatum.color,meshDatum.wireframeGeometricPrimitives,meshDatum.nonWireframeGeometricPrimitives, meshDatum.relativeIsolevel);
+					let meshDatum = msg.meshData[i];
+					let newBlock = geometricPrimitivesToMesh(meshDatum.color,meshDatum.wireframeGeometricPrimitives,meshDatum.nonWireframeGeometricPrimitives, meshDatum.relativeIsolevel);
 					newBlock.isolevel = meshDatum.relativeIsolevel;
 					newBlock.centerOnGrid = msg.centerOnGrid;
 					map.add( newBlock );
 				}
 
 				mostRecentBlockIsolevel = msg.meshData[0].relativeIsolevel;
-				for(var i = 0; i < map.children.length; i++)
+				for(let i = 0; i < map.children.length; i++)
 				{
 					if(map.children[i] === map.unitCellMesh) continue;
 					map.children[i].visible = Math.abs(map.children[i].isolevel) === Math.abs(mostRecentBlockIsolevel);
@@ -126,8 +140,8 @@ function initMapCreationSystem()
 
 		function getBlockCenterOffset(block)
 		{
-			var offset = Array(3);
-			for(var i = 0; i < 3; i++)
+			let offset = Array(3);
+			for(let i = 0; i < 3; i++)
 			{
 				offset[i] = block.centerOnGrid[i]-latestUserCenterOnGrid[i]
 			}
@@ -140,7 +154,7 @@ function initMapCreationSystem()
 
 		function removeABadBlockIfOneExists()
 		{
-			var blocks = [];
+			let blocks = [];
 			map.children.forEach( function(child)
 			{
 				if(child !== map.unitCellMesh)
@@ -155,8 +169,8 @@ function initMapCreationSystem()
 
 			blocks.sort(function(a,b)
 			{
-				var aHasGoodIsolevel = Math.abs( a.isolevel ) === Math.abs( mostRecentBlockIsolevel )
-				var bHasGoodIsolevel = Math.abs( b.isolevel ) === Math.abs( mostRecentBlockIsolevel )
+				let aHasGoodIsolevel = Math.abs( a.isolevel ) === Math.abs( mostRecentBlockIsolevel )
+				let bHasGoodIsolevel = Math.abs( b.isolevel ) === Math.abs( mostRecentBlockIsolevel )
 				if( aHasGoodIsolevel && !bHasGoodIsolevel )
 				{
 					return -1;
@@ -166,17 +180,17 @@ function initMapCreationSystem()
 					return 1;
 				}
 
-				var aCenterOffset = getBlockCenterOffset(a);
-				var bCenterOffset = getBlockCenterOffset(b);
+				let aCenterOffset = getBlockCenterOffset(a);
+				let bCenterOffset = getBlockCenterOffset(b);
 
-				var lengthDifference = getArrayVectorLengthSq( aCenterOffset ) - getArrayVectorLengthSq( bCenterOffset );
+				let lengthDifference = getArrayVectorLengthSq( aCenterOffset ) - getArrayVectorLengthSq( bCenterOffset );
 				if( lengthDifference !== 0 )
 				{
 					return lengthDifference;
 				}
 				else
 				{
-					for(var i = 0; i < 3; i++)
+					for(let i = 0; i < 3; i++)
 					{
 						if( aCenterOffset[i] < bCenterOffset[i] )
 						{
@@ -195,7 +209,7 @@ function initMapCreationSystem()
 				(!isDiffMap && blocks.length > 27) ||
 				( isDiffMap && blocks.length > 27 * 2) )
 			{
-				var blockToBeRemoved = blocks.pop();
+				let blockToBeRemoved = blocks.pop();
 				
 				removeAndRecursivelyDispose(blockToBeRemoved);
 			}
@@ -209,65 +223,58 @@ function initMapCreationSystem()
 
 		function geometricPrimitivesToMesh(color, wireframeGeometricPrimitives, nonWireframeGeometricPrimitives, relativeIsolevel)
 		{
-			if( nonWireframeGeometricPrimitives === undefined )
+			let block = new THREE.Group()
+
+			let geo = new THREE.BufferGeometry();
+			geo.addAttribute( 'position',	new THREE.BufferAttribute( nonWireframeGeometricPrimitives.positionArray, 3 ) );
+			geo.addAttribute( 'normal',		new THREE.BufferAttribute( nonWireframeGeometricPrimitives.normalArray, 3 ) );
+			
+			// let transparent = new THREE.Mesh( geo,
+			// 	new THREE.MeshPhongMaterial({
+			// 		color: color, //less white or bluer. Back should be less blue because nitrogen
+			// 		clippingPlanes: visiBox.planes,
+			// 		transparent:true,
+			// 		opacity:0.36
+			// 	}));
+			// block.add(block.transparent)
+
+			block.back = new THREE.Mesh( geo,
+				new THREE.MeshPhongMaterial({
+					color: color,
+					clippingPlanes: visiBox.planes,
+					side: isDiffMap && relativeIsolevel < 0 ? THREE.FrontSide : THREE.BackSide //probably?
+				}));
+			block.add(block.back)
+			if(map.children.length > 1 && map.children[1].back !== undefined)
 			{
-				return wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives,color)
+				block.back.visible = map.children[1].back.visible
+			}
+
+			if(wireframeGeometricPrimitives !== undefined)
+			{
+				//super high quality
+				block.wireframe = wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives,color);
 			}
 			else
 			{
-				let block = new THREE.Group()
-
-				var geo = new THREE.BufferGeometry();
-				geo.addAttribute( 'position',	new THREE.BufferAttribute( nonWireframeGeometricPrimitives.positionArray, 3 ) );
-				geo.addAttribute( 'normal',		new THREE.BufferAttribute( nonWireframeGeometricPrimitives.normalArray, 3 ) );
-				
-				// var transparent = new THREE.Mesh( geo,
-				// 	new THREE.MeshPhongMaterial({
-				// 		color: color, //less white or bluer. Back should be less blue because nitrogen
-				// 		clippingPlanes: visiBox.planes,
-				// 		transparent:true,
-				// 		opacity:0.36
-				// 	}));
-				// block.add(block.transparent)
-
-				block.back = new THREE.Mesh( geo,
-					new THREE.MeshPhongMaterial({
-						color: color,
-						clippingPlanes: visiBox.planes,
-						side: isDiffMap && relativeIsolevel < 0 ? THREE.FrontSide : THREE.BackSide //probably?
+				block.wireframe = new THREE.LineSegments( new THREE.WireframeGeometry( geo ),
+					new THREE.LineBasicMaterial({
+						clippingPlanes: visiBox.planes
 					}));
-				block.add(block.back)
-				if(map.children.length > 1 && map.children[1].back !== undefined)
-				{
-					block.back.visible = map.children[1].back.visible
-				}
-
-				if(wireframeGeometricPrimitives !== undefined)
-				{
-					//super high quality
-					block.wireframe = wireframeIsomeshFromGeometricPrimitives(wireframeGeometricPrimitives,color);
-				}
-				else
-				{
-					block.wireframe = new THREE.LineSegments( new THREE.WireframeGeometry( geo ),
-						new THREE.LineBasicMaterial({
-							clippingPlanes: visiBox.planes
-						}));
-				}
-				block.add(block.wireframe)
-
-				return block
 			}
+			block.add(block.wireframe)
+
+			return block
 		}
 
-		map.postMessageConcerningSelf({arrayBuffer:arrayBuffer,isDiffMap:isDiffMap});
+		map.postMessageConcerningSelf({arrayBuffer:arrayBuffer});
 		waitingOnResponse = true;
 	}
 
-	var white = new THREE.Color(0xFFFFFF)
+	let white = new THREE.Color(0xFFFFFF)
 	function wireframeIsomeshFromGeometricPrimitives(geometricPrimitives,color)
 	{
-		var isomesh = new THREE.LineSegments(new THREE.BufferGeometry(),
+		let isomesh = new THREE.LineSegments(new THREE.BufferGeometry(),
 			new THREE.LineBasicMaterial({
 				color: color,
 				linewidth: 1.25,
@@ -281,7 +288,7 @@ function initMapCreationSystem()
 
 	function UnitCellMesh(orthogonalMatrix)
 	{
-		var CUBE_EDGES = [	[0, 0, 0], [1, 0, 0],
+		let CUBE_EDGES = [	[0, 0, 0], [1, 0, 0],
 							[0, 0, 0], [0, 1, 0],
 							[0, 0, 0], [0, 0, 1],
 							[1, 0, 0], [1, 1, 0],
@@ -293,7 +300,7 @@ function initMapCreationSystem()
 							[1, 0, 1], [1, 1, 1],
 							[1, 1, 0], [1, 1, 1],
 							[0, 1, 1], [1, 1, 1] ];
-		var vertices = CUBE_EDGES.map(function (a)
+		let vertices = CUBE_EDGES.map(function (a)
 		{
 			return {
 				xyz: [  orthogonalMatrix[0] * a[0]  + orthogonalMatrix[1] * a[1]  + orthogonalMatrix[2] * a[2],
@@ -302,13 +309,13 @@ function initMapCreationSystem()
 			};
 		});
 
-		var geometry = new THREE.BufferGeometry();
-		var pos = new Float32Array(vertices.length * 3);
+		let geometry = new THREE.BufferGeometry();
+		let pos = new Float32Array(vertices.length * 3);
 		if (vertices && vertices[0].xyz)
 		{
-			for (var i = 0; i < vertices.length; i++)
+			for (let i = 0; i < vertices.length; i++)
 			{
-				var xyz = vertices[i].xyz;
+				let xyz = vertices[i].xyz;
 				pos[3*i] = xyz[0];
 				pos[3*i+1] = xyz[1];
 				pos[3*i+2] = xyz[2];
@@ -316,9 +323,9 @@ function initMapCreationSystem()
 		}
 		else
 		{
-			for (var i = 0; i < vertices.length; i++)
+			for (let i = 0; i < vertices.length; i++)
 			{
-				var v = vertices[i];
+				let v = vertices[i];
 				pos[3*i] = v.x;
 				pos[3*i+1] = v.y;
 				pos[3*i+2] = v.z;
@@ -326,7 +333,7 @@ function initMapCreationSystem()
 		}
 		geometry.addAttribute('position', new THREE.BufferAttribute(pos, 3));
 
-		var colors = new Float32Array([ 1,0,0,1,0.66667,0,0,1,0,0.66667,1,0,0,0,1,0,0.66667,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 ]);
+		let colors = new Float32Array([ 1,0,0,1,0.66667,0,0,1,0,0.66667,1,0,0,0,1,0,0.66667,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 ]);
 		geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
 
 		let material = new THREE.LineBasicMaterial({

@@ -20,12 +20,16 @@
 
 		<script src="lib/OBJLoader.js"></script>
 		<script src="lib/PDBLoader.js"></script>
+
+		<script src="lib/octree.js"></script>
 		
 		<script src="lib/WebVR.js"></script>
 		<script src="hands.js"></script>
 
 		<script src="surroundings.js"></script>
 		<script src="panel.js"></script>
+
+		<script src="atom.js"></script>
 
 		<script src="displayManager.js"></script>
 
@@ -44,8 +48,10 @@
 			<script src="tools/mutator.js"></script>
 			<!--<script src="tools/handDistances.js"></script>-->
 			<script src="tools/newAtomRoster.js"></script>
-			<script src="tools/fileNavigator.js"></script>
+			<script src="tools/fileNavigation.js"></script>
 			<script src="tools/environmentDistances.js"></script>
+
+			<script src="measures/ramachandran.js"></script>	
 			
 		<script src="stats.js"></script>
 		<script src="spectatorRepresentation.js"></script>
@@ -128,7 +134,7 @@ Update procedure, in autobuild:
 	Switch virtual machine connection mode to NAT
 	in gitcoot/coot, git pull
 	in gitcoot/coot, bash autogen.sh
-	in gitcoot/build, bash CIH 
+	in gitcoot/build, bash CIH.sh
 	in gitcoot/build, make
 	in gitcoot/build, make install
 	It is now in Linux-localhost

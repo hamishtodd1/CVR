@@ -1,55 +1,60 @@
 /*
-Video
-	Maybe different data? EM...
-	Make data visible
-	Make molecule visible
-	Show stats thing
-	Paint
-	Rigid sphere
-	Rigid chain
-	Autofit rotamer
-	Change chickenwire so you can talk about new representation?
-	Change isolevel
+Your thoughts about video processing might be silly. Likely there will be an api in future, an api for
 
-TODO for CCP4SW
-	Video outlining features
-	Bar chart
-	Highlighting
-	"Easy stuff"
-		Other easy booleans eg crystal box?
-		Mutate / everything else sitting there in script
-		Display manager
-	Add terminal residue
-	Refinement
-	Back and forth
-	Loaded from a webpage
-	Get map from coot
+UI for AR will be huge. In principle some simple app doing something that a thousand apps already do could make a lot of money
+
+TODO
+	You ought to have deleter too
+	Get it on web and email to folks at conference
+	Refinement (make Paul happy)
+		force restraints
+	Highlighting working better
+	Protein painter can start from current chain
+	Ramachandran for painter (but then you need sequence)
+	Selection of rotamers
+
+TODO to make it independent of coot
+	Loaded from a webpage (ask Ivan)
+	Socket not needed
+	Undo ;_;
+	Correct PDB export
+		You are "just" modifying the positions of existing atoms, and...
+		adding a new chain
 	
 TODO during PhD
+	Everything else sitting there in script
+	If you want those metrics you probably have to get them from coot
+	Mutate
+	Coot tutorial including EM tutorial
+		Change map color
+		Unmodelled blobs
+		"Density fit analysis"
+		Merge
+			Urgh that's a ballache, have to make sure it works perfectly with coot
+		Fit loop
+		Refmac
+		Waters
+		Symmetry atoms
+	"undo"
+		Just coot undo, then get the result? Full refresh
+		Button on controller reserved
+		Flash or something
+		Hydrogen hiding really should be automatic
+	Get map from coot
+	Save
 	Complex-to-look-at 3D things
+		probe dots
 		Alt conformers; opacity?
 		Manually aligning tomograms?
 		Anisotropic atoms? There may be some interesting stuff here
 		NCS; Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
 		Those little webbings on Coot's amide planes
-	Coot tutorial including EM tutorial
 	Fix the atom deletion problems
-	Email Lovelace
-	Refinement
-		Grabbing two ends of a chain defines it as refinement area
-		Force restraints
-	Save
 	Everything in "panel demo"
 	Octree selection
-	"undo"
-		Just coot undo, then get the result? Full refresh
-		Button on controller reserved
-		Flash or something
 	easy: "hand distances"
 	Non-vr head movement sensetivity demo
-	probe dots
-	Selection of rotamers
-	"Carbon alpha mode"(/skeletonize?), often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
+	"Carbon alpha mode" (/skeletonize?), often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
 	NMR data should totally be in there, a set of springs
 	Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
 	ambient occlusion maps for all?
@@ -60,6 +65,7 @@ TODO during PhD
 		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
 
 Beyond
+	Back and forth
 	IMOD, an EM software with manual manipulation, might also benefit from VRification
 	Radio
 
@@ -82,7 +88,7 @@ VR Games to get maybe
 	Fun
 		Superhypercube
 		thumper
-		form
+		Hotdogs, horseshoes and hand grenades
 		violent stuff
 			superhot		
 			Sairento
@@ -96,8 +102,8 @@ Maya
 	reddit/bluecollarwomen
 	http://www.nts.org.uk/wildlifesurvey/
 	http://www.wildlifeinformation.co.uk/about_volunteering.php
-*/
 
+*/
 
 function init()
 {
@@ -117,6 +123,7 @@ function init()
 	initSocket();
 	socket.commandReactions["you aren't connected to coot"] = function()
 	{
+		// fakeCootConnectedInit()
 		nonCootConnectedInit()
 	}
 	socket.commandReactions["model"] = function(msg)
@@ -130,9 +137,18 @@ function init()
 		// maps.push(newMap);
 		// assemblage.add(newMap)
 	}
+	socket.commandReactions["mapFilename"] = function(msg)
+	{
+		loadFakeMap(msg.mapFilename)
+		// let newMap = Map( msg["dataString"], false );
+		// maps.push(newMap);
+		// assemblage.add(newMap)
+	}
 
 	initPanel();
 	initMiscPanelButtons();
+
+	initPdbLoader()
 	
 	initVisiBox();
 	assemblage.position.z = -0.9
@@ -181,21 +197,24 @@ function init()
 	{
 		initFileNavigator()
 
-		//maybe better if they were all cubes? Atoms are spheres.
-		//coot specific
-		// initRefiner()
+		// //maybe better if they were all cubes? Atoms are spheres.
+		// //coot specific
+		// // initRefiner()
+		// initAutoRotamer()
 
-		initEnvironmentDistances()
+		// initEnvironmentDistances()
 		
-		initAutoRotamer()
 		initRigidSphereMover()
 		initRigidChainMover()
-		initAtomLabeller()
-		// initMutator()
-		initAtomDeleter()
-		initResidueDeleter()
 		initProteinPainter()
-		initNewAtomRoster()
+
+		// initAtomLabeller()
+		initMutator()
+		// initAtomDeleter()
+		// initResidueDeleter()
+		// initNewAtomRoster()
+
+		// initRamachandran()
 
 		socket.send(JSON.stringify({command:"loadPolarAndAzimuthals"}))
 

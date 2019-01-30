@@ -1,7 +1,98 @@
-//the first init
-socket.on('OnConnect_Message', function(msg)
+function Ramachandran()
 {
-	function loadAllowedArray(k, allowedPhiPsiArray, loadingChecker)
+	let rama = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(TAU,TAU),new THREE.MeshBasicMaterial())
+	rama.scale.multiplyScalar(0.01)
+	let resolution = 72
+	rama.position.z = -0.3
+	
+	let ramaArray = new Uint8Array(sq(resolution)*3)
+	for(let i = 0; i < resolution; i++)
+	{
+		for(let j = 0; j < resolution; j++)
+		{
+			for(let k = 0; k < 3; k++)
+			{
+				ramaArray[(i*resolution+j)*3+k] = Math.floor(Math.random()*256)
+				if(i>resolution/2)
+					ramaArray[(i*resolution+j)*3+k] = 0
+			}
+		}
+	}
+	rama.material.map = new THREE.DataTexture( ramaArray, resolution, resolution, THREE.RGBFormat )
+	rama.material.map.needsUpdate = true
+
+	let point = new THREE.Mesh(new THREE.SphereGeometry( TAU/resolution*2 ));
+	rama.add(point)
+
+	return rama
+
+	//CLEARLY the better thing to do is have spheres of the size that ramachandran used
+
+	//donut stuff
+	if(0)
+	{
+		for(var i = 0; i <= verticesWide; i++)
+		{
+			let x = (i / verticesWide) * 2 - 1
+			for(var j = 0; j <= verticesWide; j++)
+			{
+				let y = (j / verticesWide) * 2 - 1
+
+				rama.geometry.vertices[ i * (verticesWide) + j ].copy(
+					foldingDonutPosition( x, y, 0 ) );
+			}
+		}
+		rama.geometry.computeFaceNormals();
+		rama.geometry.computeVertexNormals();
+		rama.geometry.verticesNeedUpdate = true;
+		rama.geometry.normalsNeedUpdate = true;
+
+		function positionOnCircle(arcLength, center, axis, angleZeroPosition )
+		{
+			var radiusVector = angleZeroPosition.clone();
+			radiusVector.sub( center );
+			
+			var circumference = TAU * radiusVector.length();
+			var angle = arcLength / circumference * TAU;
+			
+			var position = radiusVector.clone();
+			position.applyAxisAngle(axis,angle); //or minus that angle?
+			position.add(center);
+			
+			return position;
+		}
+
+		function foldingDonutPosition( x, y, genus )
+		{
+			var innerRoundedness = genus < 0.5 ? genus * 2 : 1;
+			var outerRoundedness = genus >= 0.5 ? (genus-0.5) * 2 : 0;
+			
+			var finalOuterRadius = 2 / TAU;
+			var virtualOuterRadius = outerRoundedness === 0 ? Number.MAX_SAFE_INTEGER : finalOuterRadius / outerRoundedness;
+			var virtualCircumferenceCenter = new THREE.Vector3(0,0,-virtualOuterRadius);
+			var circumferenceComponent = positionOnCircle( x, virtualCircumferenceCenter, yAxis, new THREE.Vector3() );
+			
+			var finalMinorRadius = finalOuterRadius / 3;
+			var virtualMinorRadius = innerRoundedness === 0 ? Number.MAX_SAFE_INTEGER : finalMinorRadius / innerRoundedness;
+			
+			var virtualTubeCenter = virtualCircumferenceCenter.clone();
+			virtualTubeCenter.sub(circumferenceComponent);
+			virtualTubeCenter.setLength( virtualMinorRadius );
+			virtualTubeCenter.add(circumferenceComponent);
+			
+			var tubeCenterTangent = circumferenceComponent.clone().sub(virtualTubeCenter);
+			tubeCenterTangent.cross(yAxis);
+			tubeCenterTangent.normalize();
+			
+			var finalPosition = positionOnCircle( y / (1+2*innerRoundedness), virtualTubeCenter, tubeCenterTangent, circumferenceComponent );
+			return finalPosition;
+		}
+	}
+}
+
+function weirdLoaderThatStartedWithSocket()
+{
+	function loadAllowedArray(k, allowedPhiPsiArray )
 	{
 		var tauAngle = 105 + k * 5;
 		new THREE.FileLoader().load(
@@ -41,22 +132,11 @@ socket.on('OnConnect_Message', function(msg)
 	{
 		allowedArray[i] = Array( 360 / 5 );
 		
-		loadAllowedArray(i, allowedArray[i], loadingChecker)
+		loadAllowedArray(i, allowedArray[i] )
 	}
-	
-	new THREE.FontLoader().load( "gentilis.js", 
-		function ( reponse )
-		{
-			gentilis = reponse;
-			loadingChecker.font = true;
-			loadingChecker.attemptInit();
-		},
-		function ( xhr ) {},
-		function ( xhr ) { console.error( "couldn't load font" ); }
-	);
-});
+}
 
-function initRamachandran(allowedArray)
+function oldInitRamachandran(allowedArray)
 {
 	function normalizedAngle(angle)
 	{
@@ -76,19 +156,19 @@ function initRamachandran(allowedArray)
 		//"hard sphere"? You mean this?
 		{
 			
-			for(var i = 0; i < .atoms.length; i++)
-			{
-				atoms[i].updateMatrixWorld();
-				for(var j = 0; j < .atoms.length; j++)
-				{
-					atoms[j].updateMatrixWorld();
-					if( .atoms[i].getWorldPosition().distanceTo( .atoms[j].getWorldPosition() ) < atomRadii[ .atoms[i].element] + atomRadii[ .atoms[i].element] )
-					{
-						return 0;
-					}
-				}
-			}
-			return 1;
+			// for(var i = 0; i < .atoms.length; i++)
+			// {
+			// 	atoms[i].updateMatrixWorld();
+			// 	for(var j = 0; j < .atoms.length; j++)
+			// 	{
+			// 		atoms[j].updateMatrixWorld();
+			// 		if( .atoms[i].getWorldPosition().distanceTo( .atoms[j].getWorldPosition() ) < atomRadii[ .atoms[i].element] + atomRadii[ .atoms[i].element] )
+			// 		{
+			// 			return 0;
+			// 		}
+			// 	}
+			// }
+			// return 1;
 		}
 		
 		{
@@ -242,7 +322,7 @@ function initRamachandran(allowedArray)
 	ramachandran.repositionIndicatorAndReturnAllowability = function(tau, phi, psi)
 	{
 		this.indicator.position.copy( foldingDonutPosition(
-				phi / TAU * 2, psi / TAU * 2, this.genus
+			phi / TAU * 2, psi / TAU * 2, this.genus
 		));
 		
 		var visibleIndex = Math.round( ( ( tau * 360 / TAU ) - 105 ) / 5 );
