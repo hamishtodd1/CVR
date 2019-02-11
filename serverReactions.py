@@ -7,31 +7,41 @@ from os import listdir
 from coot import *
 # import json
 
-pdbFileString = "/home/htodd/CVR/modelsAndMaps/drugIsInteresting.pdb";
-handle_read_draw_molecule_with_recentre(pdbFileString, 1)
+# pdbFileString = "/home/htodd/CVR/modelsAndMaps/drugIsInteresting.pdb";
+# handle_read_draw_molecule_with_recentre(pdbFileString, 1)
 
 # mtzFileString = "/home/htodd/CVR/data/tutorial.mtz"
-# make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
+mtzFileString = "/home/htodd/CVR/modelsAndMaps/jp.mtz"
+make_and_draw_map( mtzFileString, "FWT", "PHWT", "", 0, 0)
 # mapFileString = "/home/htodd/CVR/data/drugIsInteresting.map";
 # handle_read_ccp4_map( mapFileString, 0 ) #second arg is whether it's a difference map
 
-def connect(self):
+self = ""
+
+import base64
+
+def connect(selfValue):
+	global self
+	self = selfValue
+
 	modelImol = 0
 	modelMsg = {'command':"model"}
 	modelMsg['modelDataString'] = str( get_bonds_representation(modelImol) ) #does it need to be in a string? environment distances didn't need to be
 	self.write_message( modelMsg )
 
-	mapMsg = {'command':"mapFilename",'mapFilename':'drugIsInteresting.map'}
-	self.write_message( mapMsg )
-
-	# mapMsg = {'command':"map"}
-	# temporaryFileName = "export.map" #Paul could speed this up
-	# export_map(imol_refinement_map(), temporaryFileName)
-	# temporaryFile = open(temporaryFileName)
-	# mapMsg['dataString'] = temporaryFile
+	# mapMsg = {'command':"mapFilename",'mapFilename':'drugIsInteresting.map'}
 	# self.write_message( mapMsg )
 
-def command(self, msg):
+	nameOfTemporaryFile = "export.map"
+	export_map(imol_refinement_map(), nameOfTemporaryFile)
+	mapFile = open( nameOfTemporaryFile )
+	mapString = mapFile.read()
+	mapFile.close()
+	encoded = base64.b64encode(mapString)
+	msg = {'command':"map", 'dataString':encoded}
+	self.write_message( msg )
+
+def command(msg):
 	if msg["command"] == "deleteAtom":
 		delete_atom(msg["imol"],msg["chainId"],msg["resNo"],msg["insertionCode"],msg["name"],msg["altloc"]);
 		print("warning, this used to say self.write_message(msgContainer)")
@@ -99,38 +109,44 @@ def command(self, msg):
 
 	#-------------Refinement stuff
 	elif msg["command"] == "commenceRefinement":
+		print("commencing")
 		startedStatus = refine_residues_py(msg["imol"], msg["residues"] )
 
 		if startedStatus == False:
 			print("disallowed refinement???")
 
 	elif msg["command"] == "ceaseRefinement":
-		sendIntermediateRepresentation(self)
+		sendIntermediateRepresentation()
 		accept_regularizement()
 
-	elif msg["command"] == "forceRestraint":
-		atomSpec = [msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"]]
-		drag_intermediate_atom_py(atomSpec,msg["newPosition"])
+	# elif msg["command"] == "forceRestraint":
+	# 	atomSpec = [msg["imol"], msg["chainId"], msg["resNo"], msg["insertionCode"], msg["name"], msg["altloc"]]
+	# 	#ohhh but probably want to clear other created restraints
+	# 	drag_intermediate_atom_py(atomSpec,msg["newPosition"])
 
 	#------------No more refinement stuff
 	else:
 		print('received unrecognized message:', msg, msg["command"])
 
-def sendIntermediateRepresentation(self):
+def sendIntermediateRepresentation():
+	print( "getting intermediate represenation" )
 	intermediateRepresentation = get_intermediate_atoms_bonds_representation()
-	print("getting intermediate represenation")
 	if intermediateRepresentation != False:
 		print("and sending it too")
 		returnMsg = {
-			"command":"intermediateRepresentation",
-			"imol":0, #hem hem
-			"intermediateRepresentation":intermediateRepresentation
+			"command":"intermediateAtoms",
+			"imol":0, #TODO
+			"intermediateAtoms":intermediateRepresentation
 		}
 		self.write_message(returnMsg)
 	else:
 		print("but not sending it")
 
-#set_python_draw_function( sendIntermediateRepresentation(self) ) #
+def boog():
+	print("OOOOOOOOOOOOOOOOOOOOOOOOOO")
+set_python_draw_function( "boog()" )
+
+# set_python_draw_function( "sendIntermediateRepresentation()" )
 
 def getStats(imol):
 	# cis_peptides()

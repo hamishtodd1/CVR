@@ -4,6 +4,8 @@ import tornado.websocket
 
 from os import listdir
 
+cvrDirectoryString = "."
+
 try:
 	coot_version()
 except NameError:
@@ -11,6 +13,7 @@ except NameError:
 	print("Not running in coot")
 	ip = "localhost"
 else:
+	cvrDirectoryString = "CVR"
 	runningInCoot = True
 	print("Running in coot")
 	import imp
@@ -38,16 +41,12 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 		if msg["command"] == "pdbAndMapFilenames":
 			returnMsg = {"command":"pdbAndMapFilenames"}
-			returnMsg["filenames"] = listdir("./modelsAndMaps")
+			returnMsg["filenames"] = listdir(cvrDirectoryString + "/modelsAndMaps")
 			self.write_message(returnMsg)
 
 		if msg["command"] == "loadPolarAndAzimuthals":
 
-			src = "settings/"
-			if runningInCoot == True:
-				src = "CVR/settings/" #hacky
-
-			file = open( src + "polarAndAzimuthals.txt","r" )				
+			file = open( cvrDirectoryString + "/settings/" + "polarAndAzimuthals.txt","r" )				
 			returnMsg = {"command":"polarAndAzimuthals"}
 			returnMsg["polarAndAzimuthals"] = file.read()
 			file.close()
@@ -55,16 +54,12 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 		if msg["command"] == "savePolarAndAzimuthals":
 
-			src = "settings/"
-			if runningInCoot == True:
-				src = "CVR/settings/" #hacky
-
-			file = open( src + "polarAndAzimuthals.txt","w" )
+			file = open( vrDirectoryString + "/settings/" + "polarAndAzimuthals.txt","w" )
 			file.write( str(msg["polarAndAzimuthals"]) )
 			file.close()
 
 		elif runningInCoot == True:
-			serverReactions.command(self, msg)
+			serverReactions.command(msg)
 
 	def on_close(self):
 		print('Closed connection')
