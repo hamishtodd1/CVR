@@ -54,7 +54,7 @@ class wsHandler(tornado.websocket.WebSocketHandler):
 
 		if msg["command"] == "savePolarAndAzimuthals":
 
-			file = open( vrDirectoryString + "/settings/" + "polarAndAzimuthals.txt","w" )
+			file = open( cvrDirectoryString + "/settings/" + "polarAndAzimuthals.txt","w" )
 			file.write( str(msg["polarAndAzimuthals"]) )
 			file.close()
 

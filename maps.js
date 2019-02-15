@@ -61,7 +61,11 @@ function initMapCreationSystem()
 			{
 				let center = new THREE.Vector3(0,0,-1 )
 				visiBox.localToWorld(center)
-				// center.setLength((visiBox.scale.z + panel.scale.z )/2)
+				if(true)
+				{
+					//in the middle of the box, rather than the front
+					center.setLength((visiBox.scale.z + panel.scale.z )/2)
+				}
 				assemblage.updateMatrixWorld();
 				assemblage.worldToLocal( center );
 

@@ -29,22 +29,33 @@
 
 function initRefiner()
 {
-	// startRefinement = function()
-	// {
-	// 	var dummyResidues = [['A',88,''],['A',89,''],['A',90,'']]
-	// 	var msg = {
-	// 		command: "commenceRefinement",
-	// 		imol: 0, //TODO CONTINGENT!!!!
-	// 		residues: dummyResidues
-	// 	};
-	// 	socket.send(JSON.stringify(msg));
-	// }
+	startRefinement = function()
+	{
+		var dummyResidues = [['A',88,''],['A',89,''],['A',90,'']]
+		var msg = {
+			command: "commenceRefinement",
+			imol: 0, //TODO
+			residues: dummyResidues
+		};
+		socket.send(JSON.stringify(msg));
+	}
 	stopRefinement = function()
 	{
 		var msg = { command: "ceaseRefinement" };
 		socket.send(JSON.stringify(msg));
 		//would be nice to display stats
 	}
+
+	console.log("commencing refinement")
+	startRefinement()
+
+	socket.commandReactions.intermediateAtoms = function(msg)
+	{
+		console.log("got intermediate atoms! will be stopping", msg)
+		stopRefinement()
+	}
+
+	return
 
 	var autoRefiner = new THREE.Object3D();
 	

@@ -28,6 +28,10 @@ function loadMap(filename)
 
 function nonCootConnectedInit()
 {
+	loadMap("jp.map")
+	assemblage.position.set(-0.41,-1,0.46) //TODO
+	assemblage.scale.setScalar(0.02)
+
 	//TODO until there's files in there, don't initialize and just have a sign
 
 	let dragTextBoxSign = makeTextSign("drop to read file")

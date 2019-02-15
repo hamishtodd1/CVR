@@ -130,19 +130,26 @@ function init()
 	{
 		makeModelFromCootString( msg.modelDataString );
 	}
+	function base64ToArrayBuffer(base64String) 
+	{
+		var binary_string = atob(base64String);
+		var len = binary_string.length;
+		var bytes = new Uint8Array( len );
+		for (var i = 0; i < len; i++)
+		{
+			bytes[i] = binary_string.charCodeAt(i);
+		}
+		return bytes.buffer;
+	}
 	socket.commandReactions["map"] = function(msg)
 	{
-		console.error("do something here")
-		// let newMap = Map( msg["dataString"], false );
-		// maps.push(newMap);
-		// assemblage.add(newMap)
+		let myArrayBuffer = base64ToArrayBuffer( msg["dataString"] )
+		let newMap = Map( myArrayBuffer, false );
 	}
 	socket.commandReactions["mapFilename"] = function(msg)
 	{
-		loadFakeMap(msg.mapFilename)
+		loadMap(msg.mapFilename)
 		// let newMap = Map( msg["dataString"], false );
-		// maps.push(newMap);
-		// assemblage.add(newMap)
 	}
 
 	initPanel();
@@ -203,6 +210,8 @@ function init()
 		// initAutoRotamer()
 
 		// initEnvironmentDistances()
+
+		// initRefiner()
 		
 		initRigidSphereMover()
 		initRigidChainMover()
