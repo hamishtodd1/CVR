@@ -77,55 +77,40 @@ function initProteinPainter()
 	//different segments. Do not screw around lightly, their positions are expected to be where they currently are
 	{
 		var amidePdbRead = {
-			elements:["C","O","C","N","H","C"],
+			elements:["C","O","C","N","C"],
 			positions:[
 				new THREE.Vector3(0.0,		0.0,0.0),
 				new THREE.Vector3(HS3*2,	0.0,0.0),
 				new THREE.Vector3(HS3,		0.5,0.0),
 				new THREE.Vector3(HS3,		1.5,0.0),
-				new THREE.Vector3(0.0,		2.0,0.0),
 				new THREE.Vector3(HS3*2,	2.0,0.0),
 			]
 		}
 
 		var nTerminusPdbRead = {
-			elements:["N","H","H",
-				"C","H",
-				"C","H","H","H"],
+			elements:["N", "C", "C"],
 			positions:[
 				new THREE.Vector3(0.0,	-0.5, -HS3),
-				new THREE.Vector3(HS3,	-0.75,-HS3*1.5),
-				new THREE.Vector3(-HS3,	-0.75,-HS3*1.5),
-
 				new THREE.Vector3(0.0,	0.0,	0.0),
-				new THREE.Vector3(-HS3,	0.5, 	0.0),
-
-				new THREE.Vector3(0.0,	-0.5,	HS3),
-				new THREE.Vector3(HS3,	-1.0,	HS3),
-				new THREE.Vector3(-HS3,	-1.0,	HS3),
-				new THREE.Vector3(0.0,	0.0,	HS3*2.0),
+				new THREE.Vector3(0.0,	-0.5,	HS3)
 			]
 		}
 		var cTerminusPdbRead = {
-			elements:["C","O","C","O","H"],
+			elements:["C","O","C","O"],
 			positions:[
 				new THREE.Vector3(0.0,	0.0,0.0),
 				new THREE.Vector3(HS3*2,0.0,0.0),
 				new THREE.Vector3(HS3,	0.5,0.0),
-				new THREE.Vector3(HS3,	1.5,0.0),
-				new THREE.Vector3(HS3,	2.5,0.0),
+				new THREE.Vector3(HS3,	1.5,0.0)
 			]
 		}
 
 		var sideChainAndHydrogenPdbRead = {
 			elements:[
-				"H","C","H","H","H","C"],
+				"H","C","C"],
 			positions:[
 				new THREE.Vector3(-HS3,	0.5, 	0.0),
 				new THREE.Vector3(0.0,	-0.5,	HS3),
-				new THREE.Vector3(HS3,	-1.0,	HS3),
-				new THREE.Vector3(-HS3,	-1.0,	HS3),
-				new THREE.Vector3(0.0,	0.0,	HS3*2.0),
 				new THREE.Vector3(0.0,	0.0,	0.0),
 			]
 		}
@@ -152,9 +137,9 @@ function initProteinPainter()
 		{
 			amideAtoms.push( new Atom( amidePdbRead.elements[i], amidePdbRead.positions[i].clone() ) );
 		}
-		var bondData = [[[[],[],1,0,2],[[],[],1,2,3]],[],[[[],[],1,1,2]],[[[],[],1,3,4],[[],[],1,3,5]],[],[],[],[],[],[]];
-		changeBondBetweenAtomsToDouble(bondData, 1,2);
-		var amide = makeMoleculeMesh( amideAtoms, false,bondData );
+		// var bondData = [[[[],[],1,0,2],[[],[],1,2,3]],[],[[[],[],1,1,2]],[[[],[],1,3,4],[[],[],1,3,5]],[],[],[],[],[],[]];
+		// changeBondBetweenAtomsToDouble(bondData, 1,2);
+		var amide = makeMoleculeMesh( amideAtoms, false );
 		var amideDiagonalLength = amide.atoms[ amide.atoms.length - 1 ].position.length();
 
 		var cTerminusAtoms = [];
@@ -162,9 +147,9 @@ function initProteinPainter()
 		{
 			cTerminusAtoms.push( new Atom( cTerminusPdbRead.elements[i], cTerminusPdbRead.positions[i].clone() ) );
 		}
-		var bondData = [[[[],[],1,0,2],[[],[],1,2,3]],[],[[[],[],1,1,2],[[],[],1,3,4]],[],[],[],[],[],[],[]];
-		changeBondBetweenAtomsToDouble(bondData, 1,2);
-		var cTerminus = makeMoleculeMesh( cTerminusAtoms, false, bondData );	 	
+		// var bondData = [[[[],[],1,0,2],[[],[],1,2,3]],[],[[[],[],1,1,2],[[],[],1,3,4]],[],[],[],[],[],[],[]];
+		// changeBondBetweenAtomsToDouble(bondData, 1,2);
+		var cTerminus = makeMoleculeMesh( cTerminusAtoms, false );	 	
 
 		var sideChainAndHydrogenAtoms = [];
 		for(var i = 0; i < sideChainAndHydrogenPdbRead.elements.length; i++)
@@ -224,24 +209,29 @@ function initProteinPainter()
 		{
 			if( amides.length === 0 )
 			{
-				//TODO you might be wanting to continue the chain
-				let closestAtom = getClosestAtom()
-				//find the cAlpha
-				recursivelySearchBondPartners(atom,function(atom)
+				if( Math.abs(assemblage.scale.x - 0.026) > 0.01 )
 				{
-					return atom.name === " CB "
-				})
-
-				function recursivelySearchBondPartners(atom,conditionalFunction)
-				{
-					for(let i = 0; i < atom.bondPartners.length; i++)
-					{
-						if( conditionalFunction(atom.bondPartners[i]) )
-						{
-							return atom.bondPartners[i]
-						}
-					}
+					console.log("may want it smaller/bigger")
 				}
+
+				//TODO you might be wanting to continue the chain
+				// let closestAtom = getClosestAtom()
+				//find the cAlpha
+				// recursivelySearchBondPartners(atom,function(atom)
+				// {
+				// 	return atom.name === " CB "
+				// })
+
+				// function recursivelySearchBondPartners(atom,conditionalFunction)
+				// {
+				// 	for(let i = 0; i < atom.bondPartners.length; i++)
+				// 	{
+				// 		if( conditionalFunction(atom.bondPartners[i]) )
+				// 		{
+				// 			return atom.bondPartners[i]
+				// 		}
+				// 	}
+				// }
 
 				let newAmide = createActiveAmideAtPosition(handPositionInAssemblage)
 				newAmide.add(nTerminus.clone())
@@ -251,8 +241,7 @@ function initProteinPainter()
 			let prevCAlphaToHand = handPositionInAssemblage.clone().sub(activeAmide.position)
 			let lengthOnAmide = prevCAlphaToHand.dot(prevCAlphaAcrossAmide)
 
-			if( lengthOnAmide > amideDiagonalLength / 2 
-				&& amides.length < 2 )
+			if( lengthOnAmide > amideDiagonalLength * 0.75 ) // && amides.length < 2 )
 			{
 				let newAmidePosition = nextCAlpha.clone();
 				activeAmide.updateMatrixWorld();
@@ -291,11 +280,18 @@ function initProteinPainter()
 
 			let toolQuaternionInAssemblage = proteinPainter.quaternion.clone().premultiply( proteinPainter.parent.quaternion )
 			toolQuaternionInAssemblage.premultiply( assemblage.quaternion.getInverse() )
+			if(assemblage.parent !== scene)
+			{
+				toolQuaternionInAssemblage.premultiply( assemblage.parent.quaternion.getInverse() )
+			}
 			activeAmide.quaternion.copy(toolQuaternionInAssemblage)
+
+			// .setFromRotationMatrix
 
 			if(activeSideChainAndHydrogen)
 			{
-				//correcting to tetrahedral angle
+				let correctToTetrahedralAngle = false
+				if(correctToTetrahedralAngle)
 				{
 					//not got an intuitive explanation for why this feels best, but wouldn't for that either
 					//was thinking of doing it by saying what quaternion is the closest?
@@ -306,7 +302,7 @@ function initProteinPainter()
 					let currentAngle = cBeta.angleTo(previousAmideNitrogen)
 					let axis = previousAmideNitrogen.clone().cross(cBeta).normalize()
 					let deltaQ = new THREE.Quaternion().setFromAxisAngle(axis,TETRAHEDRAL_ANGLE-currentAngle)
-					activeAmide.quaternion.multiply(deltaQ)
+					activeAmide.quaternion.multiply( deltaQ )
 				}
 
 				//repelling

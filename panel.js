@@ -274,6 +274,7 @@ function initPanel()
 		{
 			let outlineThickness = 0.2;
 			menu = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth+outlineThickness*2,totalElementsHeight+outlineThickness*2), new THREE.MeshBasicMaterial({color:0x262626}));
+			menu.textMeshes = textMeshes
 			menus.push(menu)
 			menu.matrixAutoUpdate = false;
 			menu.parentController = null;

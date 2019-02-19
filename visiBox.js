@@ -1,9 +1,3 @@
-/*
-	edges shouldn't do the silly scaling thing
-	arguably corner movement should be horizontally mirrored
-	maybe it should be frustum shaped?
-*/
-
 function initVisiBox()
 {
 	visiBox = new THREE.LineSegments(new THREE.Geometry(),new THREE.MeshLambertMaterial({color:0x333333}));
@@ -14,7 +8,7 @@ function initVisiBox()
 
 	visiBox.scale.x = 0.23
 	visiBox.scale.y = 0.17
-	visiBox.scale.z = 0.33
+	visiBox.scale.z = 0.3
 	visiBox.rotation.x = -0.48
 
 	let d = 99999

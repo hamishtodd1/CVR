@@ -7,22 +7,29 @@ var typeColors = {
 	map_pos: 0x298029,
 	map_neg: 0x8B2E2E,
 }
- 
-const blockRadius = 7; //yo
 
-var centerOffsets = [];
-for(var i = -1; i <= 1; i++) {
-for(var j = -1; j <= 1; j++) {
-for(var k = -1; k <= 1; k++) {
-	centerOffsets.push([ i*blockRadius*2, j*blockRadius*2, k*blockRadius*2]);
-}
-}
-}
-centerOffsets.sort(function (vec1,vec2)
+const defaultBlockRadius = 7;
+const megaContouringBlockRadius = 30;
+let blockRadius = defaultBlockRadius;
+
+var centerOffsets = null;
+function generateCenterOffsets()
 {
-	return vecLengthSq(vec1) - vecLengthSq(vec2);
-});
-// centerOffsets = [[0,0,0]]
+	centerOffsets = []
+	for(var i = -1; i <= 1; i++) {
+	for(var j = -1; j <= 1; j++) {
+	for(var k = -1; k <= 1; k++) {
+		centerOffsets.push([ i*blockRadius*2, j*blockRadius*2, k*blockRadius*2]);
+	}
+	}
+	}
+	centerOffsets.sort(function (vec1,vec2)
+	{
+		return vecLengthSq(vec1) - vecLengthSq(vec2);
+	});
+}
+generateCenterOffsets()
+
 var centerOnGridsToBeSent = [];
 
 function logExtremes(array,indexToInspect)
@@ -46,6 +53,12 @@ function logExtremes(array,indexToInspect)
 onmessage = function(event)
 {
 	var msg = event.data;
+
+	if(event.data.toggleMegaContouring )
+	{
+		blockRadius = (blockRadius === defaultBlockRadius)?megaContouringBlockRadius:defaultBlockRadius;
+		generateCenterOffsets()
+	}
 
 	if(mapMirrors[ msg.mapIndex ] === undefined)
 	{
