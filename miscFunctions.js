@@ -385,3 +385,53 @@ function removeAndRecursivelyDispose(obj)
 	if (obj.geometry) { obj.geometry.dispose(); }
 	if (obj.material) { obj.material.dispose(); }
 }
+
+function tetrahedronTop(P1,P2,P3, r1,r2,r3)
+{
+	P3.sub(P1);
+	P2.sub(P1);
+	var cos_P3_P2_angle = P3.dot(P2)/P2.length()/P3.length();
+	var sin_P3_P2_angle = Math.sqrt(1-cos_P3_P2_angle*cos_P3_P2_angle);
+	
+	var P1_t = new THREE.Vector3(0,0,0);
+	var P2_t = new THREE.Vector3(P2.length(),0,0);
+	var P3_t = new THREE.Vector3(P3.length() * cos_P3_P2_angle, P3.length() * sin_P3_P2_angle,0);
+	
+	var cp_t = new THREE.Vector3(0,0,0);
+	cp_t.x = ( r1*r1 - r2*r2 + P2_t.x * P2_t.x ) / ( 2 * P2_t.x );
+	cp_t.y = ( r1*r1 - r3*r3 + P3_t.x * P3_t.x + P3_t.y * P3_t.y ) / ( P3_t.y * 2 ) - ( P3_t.x / P3_t.y ) * cp_t.x;
+	if(r1*r1 - cp_t.x*cp_t.x - cp_t.y*cp_t.y < 0)
+	{
+		return false;			
+	}
+	cp_t.z = Math.sqrt(r1*r1 - cp_t.x*cp_t.x - cp_t.y*cp_t.y);
+	
+	var cp = new THREE.Vector3(0,0,0);
+	
+	var x_direction = P2.clone();
+	x_direction.normalize();
+	x_direction.multiplyScalar(cp_t.x);
+	cp.add(x_direction);
+	
+	var y_direction = new THREE.Vector3();
+	y_direction.crossVectors(z_direction,x_direction);
+	y_direction.normalize();
+	y_direction.multiplyScalar(cp_t.y);
+	cp.add(y_direction);		
+	cp.add(P1);
+
+	var z_direction = new THREE.Vector3();
+	z_direction.crossVectors(P2,P3);
+	z_direction.normalize(); 
+	z_direction.multiplyScalar(cp_t.z);
+	let solutions = [
+		cp.clone().add(z_direction),
+		cp.clone().add(z_direction.negate())
+		]
+	cp.add(z_direction);
+	
+	P2.add(P1);
+	P3.add(P1);
+	
+	return solutions
+}

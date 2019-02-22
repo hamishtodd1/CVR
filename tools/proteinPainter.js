@@ -1,6 +1,5 @@
 /*
 	TODO (probably, might need to think more)
-		Tau dial
 		When you want to lay down a new one, read the atoms near your hand.
 			Should be able to grab any residue. It breaks off
 			Grab a terminal residue and you start working out of that
@@ -14,11 +13,11 @@
 		Integrate
 			needs to be able to be moved by rigid mover
 			exported to pdb
+		Tau dial?
+
+	Might be significantly better with carbon atom points
 	
 	Rama
-		Lynne data
-			Tau is set to 110, but if Lynne's data is to be believed it can do 105 and 115 too
-		There are only two degrees of freedom, phi and psi
 		"abstract over" the set of all rotamers:
 			You get a circle of psi's of different colors given the current phi, abstracting over position of next Calpha
 			You get a circle of phi's of different colors given the current psi, abstracting over position of next Calpha
@@ -162,6 +161,7 @@ function initProteinPainter()
 		var sideChainAndHydrogenActualLeft = sideChainAndHydrogenActualSpindle.clone().cross(sideChainAndHydrogenPdbRead.positions[0]).cross(sideChainAndHydrogenActualSpindle).normalize();
 		var cBeta = amidePdbRead.positions[2].clone();
 		var nextCAlpha = amidePdbRead.positions[amidePdbRead.positions.length-1].clone();
+		var nextCAlphaAngleToCBetaSpindle = nextCAlpha.angleTo(cBeta)
 	}
 
 	let amides = [];
@@ -176,12 +176,8 @@ function initProteinPainter()
 		proteinPainter.add(placementIndicatorMesh)
 		placementIndicatorMesh.update = function()
 		{
+			this.scale.setScalar(getAngstrom() )
 			this.visible = ( handControllers.indexOf(proteinPainter.parent) !== -1 && amides.length === 0 )
-
-			if(this.visible)
-			{
-				this.scale.setScalar(getAngstrom() )
-			}
 		}
 		objectsToBeUpdated.push(placementIndicatorMesh)
 	}
@@ -196,6 +192,31 @@ function initProteinPainter()
 		assemblage.add(newAmide)
 
 		return newAmide;
+	}
+
+	{
+		var fakeAmide = amide.clone()
+		fakeAmide.material = new THREE.MeshBasicMaterial()
+		assemblage.add(fakeAmide)
+		fakeAmide.material.vertexColors = 0
+
+		// var dottedLine = new THREE.Mesh(
+		// 	DottedLineGeometry(99,0.002),
+		// 	new THREE.MeshLambertMaterial());
+		// assemblage.add(dottedLine)
+	}
+
+	function planeAngle(origin,z,nonProjectedX,nonProjectedP)
+	{
+		//hopefully not collinear
+		let n = z.clone().sub(origin).normalize()
+		let plane = new THREE.Plane( n, 0 )
+		let x = plane.projectPoint(nonProjectedX,new THREE.Vector3()).normalize()
+		let y = n.clone().cross(x)
+
+		let p = plane.projectPoint(nonProjectedP,new THREE.Vector3())
+		let p2D = new THREE.Vector2(p.dot(x), p.dot(y))
+		return p2D.angle()
 	}
 
 	let activeSideChainAndHydrogen = null;
@@ -278,6 +299,11 @@ function initProteinPainter()
 			// 	}
 			// }
 
+
+
+
+
+
 			let toolQuaternionInAssemblage = proteinPainter.quaternion.clone().premultiply( proteinPainter.parent.quaternion )
 			toolQuaternionInAssemblage.premultiply( assemblage.quaternion.getInverse() )
 			if(assemblage.parent !== scene)
@@ -290,6 +316,98 @@ function initProteinPainter()
 
 			if(activeSideChainAndHydrogen)
 			{
+
+
+				//it is IK, there can be 2 solutions, you need to look at what it's closest to
+				//could get equation for nextCAlpha in terms of phi and psi.
+				//divide space into cones. If you're over the donut
+				//how to switch between
+				if(dottedLine !== undefined)
+				{
+					dottedLine.position.copy(activeAmide.position)
+					dottedLine.visible = (handControllers[0].grippingSide && handControllers[1].grippingSide);
+
+					var direction = handControllers[1].position.clone().sub(handControllers[0].position).normalize();
+					
+					var newY = direction.clone().multiplyScalar(getAngstrom());
+					redirectCylinder(dottedLine, handControllers[0].position, newY)
+				}
+
+				let prevNitrogenDirection = cBeta.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion).normalize()
+				fakeAmide.position.copy(activeAmide.position)
+				let axis = nextCAlpha.clone().cross(prevNitrogenDirection).normalize()
+				let angleToCBetaSpindle = prevCAlphaToHand.angleTo(prevCAlphaAcrossAmide)
+				if( angleToCBetaSpindle < nextCAlphaAngleToCBetaSpindle )
+				{
+					//"just" put the new carbon alpha where the hand is
+					//then there are two options for carbon beta
+					//choose the one with the closer quaternion... or the better rama?
+					//main cool thing this could do in comparison with coot:	
+					//coot you just give you what you asked for, whereas with this you can maybe see that different hypotheses are incompatible with rama data?
+					//we're hoping it will be easy to switch between the two. Jesus this is hard
+						//maybe have some silly hack taking rotation into account if it isn't
+						//some kind of "momentum" may be needed, urgh
+
+					let activeAmideToNextCAlpha = prevCAlphaToHand.clone().setLength(nextCAlpha.length())
+
+					let prevNitrogen = prevNitrogenDirection.clone().add(activeAmide.position)
+					let cBetaDist = cBeta.length()
+					let nDist = cBeta.length() //not exactly
+					let cBetaToNextCAlphaDist = cBeta.distanceTo(nextCAlpha)
+					let prevNitrogenToCBetaDistance = Math.sqrt( sq(cBetaDist) + sq(nDist) + 2 * nDist * cBetaDist * Math.cos(TETRAHEDRAL_ANGLE ) )
+
+					let possibleCBetas = tetrahedronTop(
+						new THREE.Vector3(),
+						activeAmideToNextCAlpha,
+						prevNitrogenDirection,
+						cBetaDist,cBetaToNextCAlphaDist,prevNitrogenToCBetaDistance)
+
+					let dists = [0,0]
+					for(let i = 0; i < 2; i++)
+					{
+						//untested
+						// let phi = planeAngle(prevNitrogenDirection,zeroVector,prevCBeta,possibleCBetas[i])
+						// let psi = planeAngle(prevNitrogenDirection,zeroVector,prevCBeta,possibleCBetas[i])
+						// let ramaScore = 
+						//note some phi are impossible
+
+						let oldCBeta = cBeta.clone().applyQuaternion(activeAmide.quaternion)
+						dists[i] = possibleCBetas[i].distanceTo(oldCBeta)
+					}
+					let newCBeta = possibleCBetas[dists[0]<dists[1]?0:1]
+
+					activeAmide.quaternion.setFromUnitVectors(cBeta.clone().normalize(),newCBeta.clone().normalize())
+					let partwayNextCAlpha = nextCAlpha.clone().applyQuaternion(activeAmide.quaternion)
+
+					let psiQuaternion = new THREE.Quaternion().setFromAxisAngle(cBeta.clone().normalize(), psi)
+					activeAmide.quaternion.multiply( psiQuaternion )
+				}
+				// else
+				// {
+				// 	let prevNitrogenDirection = cBeta.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion).normalize()
+
+				// 	if( prevCAlphaToHand.angleTo(prevNitrogenDirection) < TETRAHEDRAL_ANGLE )
+				// 	{
+				// 		//angle needs to be increased
+				// 	}
+
+				// 	//only one solution, send in the direction of cBeta spindle
+				// 	if( angleToCBetaSpindle > nextCAlphaAngleToCBetaSpindle )
+				// 	{
+						
+				// 	}
+
+				// 	let axis = nextCAlpha.clone().cross(prevNitrogenDirection).normalize()
+				// 	if(  )
+				// 	{
+
+				// 	}
+				// }
+
+
+
+
+
 				let correctToTetrahedralAngle = false
 				if(correctToTetrahedralAngle)
 				{
@@ -306,10 +424,9 @@ function initProteinPainter()
 				}
 
 				//repelling
-				let nitrogenDirection = cBeta.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion).normalize()
 				let cBetaDirection = cBeta.clone().applyQuaternion(activeAmide.quaternion).normalize()
 
-				let intendedSpindle = nitrogenDirection.clone().lerp(cBetaDirection,0.5).normalize().negate();
+				let intendedSpindle = prevNitrogenDirection.clone().lerp(cBetaDirection,0.5).normalize().negate();
 				let intendedLeft = cBetaDirection.clone().cross(intendedSpindle).normalize();
 
 				activeSideChainAndHydrogen.quaternion.setFromUnitVectors( sideChainAndHydrogenActualSpindle,intendedSpindle )
