@@ -270,7 +270,7 @@ THREE.Quaternion.prototype.distanceTo = function(q2)
 }
 THREE.Quaternion.prototype.getAxisWithAngleAsLength = function()
 {
-	var scaleFactor = Math.sqrt(1-qw*qw);
+	var scaleFactor = Math.sqrt(1-this.w*this.w);
 	var axis = new THREE.Vector3(
 		this.x / scaleFactor,
 		this.y / scaleFactor,
@@ -402,33 +402,33 @@ function tetrahedronTop(P1,P2,P3, r1,r2,r3)
 	cp_t.y = ( r1*r1 - r3*r3 + P3_t.x * P3_t.x + P3_t.y * P3_t.y ) / ( P3_t.y * 2 ) - ( P3_t.x / P3_t.y ) * cp_t.x;
 	if(r1*r1 - cp_t.x*cp_t.x - cp_t.y*cp_t.y < 0)
 	{
-		return false;			
+		return false;
 	}
 	cp_t.z = Math.sqrt(r1*r1 - cp_t.x*cp_t.x - cp_t.y*cp_t.y);
 	
-	var cp = new THREE.Vector3(0,0,0);
+	let solutions = [new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,0)]
+	
+	var z_direction = new THREE.Vector3();
+	z_direction.crossVectors(P2,P3);
+	z_direction.normalize(); 
+	z_direction.multiplyScalar(cp_t.z);
+	solutions[0].add(z_direction)
+	solutions[1].sub(z_direction)
 	
 	var x_direction = P2.clone();
 	x_direction.normalize();
 	x_direction.multiplyScalar(cp_t.x);
-	cp.add(x_direction);
+	solutions[0].add(x_direction);
+	solutions[1].add(x_direction);
 	
 	var y_direction = new THREE.Vector3();
 	y_direction.crossVectors(z_direction,x_direction);
 	y_direction.normalize();
 	y_direction.multiplyScalar(cp_t.y);
-	cp.add(y_direction);		
-	cp.add(P1);
-
-	var z_direction = new THREE.Vector3();
-	z_direction.crossVectors(P2,P3);
-	z_direction.normalize(); 
-	z_direction.multiplyScalar(cp_t.z);
-	let solutions = [
-		cp.clone().add(z_direction),
-		cp.clone().add(z_direction.negate())
-		]
-	cp.add(z_direction);
+	solutions[0].add(y_direction);		
+	solutions[1].add(y_direction);		
+	solutions[0].add(P1);
+	solutions[1].add(P1);
 	
 	P2.add(P1);
 	P3.add(P1);

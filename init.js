@@ -223,7 +223,7 @@ function init()
 		// initResidueDeleter()
 		// initNewAtomRoster()
 
-		// initRamachandran()
+		initRamachandran()
 
 		socket.send(JSON.stringify({command:"loadPolarAndAzimuthals"}))
 
