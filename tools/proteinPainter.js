@@ -195,17 +195,11 @@ function initProteinPainter()
 	}
 
 	{
-		var dottedLine = new THREE.Mesh(
-			DottedLineGeometry(10,0.02),
-			new THREE.MeshLambertMaterial({color:0x000000, side:THREE.DoubleSide}));
-		assemblage.add(dottedLine)
-		var selectorFlap = new THREE.Mesh(new THREE.Geometry(),dottedLine.material)
-		selectorFlap.geometry.vertices.push(new THREE.Vector3(),new THREE.Vector3(1,1,0),new THREE.Vector3(0,1,0))
+		var selectorFlap = new THREE.Mesh(new THREE.Geometry(),new THREE.MeshLambertMaterial({color:0x000000, side:THREE.DoubleSide}))
+		selectorFlap.geometry.vertices.push(new THREE.Vector3(),new THREE.Vector3(0.02,0.5,0),new THREE.Vector3(-0.02,0.5,0))
 		selectorFlap.geometry.faces.push(new THREE.Face3(0,1,2))
-		selectorFlap.scale.x = 1
-		selectorFlap.scale.y = 10
-		//might have to twist super far though
-		dottedLine.add(selectorFlap)
+		scene.add(selectorFlap)
+		var pointInHand = new THREE.Vector3(0,0.36,0)
 
 		var fakeAtoms = []
 		for( let i = 0; i < 2; i++ )
@@ -237,6 +231,8 @@ function initProteinPainter()
 	{
 		if( this.parent.button1 )
 		{
+			let hand = proteinPainter.parent
+
 			if( amides.length === 0 )
 			{
 				if( Math.abs(assemblage.scale.x - 0.026) > 0.01 )
@@ -271,6 +267,7 @@ function initProteinPainter()
 			let prevCAlphaToHand = handPositionInAssemblage.clone().sub(activeAmide.position)
 			let lengthOnAmide = prevCAlphaToHand.dot(prevCAlphaAcrossAmide)
 
+			//they ought to disappear and reappear at the same distance so you can put on in then change your mind back and forth
 			if( lengthOnAmide > amideDiagonalLength * 0.75 
 				&& amides.length < 2 )
 			{
@@ -309,53 +306,10 @@ function initProteinPainter()
 			// 	}
 			// }
 
-
-
-
-
-
-			// let toolQuaternionInAssemblage = proteinPainter.quaternion.clone().premultiply( proteinPainter.parent.quaternion )
-			// toolQuaternionInAssemblage.premultiply( assemblage.quaternion.getInverse() )
-			// if(assemblage.parent !== scene)
-			// {
-			// 	toolQuaternionInAssemblage.premultiply( assemblage.parent.quaternion.getInverse() )
-			// }
-			// activeAmide.quaternion.copy(toolQuaternionInAssemblage)
-
 			if(activeSideChainAndHydrogen)
 			{
-				//it is IK, there can be 2 solutions, you need to look at what it's closest to
-				//could get equation for nextCAlpha in terms of phi and psi.
-				//divide space into cones. If you're over the donut
-				//how to switch between
-
-
-				if(dottedLine != undefined)
-				{
-					dottedLine.position.copy(activeAmide.position)
-
-					var newY = handPositionInAssemblage.clone().sub(activeAmide.position).multiplyScalar(0.05)
-					redirectCylinder(dottedLine, activeAmide.position, newY )
-					//could change color depending on what's aboot to happen
-				}
-
 				let prevNitrogen = cBeta.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion)
 				{
-					//choose the one with the closer quaternion... or the better rama?
-					//for a given cAlpha location, there is a single choice?
-					//we were hoping it will be easy to switch between the two
-						//maybe have some silly hack taking rotation into account if it isn't
-						//some kind of "momentum" may be needed, urgh
-
-					//the below happens with the carbon alpha as the origin
-
-					let axisWithAngleAsLength = proteinPainter.parent.deltaQuaternion.getAxisWithAngleAsLength()
-					if(!isNaN(axisWithAngleAsLength.x))
-					{
-						let angle = axisWithAngleAsLength.length()
-						selectorFlap.rotation.y += cBeta.angleTo(axisWithAngleAsLength) < TAU/4 ? angle:-angle
-					}
-
 					let activeAmideToNextCAlpha = prevCAlphaToHand.clone().setLength(nextCAlpha.length())
 
 					let cBetaDist = cBeta.length()
@@ -363,7 +317,7 @@ function initProteinPainter()
 					let cBetaToNextCAlphaDist = cBeta.distanceTo(nextCAlpha)
 					let prevNitrogenToCBetaDistance = Math.sqrt( sq(cBetaDist) + sq(nDist) - (2 * nDist * cBetaDist * Math.cos(TETRAHEDRAL_ANGLE ) ) )
 					
-					let possibleCBetas = tetrahedronTop(
+					let possibleCBetas = tetrahedronTops(
 						new THREE.Vector3(),
 						activeAmideToNextCAlpha,
 						prevNitrogen,
@@ -373,7 +327,7 @@ function initProteinPainter()
 
 					if(possibleCBetas === false)
 					{
-						fakeAtoms[1].material.color.setRGB(1,0,0)
+						selectorFlap.visible = false
 
 						let axis = prevNitrogen.clone().cross(prevCAlphaToHand).normalize()
 						
@@ -386,28 +340,56 @@ function initProteinPainter()
 					}
 					else
 					{
-						fakeAtoms[1].material.color.setRGB(0,0,1)
+						selectorFlap.geometry.vertices[0].copy(activeAmide.getWorldPosition(new THREE.Vector3()))
+						let handToWorldActiveAmide = selectorFlap.geometry.vertices[0].clone().sub(hand.position)
 
-						//so which is it going to be?
-							//data fit
-							//rama / theoretical chemistry score
-							//better UI?
-							//weird and surely sad that hard spheres is the most relied upon method. 
-							//how about: your hand has spent multiple frames skewing to the side
-							//how about a little flap
+						//plan: we're going to make the plane and change this to that formalism
+						//then use that to get the options too
+						//could get the point in between
 
-						// let oldCBeta = fakeAtoms[1].position
-						// let speeds = [possibleCBetas[0].distanceTo(oldCBeta),possibleCBetas[1].distanceTo(oldCBeta)]
-						// newCBeta = possibleCBetas[speeds[0]<speeds[1]?0:1]
+						hand.updateMatrixWorld()
+						let handToWorldPointInHand = hand.localToWorld(pointInHand.clone()).sub(hand.position)
+						let handPlane = new THREE.Plane(handToWorldActiveAmide.clone().normalize(),0)
+						let pointInHandSquashedToPlane = handPlane.projectPoint(handToWorldPointInHand.clone(), new THREE.Vector3())
 
-						selectorFlap.updateMatrixWorld()
-						let flapPoint = new THREE.Vector3(1,0,0)
-						selectorFlap.localToWorld( flapPoint )
-						assemblage.worldToLocal( flapPoint )
-						flapPoint.sub(activeAmide.position)
-						let selectorFlapDists = [possibleCBetas[0].distanceTo(flapPoint),possibleCBetas[1].distanceTo(flapPoint)]
-						newCBeta = possibleCBetas[selectorFlapDists[0]<selectorFlapDists[1]?0:1]
-						console.log(selectorFlapDists,selectorFlapDists[0]<selectorFlapDists[1])
+						let possibleCBetasOnPlane = [new THREE.Vector3(),new THREE.Vector3()]
+						let angles = Array(2)
+						for(let i = 0; i < 2; i++)
+						{
+							let possibleCBetaWorld = possibleCBetas[i].clone().add(activeAmide.position)
+							assemblage.localToWorld(possibleCBetaWorld)
+							possibleCBetaWorld.sub(hand.position)
+							handPlane.projectPoint(possibleCBetaWorld, possibleCBetasOnPlane[i] )
+
+							angles[i] = possibleCBetasOnPlane[i].angleTo(pointInHandSquashedToPlane)
+						}
+						let angleBetweenPossibilities = possibleCBetasOnPlane[0].angleTo(possibleCBetasOnPlane[1])
+
+						let closerIndex = angles[0] < angles[1] ? 0:1
+						if(angles[1-closerIndex] > angleBetweenPossibilities)
+						{
+							let len = pointInHandSquashedToPlane.length()
+							pointInHandSquashedToPlane.copy( possibleCBetasOnPlane[ closerIndex ] ).setLength( len )
+						}
+						newCBeta = possibleCBetas[ closerIndex ]
+
+						let worldPointInHandSquashedToPlane = pointInHandSquashedToPlane.add(hand.position)
+
+						pointInHand.copy(worldPointInHandSquashedToPlane)
+						hand.worldToLocal( pointInHand )
+
+						selectorFlap.geometry.vertices[1].copy(worldPointInHandSquashedToPlane)
+						selectorFlap.geometry.vertices[1].sub(selectorFlap.geometry.vertices[0])
+						selectorFlap.geometry.vertices[1].setLength(getAngstrom()*cBeta.length() * 3)
+						selectorFlap.geometry.vertices[1].add(selectorFlap.geometry.vertices[0])
+
+						selectorFlap.geometry.vertices[2].copy(selectorFlap.geometry.vertices[1]).sub(selectorFlap.geometry.vertices[0])
+						selectorFlap.geometry.vertices[2].projectOnVector(handToWorldActiveAmide)
+						selectorFlap.geometry.vertices[2].add(selectorFlap.geometry.vertices[0])
+						selectorFlap.geometry.verticesNeedUpdate = true
+
+						//if you've only just come in, could reposition 
+						selectorFlap.visible = true
 					}
 
 					fakeAtoms[0].position.copy(activeAmideToNextCAlpha).add(activeAmide.position)

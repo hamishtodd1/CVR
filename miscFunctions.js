@@ -386,7 +386,7 @@ function removeAndRecursivelyDispose(obj)
 	if (obj.material) { obj.material.dispose(); }
 }
 
-function tetrahedronTop(P1,P2,P3, r1,r2,r3)
+function tetrahedronTops(P1,P2,P3, r1,r2,r3)
 {
 	P3.sub(P1);
 	P2.sub(P1);
