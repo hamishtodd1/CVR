@@ -54,7 +54,7 @@ function nonCootConnectedInit()
 		document.body.appendChild(downloadObject);
 		downloadObject.style = "display: none";
 		downloadObject.href = textFile;
-		downloadObject.download = "cootVRCreatedStructure.pdb";
+		downloadObject.download = "ModelMadeInCootVR.pdb";
 		downloadObject.click();
 	}}])
 	

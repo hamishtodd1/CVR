@@ -6,27 +6,11 @@
 			Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
 		The new, first, residue still gets put in the same place, but we move the assemblage into the right orientation
 		rama
-		Hand works a bit better
+			can be used to detect when you want to "retract"?
 		Check you can rotate assemblage at same time
 			if not, probably need to check update order
-		no connectivity?
-		Integrate
-			needs to be able to be moved by rigid mover
-			exported to pdb
-		Tau dial?
-
-	Might be significantly better with carbon atom points
+		exported to pdb
 	
-	Rama
-		"abstract over" the set of all rotamers:
-			You get a circle of psi's of different colors given the current phi, abstracting over position of next Calpha
-			You get a circle of phi's of different colors given the current psi, abstracting over position of next Calpha
-			And if you hold an extra button, a teeny bit of tau, a little lever. Is this all that's ever needed?
-			Like this is super interesting because it cooooould be protein design.
-				Would you ever want to design it that way?
-				Can you be compelled to make an alpha helix this way?
-			Ramachandran data can also be used to detect when you want to "retract"
-			Lampshade-like toroidal region
 
 	Education
 		together with the mutator, you can get anything
@@ -347,45 +331,51 @@ function initProteinPainter()
 						//then use that to get the options too
 						//could get the point in between
 
-						hand.updateMatrixWorld()
-						let handToWorldPointInHand = hand.localToWorld(pointInHand.clone()).sub(hand.position)
-						let handPlane = new THREE.Plane(handToWorldActiveAmide.clone().normalize(),0)
-						let pointInHandSquashedToPlane = handPlane.projectPoint(handToWorldPointInHand.clone(), new THREE.Vector3())
-
-						let possibleCBetasOnPlane = [new THREE.Vector3(),new THREE.Vector3()]
-						let angles = Array(2)
-						for(let i = 0; i < 2; i++)
+						//takes place in hand space
 						{
-							let possibleCBetaWorld = possibleCBetas[i].clone().add(activeAmide.position)
-							assemblage.localToWorld(possibleCBetaWorld)
-							possibleCBetaWorld.sub(hand.position)
-							handPlane.projectPoint(possibleCBetaWorld, possibleCBetasOnPlane[i] )
+							hand.updateMatrixWorld()
+							let handToWorldPointInHand = hand.localToWorld(pointInHand.clone()).sub(hand.position)
+							let handPlane = new THREE.Plane(handToWorldActiveAmide.clone().normalize(),0)
+							var pointInHandSquashedToPlane = handPlane.projectPoint(handToWorldPointInHand.clone(), new THREE.Vector3())
 
-							angles[i] = possibleCBetasOnPlane[i].angleTo(pointInHandSquashedToPlane)
+							let possibleCBetasOnPlane = [new THREE.Vector3(),new THREE.Vector3()]
+							let angles = Array(2)
+							for(let i = 0; i < 2; i++)
+							{
+								let possibleCBetaWorld = possibleCBetas[i].clone().add(activeAmide.position)
+								assemblage.localToWorld(possibleCBetaWorld)
+								possibleCBetaWorld.sub(hand.position)
+								handPlane.projectPoint(possibleCBetaWorld, possibleCBetasOnPlane[i] )
+
+								angles[i] = possibleCBetasOnPlane[i].angleTo(pointInHandSquashedToPlane)
+							}
+							let angleBetweenPossibilities = possibleCBetasOnPlane[0].angleTo(possibleCBetasOnPlane[1])
+
+							let closerIndex = angles[0] < angles[1] ? 0:1
+							if(angles[1-closerIndex] > angleBetweenPossibilities)
+							{
+								let len = pointInHandSquashedToPlane.length()
+								pointInHandSquashedToPlane.copy( possibleCBetasOnPlane[ closerIndex ] ).setLength( len )
+							}
+							newCBeta = possibleCBetas[ closerIndex ]
 						}
-						let angleBetweenPossibilities = possibleCBetasOnPlane[0].angleTo(possibleCBetasOnPlane[1])
 
-						let closerIndex = angles[0] < angles[1] ? 0:1
-						if(angles[1-closerIndex] > angleBetweenPossibilities)
-						{
-							let len = pointInHandSquashedToPlane.length()
-							pointInHandSquashedToPlane.copy( possibleCBetasOnPlane[ closerIndex ] ).setLength( len )
-						}
-						newCBeta = possibleCBetas[ closerIndex ]
-
-						let worldPointInHandSquashedToPlane = pointInHandSquashedToPlane.add(hand.position)
+						let worldPointInHandSquashedToPlane = pointInHandSquashedToPlane.clone().add(hand.position)
 
 						pointInHand.copy(worldPointInHandSquashedToPlane)
 						hand.worldToLocal( pointInHand )
 
-						selectorFlap.geometry.vertices[1].copy(worldPointInHandSquashedToPlane)
-						selectorFlap.geometry.vertices[1].sub(selectorFlap.geometry.vertices[0])
-						selectorFlap.geometry.vertices[1].setLength(getAngstrom()*cBeta.length() * 3)
-						selectorFlap.geometry.vertices[1].add(selectorFlap.geometry.vertices[0])
+						selectorFlap.geometry.vertices[1].copy(worldPointInHandSquashedToPlane).sub(selectorFlap.geometry.vertices[0])
+						selectorFlap.geometry.vertices[2].copy(worldPointInHandSquashedToPlane).sub(selectorFlap.geometry.vertices[0])
 
-						selectorFlap.geometry.vertices[2].copy(selectorFlap.geometry.vertices[1]).sub(selectorFlap.geometry.vertices[0])
 						selectorFlap.geometry.vertices[2].projectOnVector(handToWorldActiveAmide)
+
+						let lengthScaling = getAngstrom() * cBeta.length() * 3 / selectorFlap.geometry.vertices[2].length()
+						selectorFlap.geometry.vertices[2].multiplyScalar(lengthScaling)
+						selectorFlap.geometry.vertices[1].multiplyScalar(lengthScaling)
+						selectorFlap.geometry.vertices[1].add(selectorFlap.geometry.vertices[0])
 						selectorFlap.geometry.vertices[2].add(selectorFlap.geometry.vertices[0])
+
 						selectorFlap.geometry.verticesNeedUpdate = true
 
 						//if you've only just come in, could reposition 
@@ -395,26 +385,22 @@ function initProteinPainter()
 					fakeAtoms[0].position.copy(activeAmideToNextCAlpha).add(activeAmide.position)
 					fakeAtoms[1].position.copy(newCBeta).add(activeAmide.position)
 
-					// activeAmide.quaternion.setFromUnitVectors(cBeta.clone().normalize(),newCBeta.clone().normalize())
-					// let partwayNextCAlpha = nextCAlpha.clone().applyQuaternion(activeAmide.quaternion)
+					{
+						let newCBetaAxis = newCBeta.clone().normalize()
+						activeAmide.quaternion.setFromUnitVectors(cBeta.clone().normalize(),newCBetaAxis)
 
-					// let psiQuaternion = new THREE.Quaternion().setFromAxisAngle(cBeta.clone().normalize(), psi)
-					// activeAmide.quaternion.multiply( psiQuaternion )
-				}
+						// let orthogonalNextCAlpha = activeAmideToNextCAlpha.clone().projectOnPlane(newCBetaAxis).normalize()
+						// let orthogonalCAlpha = nextCAlpha.clone().projectOnPlane(newCBetaAxis).normalize()
+						// let secondQuat = new THREE.Quaternion().setFromUnitVectors(orthogonalNextCAlpha,newCBetaAxis)
+						// activeAmide.quaternion.multiply(secondQuat)
 
-				let correctToTetrahedralAngle = false
-				if(correctToTetrahedralAngle)
-				{
-					//not got an intuitive explanation for why this feels best, but wouldn't for that either
-					//was thinking of doing it by saying what quaternion is the closest?
 
-					let previousAmideNitrogen = cBeta.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion)
-					previousAmideNitrogen.applyQuaternion( activeAmide.quaternion.clone().inverse() )
+						// let partwayNextCAlpha = nextCAlpha.clone().applyQuaternion(activeAmide.quaternion)
+						// let psi
 
-					let currentAngle = cBeta.angleTo(previousAmideNitrogen)
-					let axis = previousAmideNitrogen.clone().cross(cBeta).normalize()
-					let deltaQ = new THREE.Quaternion().setFromAxisAngle(axis,TETRAHEDRAL_ANGLE-currentAngle)
-					activeAmide.quaternion.multiply( deltaQ )
+						// let psiQuaternion = new THREE.Quaternion().setFromAxisAngle(newCBeta.clone().normalize(), psi)
+						// activeAmide.quaternion.multiply( psiQuaternion )
+					}
 				}
 
 				//repelling
@@ -461,11 +447,17 @@ function initProteinPainter()
 		}
 
 		//make the thing a chain in its own right
+		for(let i = 0; i < amides.length; i++)
+		{
+			//make it a pdb
+			for(let i = 0; i < )
+		}
 
 		activeAmide = null;
 		amides = [];
 		activeSideChainAndHydrogen = null;
 		sideChainAndHydrogens = []
+
 
 		//then an auto-refine!
 
