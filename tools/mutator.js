@@ -31,7 +31,8 @@ function initMutator()
 	let aasAllLoaded = false
 	function singleLoop(aaIndex, position)
 	{
-		loadPdb( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
+		//THE BELOW MAY WELL NEED UDATING
+		loadPdbAndMakeSillyModel( "data/AAs/" + aaNames[aaIndex] + ".txt", function ( carbonAlphas, geometryAtoms )
 		{
 			let newPlaque = plaque.clone();
 			newPlaque.position.copy(position);

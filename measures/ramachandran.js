@@ -6,7 +6,7 @@ function initRamachandran()
 		function(data)
 		{
 			var values = data.split(" "); //for some reason this handles the newlines as well
-			console.log(values.length)
+			//WE WERE HERE
 			
 			let allowedPhiPsiArray = Array( 72 )
 			for(let i = 0; i < allowedPhiPsiArray.length; i++)

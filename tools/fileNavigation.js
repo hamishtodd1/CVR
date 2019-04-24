@@ -19,14 +19,7 @@ function initFileNavigator()
 					{
 						if(fileType === "pdb")
 						{
-							//hacky, you should be loading it into coot
-							//could use uglymol parser...
-							new THREE.PDBLoader().load( "modelsAndMaps/" + filename, function ( carbonAlphas, geometryAtoms )
-							{
-								let atoms = atomArrayFromElementsAndCoords(geometryAtoms.elements,geometryAtoms.attributes.position.array)
-								let model = makeMoleculeMesh( atoms, true );
-								putModelInAssemblage(model)
-							})
+							loadPdbIntoAssemblage(filename)
 						}
 						else
 						{

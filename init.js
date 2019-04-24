@@ -1,29 +1,47 @@
 /*
+// Jeremy England thing
+// Heart/other 3D reaction diffusion view-source:https://pmneila.github.io/jsexp/grayscott/
+	// "orientation field" is something you can do very nicely and simply with VR and is of relevance to Ivan
+	// lower dimensional analogy is moving hand around 2D
+		It starts out all neutral orientation
+		So you draw some lines (or points) and those do get set in stone
+		Every point becomes a weighted average of the value at those curves nearest to it
+	Bunch of transparent copies of the controller mesh probably. instancing!
+// Diffusive tensor imaging
+// Want to do some biology while still here. Some VR lecture. But also something, you know, with puzzles
+// No, RD is nice because it is continuous and 2D. So best would be the extrusion thing
+
 Your thoughts about video processing might be silly. Likely there will be an api in future, an api for
 
-UI for AR will be huge. In principle some simple app doing something that a thousand apps already do could make a lot of money
-
 TODO
-	You ought to have deleter too
-	Get it on web and email to folks at conference
-	Refinement (make Paul happy)
-		force restraints
-	Highlighting working better
 	Protein painter can start from current chain
-	Ramachandran for painter (but then you need sequence)
-	Selection of rotamers
+	Deleter
+	Get it on web
+	Highlighting working better
+	Ramachandran for painter
 
 TODO to make it independent of coot
 	Loaded from a webpage (ask Ivan)
 	Socket not needed
-	Undo ;_;
+	Undo ;_; Not hard for protein painter at least
 	Correct PDB export
 		You are "just" modifying the positions of existing atoms, and...
 		adding a new chain
 	
-TODO during PhD
-	Everything else sitting there in script
-	If you want those metrics you probably have to get them from coot
+Ideals
+	Copy and paste 3D blocks of atoms
+	Complex-to-look-at 3D things
+		probe dots
+		Alt conformers; opacity?
+		Manually aligning tomograms?
+		Anisotropic atoms? There may be some interesting stuff here
+		NCS; Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
+		Those little webbings on Coot's amide planes
+		Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
+	Place atom at pointer
+		Should replace ligand builder, "add oxt to residue"
+		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
+	Metrics (have to come from coot)
 	Mutate
 	Coot tutorial including EM tutorial
 		Change map color
@@ -40,34 +58,21 @@ TODO during PhD
 		Button on controller reserved
 		Flash or something
 		Hydrogen hiding really should be automatic
-	Get map from coot
-	Save
-	Complex-to-look-at 3D things
-		probe dots
-		Alt conformers; opacity?
-		Manually aligning tomograms?
-		Anisotropic atoms? There may be some interesting stuff here
-		NCS; Crystallography only tho https://www.youtube.com/watch?v=7QbPvVA-wRQ
-		Those little webbings on Coot's amide planes
-	Fix the atom deletion problems
+	check on atom deletion
 	Everything in "panel demo"
 	Octree selection
 	easy: "hand distances"
 	Non-vr head movement sensetivity demo
 	"Carbon alpha mode" (/skeletonize?), often used when zoomed out: graphics_to_ca_representation, get_bonds_representation
 	NMR data should totally be in there, a set of springs
-	Ligands and stuff carry their "theoretical" density with them. Couldn't have that shit in normal coot, too much overlapping!
 	ambient occlusion maps for all?
-	Copy and paste 3D blocks of atoms
 	"Take screenshot"
-	Place atom at pointer
-		Should replace ligand builder, "add oxt to residue"
-		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
 
 Beyond
 	Back and forth
 	IMOD, an EM software with manual manipulation, might also benefit from VRification
 	Radio
+	Optimise getting map from coot
 
 Bugs/checks
 	Sometimes you start it and you're below the floor
@@ -144,7 +149,7 @@ function init()
 	socket.commandReactions["map"] = function(msg)
 	{
 		let myArrayBuffer = base64ToArrayBuffer( msg["dataString"] )
-		let newMap = Map( myArrayBuffer, false );
+		let newMap = Map( myArrayBuffer );
 	}
 	socket.commandReactions["mapFilename"] = function(msg)
 	{
@@ -204,9 +209,9 @@ function init()
 	{
 		initFileNavigator()
 
-		// //maybe better if they were all cubes? Atoms are spheres.
-		// //coot specific
-		// // initRefiner()
+		//maybe better if they were all cubes? Atoms are spheres.
+		//coot specific
+		// initRefiner()
 		// initAutoRotamer()
 
 		// initEnvironmentDistances()
@@ -218,7 +223,7 @@ function init()
 		initProteinPainter()
 
 		// initAtomLabeller()
-		initMutator()
+		// initMutator()
 		// initAtomDeleter()
 		// initResidueDeleter()
 		// initNewAtomRoster()

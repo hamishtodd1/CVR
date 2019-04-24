@@ -66,15 +66,7 @@ function initMapCreationSystem()
 
 			if( !waitingOnResponse )
 			{
-				let center = new THREE.Vector3(0,0,-1 )
-				visiBox.localToWorld(center)
-				if(true)
-				{
-					//in the middle of the box, rather than the front
-					center.setLength((visiBox.scale.z + panel.scale.z )/2)
-				}
-				assemblage.updateMatrixWorld();
-				assemblage.worldToLocal( center );
+				let center = visiBox.getCenterInAssemblageSpace()
 
 				let msg = {
 					isolevel,
@@ -107,7 +99,7 @@ function initMapCreationSystem()
 					if( Math.abs( handControllers[i].thumbStickAxes[1] ) > 0.1 )
 					{
 						isolevel += 0.06 * Math.pow(handControllers[i].thumbStickAxes[1],3)
-						isolevelSign.material.setText("isolevel in RMSD units: " + isolevel.toFixed(4))
+						isolevelSign.material.setText("isolevel (RMSD): " + isolevel.toFixed(4))
 						msg.currentCenterOnGrids.length = 0;
 					}
 				}

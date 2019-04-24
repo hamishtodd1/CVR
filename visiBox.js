@@ -164,4 +164,16 @@ function initVisiBox()
 			}
 		}
 	}],4.23,5.42)
+
+	visiBox.getCenterInAssemblageSpace = function()
+	{
+		let center = new THREE.Vector3(0,0,-1 )
+		visiBox.localToWorld(center)
+		//in the middle of the box, rather than the front
+		center.setLength((visiBox.scale.z + panel.scale.z )/2)
+		assemblage.updateMatrixWorld();
+		assemblage.worldToLocal( center );
+
+		return center
+	}
 }

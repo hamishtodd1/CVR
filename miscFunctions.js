@@ -1,5 +1,36 @@
+function getClosestAtomToWorldPosition(p, condition)
+{
+	if(condition === undefined)
+	{
+		condition = true
+	}
+
+	var closestAtom = null;
+	var closestDistSq = Infinity;
+	for(var i = 0; i < models.length; i++)
+	{
+		var localPosition = models[i].worldToLocal(p.clone());
+
+		for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+		{
+			let distSq = models[i].atoms[j].position.distanceToSquared( localPosition )
+			if( distSq < closestDistSq && condition(models[i].atoms[j]) )
+			{
+				closestAtom = models[i].atoms[j];
+				closestDistSq = distSq
+			}
+		}
+	}
+	return closestAtom;
+}
+
 function padLeft(str, desiredLength)
 {
+	if(str.length >= desiredLength)
+	{
+		return str
+	}
+
 	let paddingAmt = desiredLength - str.length
 	for(let i = 0; i < paddingAmt; i++)
 	{
@@ -9,6 +40,11 @@ function padLeft(str, desiredLength)
 }
 function padRight(str, desiredLength)
 {
+	if(str.length >= desiredLength)
+	{
+		return str
+	}
+
 	let paddingAmt = desiredLength - str.length
 	for(let i = 0; i < paddingAmt; i++)
 	{

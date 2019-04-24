@@ -10,7 +10,6 @@
 		Check you can rotate assemblage at same time
 			if not, probably need to check update order
 		exported to pdb
-	
 
 	Education
 		together with the mutator, you can get anything
@@ -184,13 +183,6 @@ function initProteinPainter()
 		selectorFlap.geometry.faces.push(new THREE.Face3(0,1,2))
 		scene.add(selectorFlap)
 		var pointInHand = new THREE.Vector3(0,0.36,0)
-
-		var fakeAtoms = []
-		for( let i = 0; i < 2; i++ )
-		{
-			fakeAtoms[i] = new THREE.Mesh(new THREE.SphereBufferGeometry(0.6) )
-			assemblage.add(fakeAtoms[i])
-		}
 	}
 
 	function planeAngle(origin,z,nonProjectedX,nonProjectedP)
@@ -211,38 +203,45 @@ function initProteinPainter()
 	// let illustrative = new THREE.Mesh(new THREE.BoxGeometry(getAngstrom(),getAngstrom(),getAngstrom()))
 	// assemblage.add(illustrative)
 
+	let amidePlaneIndicator = new THREE.Mesh(new THREE.PlaneBufferGeometry(1,1))
+	assemblage.add(amidePlaneIndicator)
+
 	proteinPainter.whileHeld = function(handPositionInAssemblage)
 	{
-		if( this.parent.button1 )
+		amidePlaneIndicator.position.copy(handPositionInAssemblage)
+
+		if( Math.abs(assemblage.scale.x - 0.026) > 0.005 )
+		{
+			let centerInAssemblageSpace = visiBox.getCenterInAssemblageSpace()
+			let centerInWorld = assemblage.localToWorld( centerInAssemblageSpace.clone() )
+
+			assemblage.scale.setScalar( assemblage.scale.x + (0.026-assemblage.scale.x) * 0.1 )
+			assemblage.updateMatrixWorld()
+			let centerMovementDueToScale = assemblage.localToWorld(centerInAssemblageSpace.clone())
+			assemblage.position.sub(centerMovementDueToScale).add(centerInWorld)
+
+			handPositionInAssemblage.copy(this.parent.position)
+			assemblage.updateMatrixWorld()
+			assemblage.worldToLocal(handPositionInAssemblage)
+		}
+
+		if( !this.parent.button1 )
+		{
+			//we're going to find the closest atom, we need its nitrogen and its cBeta
+			//draw plane for that amide
+			//highlight
+			// let worldPosition = assemblage.localToWorld(handPositionInAssemblage.clone())
+			// let closestCAlpha = getClosestAtomToWorldPosition(worldPosition, function(atom)
+			// {
+			// 	return atom.name === " CA "
+			// })
+		}
+		else
 		{
 			let hand = proteinPainter.parent
 
 			if( amides.length === 0 )
 			{
-				if( Math.abs(assemblage.scale.x - 0.026) > 0.01 )
-				{
-					console.log("may want it smaller/bigger")
-				}
-
-				//TODO you might be wanting to continue the chain
-				// let closestAtom = getClosestAtom()
-				//find the cAlpha
-				// recursivelySearchBondPartners(atom,function(atom)
-				// {
-				// 	return atom.name === " CB "
-				// })
-
-				// function recursivelySearchBondPartners(atom,conditionalFunction)
-				// {
-				// 	for(let i = 0; i < atom.bondPartners.length; i++)
-				// 	{
-				// 		if( conditionalFunction(atom.bondPartners[i]) )
-				// 		{
-				// 			return atom.bondPartners[i]
-				// 		}
-				// 	}
-				// }
-
 				let newAmide = createActiveAmideAtPosition(handPositionInAssemblage)
 				newAmide.add(nTerminus.clone())
 			}
@@ -251,7 +250,7 @@ function initProteinPainter()
 			let prevCAlphaToHand = handPositionInAssemblage.clone().sub(activeAmide.position)
 			let lengthOnAmide = prevCAlphaToHand.dot(prevCAlphaAcrossAmide)
 
-			//they ought to disappear and reappear at the same distance so you can put on in then change your mind back and forth
+			//they ought to disappear and reappear at the same distance so you can put one in then change your mind back and forth
 			if( lengthOnAmide > amideDiagonalLength * 0.75 
 				&& amides.length < 2 )
 			{
@@ -352,10 +351,12 @@ function initProteinPainter()
 							let angleBetweenPossibilities = possibleCBetasOnPlane[0].angleTo(possibleCBetasOnPlane[1])
 
 							let closerIndex = angles[0] < angles[1] ? 0:1
-							if(angles[1-closerIndex] > angleBetweenPossibilities)
+							let angularLimitExceeded = angles[1-closerIndex] > angleBetweenPossibilities
+							if( angularLimitExceeded )
 							{
 								let len = pointInHandSquashedToPlane.length()
-								pointInHandSquashedToPlane.copy( possibleCBetasOnPlane[ closerIndex ] ).setLength( len )
+								pointInHandSquashedToPlane.copy( possibleCBetasOnPlane[ closerIndex ] )
+								pointInHandSquashedToPlane.setLength( len )
 							}
 							newCBeta = possibleCBetas[ closerIndex ]
 						}
@@ -371,35 +372,29 @@ function initProteinPainter()
 						selectorFlap.geometry.vertices[2].projectOnVector(handToWorldActiveAmide)
 
 						let lengthScaling = getAngstrom() * cBeta.length() * 3 / selectorFlap.geometry.vertices[2].length()
-						selectorFlap.geometry.vertices[2].multiplyScalar(lengthScaling)
 						selectorFlap.geometry.vertices[1].multiplyScalar(lengthScaling)
+						selectorFlap.geometry.vertices[2].multiplyScalar(lengthScaling)
 						selectorFlap.geometry.vertices[1].add(selectorFlap.geometry.vertices[0])
 						selectorFlap.geometry.vertices[2].add(selectorFlap.geometry.vertices[0])
 
 						selectorFlap.geometry.verticesNeedUpdate = true
 
+						//could have selectorflap connect hand to nextCAlpha when not inside the donut
+
 						//if you've only just come in, could reposition 
 						selectorFlap.visible = true
 					}
-
-					fakeAtoms[0].position.copy(activeAmideToNextCAlpha).add(activeAmide.position)
-					fakeAtoms[1].position.copy(newCBeta).add(activeAmide.position)
 
 					{
 						let newCBetaAxis = newCBeta.clone().normalize()
 						activeAmide.quaternion.setFromUnitVectors(cBeta.clone().normalize(),newCBetaAxis)
 
-						// let orthogonalNextCAlpha = activeAmideToNextCAlpha.clone().projectOnPlane(newCBetaAxis).normalize()
-						// let orthogonalCAlpha = nextCAlpha.clone().projectOnPlane(newCBetaAxis).normalize()
-						// let secondQuat = new THREE.Quaternion().setFromUnitVectors(orthogonalNextCAlpha,newCBetaAxis)
-						// activeAmide.quaternion.multiply(secondQuat)
+						let localNextCAlpha = activeAmideToNextCAlpha.clone().applyQuaternion(activeAmide.quaternion.clone().inverse())
 
-
-						// let partwayNextCAlpha = nextCAlpha.clone().applyQuaternion(activeAmide.quaternion)
-						// let psi
-
-						// let psiQuaternion = new THREE.Quaternion().setFromAxisAngle(newCBeta.clone().normalize(), psi)
-						// activeAmide.quaternion.multiply( psiQuaternion )
+						let orthogonalCurrentCAlpha = nextCAlpha.clone().projectOnPlane(cBeta).normalize()
+						let orthogonalNextCAlpha = localNextCAlpha.projectOnPlane(cBeta).normalize()
+						let secondQuat = new THREE.Quaternion().setFromUnitVectors(orthogonalCurrentCAlpha,orthogonalNextCAlpha)
+						activeAmide.quaternion.multiply(secondQuat)
 					}
 				}
 
@@ -407,12 +402,12 @@ function initProteinPainter()
 				{
 					let cBetaDirection = cBeta.clone().applyQuaternion(activeAmide.quaternion).normalize()
 
-					let intendedSpindle = prevNitrogen.clone().normalize().lerp(cBetaDirection,0.5).normalize().negate();
-					let intendedLeft = cBetaDirection.clone().cross(intendedSpindle).normalize();
-
+					let intendedSpindle = prevNitrogen.clone().normalize().lerp(cBetaDirection,0.5).normalize().negate()
 					activeSideChainAndHydrogen.quaternion.setFromUnitVectors( sideChainAndHydrogenActualSpindle,intendedSpindle )
-					let leftInCurrentSpace = sideChainAndHydrogenActualLeft.clone().applyQuaternion(activeSideChainAndHydrogen.quaternion);
-					activeSideChainAndHydrogen.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors( leftInCurrentSpace, intendedLeft ) );
+
+					// let intendedLeft = cBetaDirection.clone().cross(intendedSpindle).normalize();
+					// let leftInCurrentSpace = sideChainAndHydrogenActualLeft.clone().applyQuaternion(activeSideChainAndHydrogen.quaternion);
+					// activeSideChainAndHydrogen.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors( leftInCurrentSpace, intendedLeft ) );
 				}
 			}
 		}
@@ -449,26 +444,13 @@ function initProteinPainter()
 		//make the thing a chain in its own right
 		for(let i = 0; i < amides.length; i++)
 		{
-			//make it a pdb
-			for(let i = 0; i < )
+			//siiiiigh, the atoms do need to be moved by rigid mover
 		}
 
 		activeAmide = null;
 		amides = [];
 		activeSideChainAndHydrogen = null;
 		sideChainAndHydrogens = []
-
-
-		//then an auto-refine!
-
-		// Sending it off to coot
-		// many cAlphas need deleting - sidechain AND both amide planes
-		// take all the atoms in the originals, "clone" them for each copy
-		// take their positions, convert them from local to assemblage space
-		// 	If it's a new chain, have to make that, then residues start at 0
-		// 	Otherwise,
-		// 	add_new_chain does exist
-		// 	You make this thing, you send it off to coot, coot probably refines it, then you get it back and delete.
 	}
 
 	proteinPainter.onLetGo = function()
@@ -479,3 +461,12 @@ function initProteinPainter()
 
 	return proteinPainter;
 }
+
+// Sending it off to coot
+// many cAlphas need deleting - sidechain AND both amide planes
+// take all the atoms in the originals, "clone" them for each copy
+// take their positions, convert them from local to assemblage space
+// 	If it's a new chain, have to make that, then residues start at 0
+// 	Otherwise,
+// 	add_new_chain does exist
+// 	You make this thing, you send it off to coot, coot probably refines it, then you get it back and delete.

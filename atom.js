@@ -1,3 +1,25 @@
+var elementToNumber = {
+		C: 0,
+		S: 1,
+		O: 2,
+		N: 3,
+		CL:4, //ask Paul about this
+		P: 6,
+		H: 9,
+}
+var numberToElement = [
+		"C",
+		"S",
+		"O",
+		"N",
+		"CL", //ask Paul about this
+		"Q",
+		"P",
+		"Q",
+		"Q",
+		"H"
+]
+
 function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc, occupancyAndTemperatureFactor)
 {
 	this.position = position;
@@ -38,16 +60,6 @@ function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc, occ
 	}
 }
 
-Atom.prototype.assignAtomSpecToObject = function(msg)
-{
-	msg.imol = this.imol;
-	msg.chainId = this.chainId;
-	msg.resNo = this.resNo;
-	msg.insertionCode = this.insertionCode;
-	
-	msg.name = this.name;
-	msg.altloc = this.altloc;
-}
 Atom.prototype.assignResidueSpecToMessage = function(msg)
 {
 	msg.imol = this.imol;
@@ -55,6 +67,13 @@ Atom.prototype.assignResidueSpecToMessage = function(msg)
 	msg.resNo = this.resNo;
 	msg.insertionCode = this.insertionCode;
 }
+Atom.prototype.assignAtomSpecToObject = function(msg)
+{
+	this.assignResidueSpecToMessage(msg)	
+	msg.name = this.name;
+	msg.altloc = this.altloc;
+}
+
 Atom.prototype.setLabelVisibility = function(labelVisibility)
 {
 	if( this.label === undefined && labelVisibility)

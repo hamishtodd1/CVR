@@ -67,8 +67,8 @@ function loop( visiBox )
 
 	if( handControllers[0].grippingSide && handControllers[1].grippingSide )
 	{
-		var handSeparationDifferential = handControllers[0].position.distanceTo( 
-			handControllers[1].position ) / 
+		var handSeparationDifferential = 
+			handControllers[0].position.distanceTo( handControllers[1].position ) / 
 			handControllers[0].oldPosition.distanceTo( handControllers[1].oldPosition );
 		
 		// visiBox.position.multiplyScalar( 1 / visiBox.scale.x ); 

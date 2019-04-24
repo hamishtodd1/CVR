@@ -27,16 +27,6 @@
 
 
 
-var elementToNumber = {
-		C: 0,
-		S: 1,
-		O: 2,
-		N: 3,
-		Cl:4, //WARNING: NOT SURE ABOUT THIS!!!
-		P: 6,
-		H: 9,
-}
-
 function changeBondBetweenAtomsToDouble(bondData, atomA, atomB)
 {
 	for(var j = 0; j < bondData.length; j++)
@@ -99,13 +89,13 @@ function initModelCreationSystem()
 	    {
 	    	//we have a bunch of things, preceded by their names. Necessary given the label?
 	    	var modelNumber = cootArray[0]
-			var atomDataFromCoot = cootArray[1][0];
-			var bondDataFromCoot = cootArray[1][1];
+			var atomDataFromCoot = cootArray[1];
+			var bondDataFromCoot = cootArray[3];
 
-			if(cootArray.length>2)
-			{
-				console.error("got more than one model in there!")
-			}
+			// if(cootArray.length>2)
+			// {
+			// 	console.error("got more than one model in there!")
+			// }
 	    }
 	    else
 	    {
@@ -120,19 +110,23 @@ function initModelCreationSystem()
 		}
 		var modelAtoms = Array(numberOfAtoms);
 
-		for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
+		let coordArray = null
+		let detailsArray = null
+		for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //coot orders them by color, not us!
 		{
-			for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
-			{ 
+			for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++) //atoms
+			{
+				coordArray = atomDataFromCoot[i][j][0]
+				detailsArray = atomDataFromCoot[i][j][2]
 				modelAtoms[atomDataFromCoot[i][j][3]] = new Atom(
 					i, 
-					new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]),
-					atomDataFromCoot[i][j][2][0],
-					atomDataFromCoot[i][j][2][1],
-					atomDataFromCoot[i][j][2][2],
-					atomDataFromCoot[i][j][2][3],
-					atomDataFromCoot[i][j][2][4],
-					atomDataFromCoot[i][j][2][5] );
+					new THREE.Vector3().fromArray(coordArray),
+					detailsArray[0],
+					detailsArray[1],
+					detailsArray[2],
+					detailsArray[3],
+					detailsArray[4],
+					detailsArray[5] );
 			}
 		}
 
@@ -188,6 +182,29 @@ function initModelCreationSystem()
 	{
 		let atoms = atomArrayFromElementsAndCoords(elements,coords)
 		return makeMoleculeMesh( atoms, false );
+	}
+
+	loadPdbIntoAssemblage = function(filename)
+	{
+		//uglymol has parser but not necessary probably
+		new THREE.FileLoader().load( "modelsAndMaps/" + filename, function ( pdbString )
+		{
+			let atomsAndResidues = parsePdb( pdbString );
+			let model = makeMoleculeMesh( atomsAndResidues.atoms, true )
+			model.residues = atomsAndResidues.residues
+
+			let lowestUnusedImol = 0
+			for(let i = 0; i < models.length; i++)
+			{
+				if(models[i].imol === lowestUnusedImol)
+				{
+					lowestUnusedImol++
+				}
+			}
+			model.imol = lowestUnusedImol
+
+			putModelInAssemblage(model)
+		} );
 	}
 
 	makeMoleculeMesh = function( atoms, clip, bondDataFromCoot )
@@ -254,8 +271,6 @@ function initModelCreationSystem()
 					}
 				}
 			}
-
-			// console.error(JSON.stringify(bondData))
 		}
 
 		var numberOfCylinders = 0;

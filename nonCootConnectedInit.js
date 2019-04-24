@@ -28,6 +28,7 @@ function loadMap(filename, isolevel)
 
 function nonCootConnectedInit()
 {
+	// loadPdbIntoAssemblage("drugIsInteresting.pdb")
 	loadMap("jp.map",3.4)
 	assemblage.position.set(-0.6326659774326654,0.8330610470434914,-1.7592)
 	assemblage.scale.setScalar(0.028)
@@ -45,17 +46,7 @@ function nonCootConnectedInit()
 
 	MenuOnPanel([{string:"Export PDB", buttonFunction:function()
 	{
-		var data = new Blob([pdbString], {type: 'text/plain'});
-		var textFile = window.URL.createObjectURL(data);
-
-		//TODO actually change the thing
-
-		var downloadObject = document.createElement("a");
-		document.body.appendChild(downloadObject);
-		downloadObject.style = "display: none";
-		downloadObject.href = textFile;
-		downloadObject.download = "ModelMadeInCootVR.pdb";
-		downloadObject.click();
+		exportPdb()
 	}}])
 	
 	renderer.domElement.addEventListener('dragenter', function(e)
@@ -88,10 +79,9 @@ function nonCootConnectedInit()
 		{
 			reader.onload = function (evt)
 			{
-				let text = evt.target.result
-				pdbString = text
+				pdbString = evt.target.result
 
-				let atomsAndBonds = parsePdb( text );
+				let atomsAndBonds = parsePdb( pdbString );
 				let geometryAtoms = createModel( atomsAndBonds ).geometryAtoms
 
 				let atoms = atomArrayFromElementsAndCoords( geometryAtoms.elements, geometryAtoms.attributes.position.array)

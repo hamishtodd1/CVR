@@ -25,6 +25,8 @@ const standardAtomColors = {
 	"hydrogen":		new THREE.Color(1.0,1.0,1.0)
 }
 
+let log = console.log
+
 let ourClock = new THREE.Clock( true ); //.getElapsedTime ()
 let frameDelta = 0;
 let logged = 0;
