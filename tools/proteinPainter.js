@@ -177,14 +177,6 @@ function initProteinPainter()
 		return newAmide;
 	}
 
-	{
-		var selectorFlap = new THREE.Mesh(new THREE.Geometry(),new THREE.MeshLambertMaterial({color:0x000000, side:THREE.DoubleSide}))
-		selectorFlap.geometry.vertices.push(new THREE.Vector3(),new THREE.Vector3(0.02,0.5,0),new THREE.Vector3(-0.02,0.5,0))
-		selectorFlap.geometry.faces.push(new THREE.Face3(0,1,2))
-		scene.add(selectorFlap)
-		var pointInHand = new THREE.Vector3(0,0.36,0)
-	}
-
 	function planeAngle(origin,z,nonProjectedX,nonProjectedP)
 	{
 		//hopefully not collinear
@@ -310,8 +302,6 @@ function initProteinPainter()
 
 					if(possibleCBetas === false)
 					{
-						selectorFlap.visible = false
-
 						let axis = prevNitrogen.clone().cross(prevCAlphaToHand).normalize()
 						
 						activeAmideToNextCAlpha.copy(prevNitrogen).setLength(nextCAlpha.length())
@@ -323,66 +313,14 @@ function initProteinPainter()
 					}
 					else
 					{
-						selectorFlap.geometry.vertices[0].copy(activeAmide.getWorldPosition(new THREE.Vector3()))
-						let handToWorldActiveAmide = selectorFlap.geometry.vertices[0].clone().sub(hand.position)
+						let currentCBeta = cBeta.clone().applyQuaternion( activeAmide.quaternion )
+						let closerIndex = possibleCBetas[0].distanceToSquared(currentCBeta) < possibleCBetas[1].distanceToSquared(currentCBeta)? 0:1
 
-						//plan: we're going to make the plane and change this to that formalism
-						//then use that to get the options too
-						//could get the point in between
-
-						//takes place in hand space
+						newCBeta = possibleCBetas[closerIndex]
+						if( this.parent.button2 && !this.parent.button2Old )
 						{
-							hand.updateMatrixWorld()
-							let handToWorldPointInHand = hand.localToWorld(pointInHand.clone()).sub(hand.position)
-							let handPlane = new THREE.Plane(handToWorldActiveAmide.clone().normalize(),0)
-							var pointInHandSquashedToPlane = handPlane.projectPoint(handToWorldPointInHand.clone(), new THREE.Vector3())
-
-							let possibleCBetasOnPlane = [new THREE.Vector3(),new THREE.Vector3()]
-							let angles = Array(2)
-							for(let i = 0; i < 2; i++)
-							{
-								let possibleCBetaWorld = possibleCBetas[i].clone().add(activeAmide.position)
-								assemblage.localToWorld(possibleCBetaWorld)
-								possibleCBetaWorld.sub(hand.position)
-								handPlane.projectPoint(possibleCBetaWorld, possibleCBetasOnPlane[i] )
-
-								angles[i] = possibleCBetasOnPlane[i].angleTo(pointInHandSquashedToPlane)
-							}
-							let angleBetweenPossibilities = possibleCBetasOnPlane[0].angleTo(possibleCBetasOnPlane[1])
-
-							let closerIndex = angles[0] < angles[1] ? 0:1
-							let angularLimitExceeded = angles[1-closerIndex] > angleBetweenPossibilities
-							if( angularLimitExceeded )
-							{
-								let len = pointInHandSquashedToPlane.length()
-								pointInHandSquashedToPlane.copy( possibleCBetasOnPlane[ closerIndex ] )
-								pointInHandSquashedToPlane.setLength( len )
-							}
-							newCBeta = possibleCBetas[ closerIndex ]
+							newCBeta = possibleCBetas[1-closerIndex]
 						}
-
-						let worldPointInHandSquashedToPlane = pointInHandSquashedToPlane.clone().add(hand.position)
-
-						pointInHand.copy(worldPointInHandSquashedToPlane)
-						hand.worldToLocal( pointInHand )
-
-						selectorFlap.geometry.vertices[1].copy(worldPointInHandSquashedToPlane).sub(selectorFlap.geometry.vertices[0])
-						selectorFlap.geometry.vertices[2].copy(worldPointInHandSquashedToPlane).sub(selectorFlap.geometry.vertices[0])
-
-						selectorFlap.geometry.vertices[2].projectOnVector(handToWorldActiveAmide)
-
-						let lengthScaling = getAngstrom() * cBeta.length() * 3 / selectorFlap.geometry.vertices[2].length()
-						selectorFlap.geometry.vertices[1].multiplyScalar(lengthScaling)
-						selectorFlap.geometry.vertices[2].multiplyScalar(lengthScaling)
-						selectorFlap.geometry.vertices[1].add(selectorFlap.geometry.vertices[0])
-						selectorFlap.geometry.vertices[2].add(selectorFlap.geometry.vertices[0])
-
-						selectorFlap.geometry.verticesNeedUpdate = true
-
-						//could have selectorflap connect hand to nextCAlpha when not inside the donut
-
-						//if you've only just come in, could reposition 
-						selectorFlap.visible = true
 					}
 
 					{
