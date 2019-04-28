@@ -405,6 +405,8 @@ function initPanel()
 
 					if( textMeshes[i].object3d )
 					{
+						let justPickedUp = false
+
 						if( handControllers[j].intersectLaserWithObject( textMeshes[i] ).length !== 0 ||
 							handControllers[j].intersectLaserWithObject( textMeshes[i].object3dFrame ).length !== 0 )
 						{
@@ -422,22 +424,25 @@ function initPanel()
 
 								textMeshes[i].object3d.position.set(0,0,0)
 								textMeshes[i].object3d.scale.setScalar(1)
+
+								justPickedUp = true
 							}
 						}
-					}
-					if( !handControllers[j].grippingTop && handControllers[j].grippingTopOld && 
-						textMeshes[i].object3d && textMeshes[i].object3d.parent === handControllers[j] )
-					{
-						handControllers[j].remove(textMeshes[i].object3d)
-						menu.add(textMeshes[i].object3d)
 
-						if(textMeshes[i].object3d.onLetGo !== undefined)
+						if( !justPickedUp && handControllers[j].grippingTop && !handControllers[j].grippingTopOld && 
+							textMeshes[i].object3d.parent === handControllers[j] )
 						{
-							textMeshes[i].object3d.onLetGo()
-						}
+							handControllers[j].remove(textMeshes[i].object3d)
+							menu.add(textMeshes[i].object3d)
 
-						textMeshes[i].object3d.position.copy(textMeshes[i].object3dOrdinaryPosition)
-						uniformlyScaleObject3dToMenuGapSize(textMeshes[i].object3d)
+							if(textMeshes[i].object3d.onLetGo !== undefined)
+							{
+								textMeshes[i].object3d.onLetGo()
+							}
+
+							textMeshes[i].object3d.position.copy(textMeshes[i].object3dOrdinaryPosition)
+							uniformlyScaleObject3dToMenuGapSize(textMeshes[i].object3d)
+						}
 					}
 				}
 			}

@@ -67,6 +67,9 @@ function initMapCreationSystem()
 			if( !waitingOnResponse )
 			{
 				let center = visiBox.getCenterInAssemblageSpace()
+				assemblage.localToWorld(center)
+				center.multiplyScalar(0.7)
+				assemblage.worldToLocal(center)
 
 				let msg = {
 					isolevel,

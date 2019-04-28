@@ -89,6 +89,9 @@ function initVisiBox()
 			
 			holdables.push( visiBox.corners[i] );
 		}
+		//happenning here so it's after
+		holdables.push(assemblage)
+		assemblage.ordinaryParent = scene
 	}
 
 	objectsToBeUpdated.push(visiBox)

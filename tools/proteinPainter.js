@@ -10,6 +10,7 @@
 		Check you can rotate assemblage at same time
 			if not, probably need to check update order
 		exported to pdb
+		only able to do it c-to-n, which is a problem
 
 	Education
 		together with the mutator, you can get anything
@@ -28,12 +29,12 @@ function initProteinPainter()
 	// 	{
 	// 		// rama.position.copy(activeAmide.position)
 
-	// 		// let previousNitrogenLocation = cBeta.clone().negate().add(nextCAlpha)
+	// 		// let previousNitrogenLocation = carbon.clone().negate().add(nextCAlpha)
 	// 		// let previousAmide = amides[ amides.indexOf(activeAmide) - 1 ]
 	// 		// previousNitrogenLocation.applyMatrix( previousAmide.matrix )
 	// 		// previousNitrogenLocation.sub(activeAmide.position)
 
-	// 		// let nextCBeta = cBeta.clone().applyQuaternion(activeAmide.quaternion)
+	// 		// let nextCarbon = carbon.clone().applyQuaternion(activeAmide.quaternion)
 			
 			
 
@@ -60,6 +61,7 @@ function initProteinPainter()
 	{
 		var amidePdbRead = {
 			elements:["C","O","C","N","C"],
+			names:[" CA "," O  "," C  "," N  ", " CA "],
 			positions:[
 				new THREE.Vector3(0.0,		0.0,0.0),
 				new THREE.Vector3(HS3*2,	0.0,0.0),
@@ -70,15 +72,16 @@ function initProteinPainter()
 		}
 
 		var nTerminusPdbRead = {
-			elements:["N", "C", "C"],
+			elements:["N", "C"],
+			names:[" N  ", " CA "],
 			positions:[
 				new THREE.Vector3(0.0,	-0.5, -HS3),
-				new THREE.Vector3(0.0,	0.0,	0.0),
-				new THREE.Vector3(0.0,	-0.5,	HS3)
+				new THREE.Vector3(0.0,	0.0,	0.0)
 			]
 		}
 		var cTerminusPdbRead = {
 			elements:["C","O","C","O"],
+			names:[" CA "," O  "," C  "," O  "],
 			positions:[
 				new THREE.Vector3(0.0,	0.0,0.0),
 				new THREE.Vector3(HS3*2,0.0,0.0),
@@ -88,8 +91,8 @@ function initProteinPainter()
 		}
 
 		var sideChainAndHydrogenPdbRead = {
-			elements:[
-				"H","C","C"],
+			elements:["H","C","C"],
+			names:["H"," CB "," CA "],
 			positions:[
 				new THREE.Vector3(-HS3,	0.5, 	0.0),
 				new THREE.Vector3(0.0,	-0.5,	HS3),
@@ -110,14 +113,16 @@ function initProteinPainter()
 		var nTerminusAtoms = [];
 		for(var i = 0; i < nTerminusPdbRead.elements.length; i++)
 		{
-			nTerminusAtoms.push( new Atom( nTerminusPdbRead.elements[i], nTerminusPdbRead.positions[i].clone() ) );
+			nTerminusAtoms.push( new Atom( nTerminusPdbRead.elements[i], nTerminusPdbRead.positions[i].clone(),
+				null,null,null,null,nTerminusPdbRead.names[i] ) );
 		}
 		var nTerminus = makeMoleculeMesh( nTerminusAtoms, false );
 
 		var amideAtoms = [];
 		for(var i = 0; i < amidePdbRead.elements.length; i++)
 		{
-			amideAtoms.push( new Atom( amidePdbRead.elements[i], amidePdbRead.positions[i].clone() ) );
+			amideAtoms.push( new Atom( amidePdbRead.elements[i], amidePdbRead.positions[i].clone(),
+				null,null,null,null,amidePdbRead.names[i] ) );
 		}
 		// var bondData = [[[[],[],1,0,2],[[],[],1,2,3]],[],[[[],[],1,1,2]],[[[],[],1,3,4],[[],[],1,3,5]],[],[],[],[],[],[]];
 		// changeBondBetweenAtomsToDouble(bondData, 1,2);
@@ -127,7 +132,8 @@ function initProteinPainter()
 		var cTerminusAtoms = [];
 		for(var i = 0; i < cTerminusPdbRead.elements.length; i++)
 		{
-			cTerminusAtoms.push( new Atom( cTerminusPdbRead.elements[i], cTerminusPdbRead.positions[i].clone() ) );
+			cTerminusAtoms.push( new Atom( cTerminusPdbRead.elements[i], cTerminusPdbRead.positions[i].clone(),
+				null,null,null,null,cTerminusPdbRead.names[i] ) );
 		}
 		// var bondData = [[[[],[],1,0,2],[[],[],1,2,3]],[],[[[],[],1,1,2],[[],[],1,3,4]],[],[],[],[],[],[],[]];
 		// changeBondBetweenAtomsToDouble(bondData, 1,2);
@@ -136,15 +142,16 @@ function initProteinPainter()
 		var sideChainAndHydrogenAtoms = [];
 		for(var i = 0; i < sideChainAndHydrogenPdbRead.elements.length; i++)
 		{
-			sideChainAndHydrogenAtoms.push( new Atom( sideChainAndHydrogenPdbRead.elements[i], sideChainAndHydrogenPdbRead.positions[i].clone() ) );
+			sideChainAndHydrogenAtoms.push( new Atom( sideChainAndHydrogenPdbRead.elements[i], sideChainAndHydrogenPdbRead.positions[i].clone(),
+				null,null,null,null,sideChainAndHydrogenPdbRead.names[i] ) );
 		}
 		var sideChainAndHydrogen = makeMoleculeMesh( sideChainAndHydrogenAtoms, false );
 
 		var sideChainAndHydrogenActualSpindle = new THREE.Vector3().addVectors(sideChainAndHydrogenPdbRead.positions[0],sideChainAndHydrogenPdbRead.positions[1]).normalize();
 		var sideChainAndHydrogenActualLeft = sideChainAndHydrogenActualSpindle.clone().cross(sideChainAndHydrogenPdbRead.positions[0]).cross(sideChainAndHydrogenActualSpindle).normalize();
-		var cBeta = amidePdbRead.positions[2].clone();
+		var carbon = amidePdbRead.positions[2].clone();
 		var nextCAlpha = amidePdbRead.positions[amidePdbRead.positions.length-1].clone();
-		var nextCAlphaAngleToCBetaSpindle = nextCAlpha.angleTo(cBeta)
+		var nextCAlphaAngleToCarbonSpindle = nextCAlpha.angleTo(carbon)
 	}
 
 	let amides = [];
@@ -152,7 +159,7 @@ function initProteinPainter()
 	let activeAmide = null;
 
 	{
-		let placementIndicatorMesh = new THREE.Mesh(amide.geometry.clone(), amide.material.clone())
+		let placementIndicatorMesh = amide.clone()
 		placementIndicatorMesh.add(nTerminus.clone())
 		placementIndicatorMesh.material.transparent = true
 		placementIndicatorMesh.material.opacity = 0.7
@@ -167,7 +174,7 @@ function initProteinPainter()
 
 	function createActiveAmideAtPosition(position)
 	{
-		let newAmide = amide.clone()
+		let newAmide = amide.cloneWithAtoms()
 		activeAmide = newAmide;
 		amides.push(newAmide);
 
@@ -198,6 +205,8 @@ function initProteinPainter()
 	let amidePlaneIndicator = new THREE.Mesh(new THREE.PlaneBufferGeometry(1,1))
 	assemblage.add(amidePlaneIndicator)
 
+	let laying = false;
+
 	proteinPainter.whileHeld = function(handPositionInAssemblage)
 	{
 		amidePlaneIndicator.position.copy(handPositionInAssemblage)
@@ -217,9 +226,23 @@ function initProteinPainter()
 			assemblage.worldToLocal(handPositionInAssemblage)
 		}
 
-		if( !this.parent.button1 )
+		if( this.parent.button1 && !this.parent.button1Old)
 		{
-			//we're going to find the closest atom, we need its nitrogen and its cBeta
+			if(laying)
+			{
+				castOffNewChain();
+				laying = false
+			}
+			else
+			{
+				//something?
+				laying = true
+			}
+		}
+
+		if(!laying)
+		{
+			//we're going to find the closest atom, we need its nitrogen and its carbon
 			//draw plane for that amide
 			//highlight
 			// let worldPosition = assemblage.localToWorld(handPositionInAssemblage.clone())
@@ -235,16 +258,17 @@ function initProteinPainter()
 			if( amides.length === 0 )
 			{
 				let newAmide = createActiveAmideAtPosition(handPositionInAssemblage)
-				newAmide.add(nTerminus.clone())
+				log(newAmide.atoms)
+				newAmide.add(nTerminus.cloneWithAtoms())
+
+				//Oooooor, you might be continuing
 			}
 
+			//need indicators
 			let prevCAlphaAcrossAmide = nextCAlpha.clone().applyQuaternion(activeAmide.quaternion).normalize()
 			let prevCAlphaToHand = handPositionInAssemblage.clone().sub(activeAmide.position)
 			let lengthOnAmide = prevCAlphaToHand.dot(prevCAlphaAcrossAmide)
-
-			//they ought to disappear and reappear at the same distance so you can put one in then change your mind back and forth
-			if( lengthOnAmide > amideDiagonalLength * 0.75 
-				&& amides.length < 2 )
+			if( lengthOnAmide > amideDiagonalLength * 1.4 )
 			{
 				let newAmidePosition = nextCAlpha.clone();
 				activeAmide.updateMatrixWorld();
@@ -261,98 +285,97 @@ function initProteinPainter()
 				sideChainAndHydrogens.push(activeSideChainAndHydrogen)
 			}
 
-			// if( lengthOnAmide < -amideDiagonalLength / 2 )
-			// {
-			// 	let indexOfAmideToChangeTo = amides.indexOf(activeAmide)-1
-			// 	if( indexOfAmideToChangeTo > -1 )
-			// 	{
-			// 		activeAmide = amides[indexOfAmideToChangeTo]
-			// 		if( indexOfAmideToChangeTo === 0 )
-			// 		{
-			// 			activeSideChainAndHydrogen = null
-			// 		}
-			// 		else
-			// 		{
-			// 			activeSideChainAndHydrogen = sideChainAndHydrogens[indexOfAmideToChangeTo-1]
-			// 		}
+			if(activeSideChainAndHydrogen)
+			{
+				let prevCAlphaToHand = handPositionInAssemblage.clone().sub(activeAmide.position)
+				var prevNitrogen = carbon.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion)
+				let angleToSpindle = prevNitrogen.angleTo(prevCAlphaToHand)
+				if( angleToSpindle < TAU / 4 / 3 )
+				{
+					let indexOfAmideToChangeTo = amides.indexOf(activeAmide)-1
+					if( indexOfAmideToChangeTo > -1 )
+					{
+						activeAmide = amides[indexOfAmideToChangeTo]
+						if( indexOfAmideToChangeTo === 0 )
+						{
+							activeSideChainAndHydrogen = null
+						}
+						else
+						{
+							activeSideChainAndHydrogen = sideChainAndHydrogens[indexOfAmideToChangeTo-1]
+						}
 
-			// 		removeAndRecursivelyDispose(amides.pop())
-			// 		removeAndRecursivelyDispose(sideChainAndHydrogens.pop())
-			// 	}
-			// }
+						//cheeeeeck this ok
+						removeAndRecursivelyDispose(amides.pop())
+						removeAndRecursivelyDispose(sideChainAndHydrogens.pop())
+					}
+				}
+			}
 
 			if(activeSideChainAndHydrogen)
 			{
-				let prevNitrogen = cBeta.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion)
+				let activeAmideToNextCAlpha = prevCAlphaToHand.clone().setLength(nextCAlpha.length())
+
+				let carbonDist = carbon.length()
+				let nDist = carbon.length() //not exactly
+				let carbonToNextCAlphaDist = carbon.distanceTo(nextCAlpha)
+				let prevNitrogenToCarbonDistance = Math.sqrt( sq(carbonDist) + sq(nDist) - (2 * nDist * carbonDist * Math.cos(TETRAHEDRAL_ANGLE ) ) )
+				
+				let possibleCarbons = tetrahedronTops(
+					new THREE.Vector3(),
+					activeAmideToNextCAlpha,
+					prevNitrogen,
+					carbonDist,carbonToNextCAlphaDist,prevNitrogenToCarbonDistance)
+
+				let newCarbon = null
+
+				if(possibleCarbons === false)
 				{
-					let activeAmideToNextCAlpha = prevCAlphaToHand.clone().setLength(nextCAlpha.length())
-
-					let cBetaDist = cBeta.length()
-					let nDist = cBeta.length() //not exactly
-					let cBetaToNextCAlphaDist = cBeta.distanceTo(nextCAlpha)
-					let prevNitrogenToCBetaDistance = Math.sqrt( sq(cBetaDist) + sq(nDist) - (2 * nDist * cBetaDist * Math.cos(TETRAHEDRAL_ANGLE ) ) )
+					let axis = prevNitrogen.clone().cross(prevCAlphaToHand).normalize()
 					
-					let possibleCBetas = tetrahedronTops(
-						new THREE.Vector3(),
-						activeAmideToNextCAlpha,
-						prevNitrogen,
-						cBetaDist,cBetaToNextCAlphaDist,prevNitrogenToCBetaDistance)
+					activeAmideToNextCAlpha.copy(prevNitrogen).setLength(nextCAlpha.length())
+					let directionToSway = prevCAlphaToHand.angleTo(prevNitrogen) > TETRAHEDRAL_ANGLE ? 1:-1
+					activeAmideToNextCAlpha.applyAxisAngle(axis, TETRAHEDRAL_ANGLE + directionToSway * carbon.angleTo(nextCAlpha) )
 
-					let newCBeta = null
+					newCarbon = prevNitrogen.clone()
+					newCarbon.applyAxisAngle(axis, TETRAHEDRAL_ANGLE )
+				}
+				else
+				{
+					let currentCarbon = carbon.clone().applyQuaternion( activeAmide.quaternion )
+					let closerIndex = possibleCarbons[0].distanceToSquared(currentCarbon) < possibleCarbons[1].distanceToSquared(currentCarbon)? 0:1
 
-					if(possibleCBetas === false)
+					newCarbon = possibleCarbons[closerIndex]
+					if( this.parent.button2 && !this.parent.button2Old )
 					{
-						let axis = prevNitrogen.clone().cross(prevCAlphaToHand).normalize()
-						
-						activeAmideToNextCAlpha.copy(prevNitrogen).setLength(nextCAlpha.length())
-						let directionToSway = prevCAlphaToHand.angleTo(prevNitrogen) > TETRAHEDRAL_ANGLE ? 1:-1
-						activeAmideToNextCAlpha.applyAxisAngle(axis, TETRAHEDRAL_ANGLE + directionToSway * cBeta.angleTo(nextCAlpha) )
-
-						newCBeta = prevNitrogen.clone()
-						newCBeta.applyAxisAngle(axis, TETRAHEDRAL_ANGLE )
+						newCarbon = possibleCarbons[1-closerIndex]
 					}
-					else
-					{
-						let currentCBeta = cBeta.clone().applyQuaternion( activeAmide.quaternion )
-						let closerIndex = possibleCBetas[0].distanceToSquared(currentCBeta) < possibleCBetas[1].distanceToSquared(currentCBeta)? 0:1
+				}
 
-						newCBeta = possibleCBetas[closerIndex]
-						if( this.parent.button2 && !this.parent.button2Old )
-						{
-							newCBeta = possibleCBetas[1-closerIndex]
-						}
-					}
+				{
+					let newCarbonAxis = newCarbon.clone().normalize()
+					activeAmide.quaternion.setFromUnitVectors(carbon.clone().normalize(),newCarbonAxis)
 
-					{
-						let newCBetaAxis = newCBeta.clone().normalize()
-						activeAmide.quaternion.setFromUnitVectors(cBeta.clone().normalize(),newCBetaAxis)
+					let localNextCAlpha = activeAmideToNextCAlpha.clone().applyQuaternion(activeAmide.quaternion.clone().inverse())
 
-						let localNextCAlpha = activeAmideToNextCAlpha.clone().applyQuaternion(activeAmide.quaternion.clone().inverse())
-
-						let orthogonalCurrentCAlpha = nextCAlpha.clone().projectOnPlane(cBeta).normalize()
-						let orthogonalNextCAlpha = localNextCAlpha.projectOnPlane(cBeta).normalize()
-						let secondQuat = new THREE.Quaternion().setFromUnitVectors(orthogonalCurrentCAlpha,orthogonalNextCAlpha)
-						activeAmide.quaternion.multiply(secondQuat)
-					}
+					let orthogonalCurrentCAlpha = nextCAlpha.clone().projectOnPlane(carbon).normalize()
+					let orthogonalNextCAlpha = localNextCAlpha.projectOnPlane(carbon).normalize()
+					let secondQuat = new THREE.Quaternion().setFromUnitVectors(orthogonalCurrentCAlpha,orthogonalNextCAlpha)
+					activeAmide.quaternion.multiply(secondQuat)
 				}
 
 				//repelling
 				{
-					let cBetaDirection = cBeta.clone().applyQuaternion(activeAmide.quaternion).normalize()
+					let carbonDirection = carbon.clone().applyQuaternion(activeAmide.quaternion).normalize()
 
-					let intendedSpindle = prevNitrogen.clone().normalize().lerp(cBetaDirection,0.5).normalize().negate()
+					let intendedSpindle = prevNitrogen.clone().normalize().lerp(carbonDirection,0.5).normalize().negate()
 					activeSideChainAndHydrogen.quaternion.setFromUnitVectors( sideChainAndHydrogenActualSpindle,intendedSpindle )
 
-					// let intendedLeft = cBetaDirection.clone().cross(intendedSpindle).normalize();
-					// let leftInCurrentSpace = sideChainAndHydrogenActualLeft.clone().applyQuaternion(activeSideChainAndHydrogen.quaternion);
-					// activeSideChainAndHydrogen.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors( leftInCurrentSpace, intendedLeft ) );
+					let intendedLeft = carbonDirection.clone().cross(intendedSpindle).normalize();
+					let leftInCurrentSpace = sideChainAndHydrogenActualLeft.clone().applyQuaternion(activeSideChainAndHydrogen.quaternion);
+					activeSideChainAndHydrogen.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors( leftInCurrentSpace, intendedLeft ) );
 				}
 			}
-		}
-		
-		if(this.parent.button1Old && !this.parent.button1)
-		{
-			castOffNewChain();
 		}
 	}
 
@@ -363,7 +386,7 @@ function initProteinPainter()
 			return;
 		}
 
-		let newCTerminus = cTerminus.clone();
+		let newCTerminus = cTerminus.cloneWithAtoms();
 		newCTerminus.quaternion.copy(activeAmide.quaternion)
 		newCTerminus.position.copy(activeAmide.position)
 		while( activeAmide.children.length )

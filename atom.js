@@ -20,6 +20,10 @@ var numberToElement = [
 		"H"
 ]
 
+let chainIds = "CDEFGHIJKLMNOPQRSTUVWXYZ"
+let lastChainId = "B"
+let chainId = chainIds[chainIds.indexOf(lastChainId)+1]
+
 function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc, occupancyAndTemperatureFactor)
 {
 	this.position = position;
@@ -43,7 +47,7 @@ function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc, occ
 	this.resNo = resNo;
 	this.insertionCode = insertionCode;
 	this.name = name;
-	this.altloc = altloc;
+	this.altloc = altloc; //TODO never had owt here, it's probably another vector so needs to be cloned below
 
 	if(typeof element === "number") //there are a lot of these things, best to keep it as a number
 	{
@@ -58,6 +62,11 @@ function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc, occ
 	{
 		console.error("unrecognized element: ", element)
 	}
+}
+
+Atom.prototype.clone = function()
+{
+	return new Atom(this.element,this.position.clone(),this.imol,this.chainId,this.resNo,this.insertionCode,this.name,this.altloc,this.occupancyAndTemperatureFactor)
 }
 
 Atom.prototype.assignResidueSpecToMessage = function(msg)

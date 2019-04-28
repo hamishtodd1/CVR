@@ -214,6 +214,17 @@ function initModelCreationSystem()
 		} ) );
 		moleculeMesh.atoms = atoms;
 
+		moleculeMesh.cloneWithAtoms = function()
+		{
+			let clone = moleculeMesh.clone()
+			clone.atoms = Array(moleculeMesh.atoms.length)
+			for(let i = 0; i < clone.atoms.length; i++)
+			{
+				clone.atoms[i] = moleculeMesh.atoms[i].clone()
+			}
+			return clone
+		}
+
 		if(clip)
 		{
 			moleculeMesh.material.clippingPlanes = visiBox.planes;

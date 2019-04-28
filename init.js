@@ -14,11 +14,14 @@
 Your thoughts about video processing might be silly. Likely there will be an api in future, an api for
 
 TODO
-	Protein painter can start from current chain
+	Highlighting working better
+		Thereby to get chain selector being not terrible
+		Maybe even pivoting on chain selector?
+	chain continuing
+	ramachandran
+	Would be nice to fix crap about being up or down =/
 	Deleter
 	Get it on web
-	Highlighting working better
-	Ramachandran for painter
 
 TODO to make it independent of coot
 	Loaded from a webpage (ask Ivan)
@@ -148,6 +151,7 @@ function init()
 	}
 	socket.commandReactions["map"] = function(msg)
 	{
+		log("todo, deleters assume no connection")
 		let myArrayBuffer = base64ToArrayBuffer( msg["dataString"] )
 		let newMap = Map( myArrayBuffer );
 	}
@@ -162,6 +166,7 @@ function init()
 
 	initPdbLoader()
 	
+	initSurroundings();
 	initVisiBox();
 	assemblage.position.z = -0.9
 	assemblage.scale.setScalar( 0.04 ); //0.04 means no visibox wasted, 0.028 is nice, 0.01 fits on screen
@@ -175,7 +180,6 @@ function init()
 	}
 	window.addEventListener( 'resize', windowResize)
 	
-	initSurroundings();
 	initScaleStick();
 	// initKeyboardInput();
 	// initMonomerReceiver()
@@ -213,22 +217,18 @@ function init()
 		//coot specific
 		// initRefiner()
 		// initAutoRotamer()
-
 		// initEnvironmentDistances()
-
-		// initRefiner()
 		
 		initRigidSphereMover()
 		initRigidChainMover()
 		initProteinPainter()
 
-		// initAtomLabeller()
+		initAtomLabeller()
 		// initMutator()
-		// initAtomDeleter()
-		// initResidueDeleter()
+		initAtomDeleter()
+		initResidueDeleter()
 		// initNewAtomRoster()
-
-		initRamachandran()
+		// initRamachandran()
 
 		socket.send(JSON.stringify({command:"loadPolarAndAzimuthals"}))
 

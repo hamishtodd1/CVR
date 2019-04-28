@@ -8,7 +8,7 @@ function initAtomDeleter()
 	//probably various things can highlight something, be sure to always do cleanup
 	//heh but what if you want a tool in each hand?
 	atomDeleter.onLetGo = turnOffAllHighlights;
-	
+
 	atomDeleter.whileHeld = function(assemblagePosition)
 	{
 		if( models.length === 0 )
@@ -29,7 +29,17 @@ function initAtomDeleter()
 					{
 						var msg = {command:"deleteAtom"};
 						models[i].atoms[j].assignAtomSpecToObject( msg );
-						socket.send(JSON.stringify(msg));
+
+						if(true) //not connected to coot!
+						{
+							socket.commandReactions.deleteAtom(msg)
+							i = -1
+							break;
+						}
+						else
+						{
+							socket.send(JSON.stringify(msg));
+						}
 					}
 				}
 			}
