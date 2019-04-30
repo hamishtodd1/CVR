@@ -10,6 +10,8 @@
 	Grab a terminal residue and you start working out of that
 	Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
 
+
+	Speedometer tau indication
 	
 
 	Take some supercomputer algorithms from 1980 and because moore's law they are consumer hardware today

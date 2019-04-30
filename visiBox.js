@@ -14,7 +14,7 @@ function initVisiBox()
 
 	visiBox.scale.x = 0.23
 	visiBox.scale.y = 0.17
-	visiBox.scale.z = 0.33
+	visiBox.scale.z = 0.39
 	visiBox.rotation.x = -0.48
 
 	let d = 99999

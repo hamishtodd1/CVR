@@ -570,8 +570,11 @@ function initPanel()
 			}
 		}
 
+		// let s = console.trace()
+		// console.log(s)
+
 		let stack = new Error().stack;
-		let name = (stack.split("at init"))[1].split(" (")[0]
+		let name = Math.random().toString()// (stack.split("at init"))[1].split(" (")[0]
 
 		MenuOnPanel([{string:name, object3d: tool }])
 
