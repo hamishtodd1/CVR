@@ -31,6 +31,14 @@ function nonCootConnectedInit()
 	loadPdbIntoAssemblage("drugIsInteresting.pdb")
 	loadMap("drugIsInteresting.map")
 
+	// loadMap("kyle.map")
+	// new THREE.FileLoader().load( "modelsAndMaps/kyleGbr.txt",
+	// 	function( modelDataString )
+	// 	{
+	// 		makeModelFromCootString( modelDataString);
+	// 	}
+	// );
+
 	// loadMap("jp.map",3.4)
 	// assemblage.position.set(-0.6326659774326654,0.8330610470434914,-1.7592)
 	// assemblage.scale.setScalar(0.028)

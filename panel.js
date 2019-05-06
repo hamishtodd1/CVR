@@ -579,11 +579,15 @@ function initPanel()
 		let fakeError = new Error()
 		if(fakeError.stack)
 		{
-			var name = (fakeError.stack.split("at init"))[1].split(" (")[0]
-		}
-		else
-		{
-			var name = "firefox is bad for naming things"
+			var chromeStyleSplit = (fakeError.stack.split("at init"))
+			if(chromeStyleSplit.length > 1)
+			{
+				var name = chromeStyleSplit[1]
+			}
+			else
+			{
+				var name = (fakeError.stack.split("\ninit"))[1].split("@")[0]
+			}
 		}
 
 		MenuOnPanel([{string:name, object3d: tool }])

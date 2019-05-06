@@ -4,6 +4,7 @@ var elementToNumber = {
 		O: 2,
 		N: 3,
 		CL:4, //ask Paul about this
+		Q:5,
 		P: 6,
 		H: 9,
 }

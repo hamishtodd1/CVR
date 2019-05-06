@@ -41,6 +41,8 @@ let scene = new THREE.Scene().add(camera);
 let renderer = new THREE.WebGLRenderer( { antialias: true } );
 let handControllers = [new THREE.Object3D(),new THREE.Object3D()]
 
+let HACKY_HAND_ADDITION_REMOVE = new THREE.Vector3()
+
 let models = [];
 let maps = [];
 

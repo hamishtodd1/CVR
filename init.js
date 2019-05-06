@@ -110,6 +110,15 @@ Maya
 	reddit/bluecollarwomen
 	http://www.nts.org.uk/wildlifesurvey/
 	http://www.wildlifeinformation.co.uk/about_volunteering.php
+	
+	Humane extermination?
+	Who counts the badgers? Conducts the surveys for the government?
+	RSPCA inspector. Possibly too traumatic
+	Police dog handler
+	Lab animal caretaker
+
+	Park naturalist
+	Rehabilitator?
 
 */
 
@@ -193,8 +202,10 @@ function init()
 
 	setCurrentHeadPositionAsCenter = function()
 	{
+		HACKY_HAND_ADDITION_REMOVE.sub(camera.position)
 		renderer.vr.setPositionAsOrigin( camera.position )
 	}
+	// console.log(renderer.vr)
 	addSingleFunctionToPanel(setCurrentHeadPositionAsCenter,6.05,5.38)
 	setCurrentHeadPositionAsCenter() //wanna be accessible from behind the panel?
 
@@ -220,7 +231,7 @@ function init()
 		// initEnvironmentDistances()
 		
 		initRigidSphereMover()
-		initRigidChainMover()
+		// initRigidChainMover()
 		initProteinPainter()
 
 		initAtomLabeller()

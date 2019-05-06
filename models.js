@@ -257,28 +257,30 @@ function initModelCreationSystem()
 				bondData[i] = [];
 			}
 
-			if( atoms.length > 100 )
+			// if( atoms.length > 100 )
+			// {
+			// 	console.warn("We've been requested to calculate bond distances for ", atoms.length, " atoms")
+			// }
+			// else
 			{
-				console.warn("We've been requested to calculate bond distances for ", atoms.length, " atoms")
-			}
-
-			for( var i = 0, il = atoms.length; i < il; i++ )
-			{
-				for( var j = i+1, jl = atoms.length; j < jl; j++)
+				for( var i = 0, il = atoms.length; i < il; i++ )
 				{
-					if( atoms[i].position.distanceTo( atoms[j].position ) < 1.81 ) //quantum chemistry
+					for( var j = i+1, jl = atoms.length; j < jl; j++)
 					{
-						// if(atoms[i].name !== " O  ")
-						// {
-							//position position, bondNumber, index index
-							bondData[ atoms[i].element ].push( [[],[],1,i,j]);
-							// bondData[ atoms[i].element ].push( [[],[],1,j,i]);
-						// }
-						// else
-						// {
-						// 	bondData[ atoms[i].element ].push( [[],[],2,i,j]);
-						// 	bondData[ atoms[i].element ].push( [[],[],2,j,i]);
-						// }
+						if( atoms[i].position.distanceTo( atoms[j].position ) < 1.81 ) //quantum chemistry
+						{
+							// if(atoms[i].name !== " O  ")
+							// {
+								//position position, bondNumber, index index
+								bondData[ atoms[i].element ].push( [[],[],1,i,j]);
+								// bondData[ atoms[i].element ].push( [[],[],1,j,i]);
+							// }
+							// else
+							// {
+							// 	bondData[ atoms[i].element ].push( [[],[],2,i,j]);
+							// 	bondData[ atoms[i].element ].push( [[],[],2,j,i]);
+							// }
+						}
 					}
 				}
 			}

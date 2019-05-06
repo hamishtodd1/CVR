@@ -109,16 +109,17 @@ function initHands()
 		// 	console.log(device.stageParameters.sittingToStandingTransform)
 
 		var gamepads = navigator.getGamepads();
-		var standingMatrix = renderer.vr.getStandingMatrix()
+		// var standingMatrix = renderer.vr.getStandingMatrix()
 		
 		//If handControllers aren't getting input even from XX-vr-handControllers,
 		//Try restarting computer. Urgh. Just browser isn't enough. Maybe oculus app?
 		for(var k = 0; k < gamepads.length; ++k)
 		{
-			if(!gamepads[k] || gamepads[k].pose === null || gamepads[k].pose.position === null)
+			if(!gamepads[k] || gamepads[k].pose === null || gamepads[k].pose === undefined || gamepads[k].pose.position === null)
 			{
 				continue;
 			}
+
 
 			var affectedControllerIndex = -1;
 			if (gamepads[k].id === "OpenVR Gamepad" )
@@ -166,7 +167,8 @@ function initHands()
 			controller.oldQuaternion.copy(handControllers[ affectedControllerIndex ].quaternion);
 			
 			controller.position.fromArray( gamepads[k].pose.position );
-			controller.position.applyMatrix4( standingMatrix );
+			controller.position.add(HACKY_HAND_ADDITION_REMOVE)
+			// controller.position.applyMatrix4( standingMatrix );
 			controller.quaternion.fromArray( gamepads[k].pose.orientation );
 			controller.updateMatrixWorld();
 

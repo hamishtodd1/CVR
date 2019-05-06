@@ -5,6 +5,34 @@
 			Grab a terminal residue and you start working out of that
 			Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
 		The new, first, residue still gets put in the same place, but we move the assemblage into the right orientation
+
+	How to integrate this shit?
+
+	Should be able to grab any residue. It breaks off
+
+	Grab a terminal residue and you start working out of that
+	Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
+
+
+	Speedometer tau indication
+	
+
+	Take some supercomputer algorithms from 1980 and because moore's law they are consumer hardware today
+	Game design: writing algorithms that have to run in realtime on consumer hardware
+	HPC: writing algorithms that you can just about get to run on clusters
+	
+	Visualize the ramachandran in place.
+	Tau is set to 110, but if Lynne's data is to be believed it can do 105 and 115 too
+	There are only two degrees of freedom, phi and psi
+	"abstract over" the set of all rotamers:
+		You get a circle of psi's of different colors given the current phi, abstracting over position of next Calpha
+		You get a circle of phi's of different colors given the current psi, abstracting over position of next Calpha
+		And if you hold an extra button, a teeny bit of tau, a little lever. Is this all that's ever needed?
+		Like this is super interesting because it cooooould be protein design.
+			Would you ever want to design it that way?
+			Can you be compelled to make an alpha helix this way?
+		Ramachandran data can also be used to detect when you want to "retract"
+		Lampshade-like toroidal region
 		rama
 			can be used to detect when you want to "retract"?
 		Check you can rotate assemblage at same time
@@ -158,18 +186,27 @@ function initProteinPainter()
 	let sideChainAndHydrogens = []
 	let activeAmide = null;
 
+	// {
+	// 	let placementIndicatorMesh = amide.clone()
+	// 	placementIndicatorMesh.add(nTerminus.clone())
+	// 	placementIndicatorMesh.material.transparent = true
+	// 	placementIndicatorMesh.material.opacity = 0.7
+	// 	proteinPainter.add(placementIndicatorMesh)
+	// 	placementIndicatorMesh.update = function()
+	// 	{
+	// 		this.scale.setScalar(getAngstrom() )
+	// 		this.visible = ( handControllers.indexOf(proteinPainter.parent) !== -1 && amides.length === 0 )
+	// 	}
+	// 	objectsToBeUpdated.push(placementIndicatorMesh)
+	// }
+
 	{
-		let placementIndicatorMesh = amide.clone()
-		placementIndicatorMesh.add(nTerminus.clone())
-		placementIndicatorMesh.material.transparent = true
-		placementIndicatorMesh.material.opacity = 0.7
-		proteinPainter.add(placementIndicatorMesh)
-		placementIndicatorMesh.update = function()
-		{
-			this.scale.setScalar(getAngstrom() )
-			this.visible = ( handControllers.indexOf(proteinPainter.parent) !== -1 && amides.length === 0 )
-		}
-		objectsToBeUpdated.push(placementIndicatorMesh)
+		var line = new THREE.Mesh(new THREE.CylinderBufferGeometryUncentered(0.13,1),
+			new THREE.MeshLambertMaterial(
+			{
+				color:0xFF0000,
+			}))
+		assemblage.add(line);
 	}
 
 	function createActiveAmideAtPosition(position)
@@ -202,14 +239,14 @@ function initProteinPainter()
 	// let illustrative = new THREE.Mesh(new THREE.BoxGeometry(getAngstrom(),getAngstrom(),getAngstrom()))
 	// assemblage.add(illustrative)
 
-	let amidePlaneIndicator = new THREE.Mesh(new THREE.PlaneBufferGeometry(1,1))
-	assemblage.add(amidePlaneIndicator)
+	// let amidePlaneIndicator = new THREE.Mesh(new THREE.PlaneBufferGeometry(1,1))
+	// assemblage.add(amidePlaneIndicator)
 
 	let laying = false;
 
 	proteinPainter.whileHeld = function(handPositionInAssemblage)
 	{
-		amidePlaneIndicator.position.copy(handPositionInAssemblage)
+		// amidePlaneIndicator.position.copy(handPositionInAssemblage)
 
 		if( Math.abs(assemblage.scale.x - 0.026) > 0.005 )
 		{
@@ -235,9 +272,10 @@ function initProteinPainter()
 			}
 			else
 			{
-				//something?
 				laying = true
 			}
+
+			line.visible = laying
 		}
 
 		if(!laying)
@@ -285,6 +323,9 @@ function initProteinPainter()
 				sideChainAndHydrogens.push(activeSideChainAndHydrogen)
 			}
 
+			let activeAmideToNextCAlpha = prevCAlphaToHand.clone().setLength(nextCAlpha.length())
+
+
 			if(activeSideChainAndHydrogen)
 			{
 				let prevCAlphaToHand = handPositionInAssemblage.clone().sub(activeAmide.position)
@@ -312,10 +353,14 @@ function initProteinPainter()
 				}
 			}
 
-			if(activeSideChainAndHydrogen)
+			if(!activeSideChainAndHydrogen)
 			{
-				let activeAmideToNextCAlpha = prevCAlphaToHand.clone().setLength(nextCAlpha.length())
-
+				// redirectCylinder(line,
+				// 	nextCAlpha.clone().applyQuaternion(activeAmide.quaternion).add(activeAmide.position),
+				// 	handPositionInAssemblage.clone().sub(activeAmideToNextCAlpha).sub(activeAmide.position) )
+			}
+			else
+			{
 				let carbonDist = carbon.length()
 				let nDist = carbon.length() //not exactly
 				let carbonToNextCAlphaDist = carbon.distanceTo(nextCAlpha)
@@ -351,6 +396,8 @@ function initProteinPainter()
 						newCarbon = possibleCarbons[1-closerIndex]
 					}
 				}
+
+				redirectCylinder(line, activeAmideToNextCAlpha.clone().add(activeAmide.position), handPositionInAssemblage.clone().sub(activeAmideToNextCAlpha).sub(activeAmide.position))
 
 				{
 					let newCarbonAxis = newCarbon.clone().normalize()
@@ -418,6 +465,8 @@ function initProteinPainter()
 	{
 		this.rotation.x = 0
 		castOffNewChain()
+		line.visible = false
+		laying = false
 	}
 
 	return proteinPainter;

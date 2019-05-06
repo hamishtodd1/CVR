@@ -68,7 +68,7 @@ function initMapCreationSystem()
 			{
 				let center = visiBox.getCenterInAssemblageSpace()
 				assemblage.localToWorld(center)
-				center.multiplyScalar(0.7)
+				center.multiplyScalar(0.8)
 				assemblage.worldToLocal(center)
 
 				let msg = {
