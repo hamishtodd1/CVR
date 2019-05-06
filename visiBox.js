@@ -1,9 +1,3 @@
-/*
-	edges shouldn't do the silly scaling thing
-	arguably corner movement should be horizontally mirrored
-	maybe it should be frustum shaped?
-*/
-
 function initVisiBox()
 {
 	visiBox = new THREE.LineSegments(new THREE.Geometry(),new THREE.MeshLambertMaterial({color:0x333333}));
@@ -14,7 +8,7 @@ function initVisiBox()
 
 	visiBox.scale.x = 0.23
 	visiBox.scale.y = 0.17
-	visiBox.scale.z = 0.39
+	visiBox.scale.z = 0.3
 	visiBox.rotation.x = -0.48
 
 	let d = 99999
@@ -95,6 +89,9 @@ function initVisiBox()
 			
 			holdables.push( visiBox.corners[i] );
 		}
+		//happenning here so it's after
+		holdables.push(assemblage)
+		assemblage.ordinaryParent = scene
 	}
 
 	objectsToBeUpdated.push(visiBox)
@@ -170,4 +167,16 @@ function initVisiBox()
 			}
 		}
 	}],4.23,5.42)
+
+	visiBox.getCenterInAssemblageSpace = function()
+	{
+		let center = new THREE.Vector3(0,0,-1 )
+		visiBox.localToWorld(center)
+		//in the middle of the box, rather than the front
+		center.setLength((visiBox.scale.z + panel.scale.z )/2)
+		assemblage.updateMatrixWorld();
+		assemblage.worldToLocal( center );
+
+		return center
+	}
 }

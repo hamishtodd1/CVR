@@ -4,6 +4,11 @@ function initHands()
 {
 	function overlappingHoldable(holdable)
 	{
+		if(holdable === assemblage)
+		{
+			return true
+		}
+
 		//TODO once a weird bug here where geometry was undefined
 		var ourPosition = this.controllerModel.geometry.boundingSphere.center.clone();
 		this.localToWorld( ourPosition );

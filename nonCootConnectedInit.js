@@ -1,21 +1,6 @@
-function nonCootConnectedInit()
+function fakeCootConnectedInit()
 {
-	loadFakeMap = function(filename)
-	{
-		//not just fileloader?
-		let req = new XMLHttpRequest();
-		req.open('GET', 'modelsAndMaps/' + filename, true);
-		req.responseType = 'arraybuffer';
-		req.onreadystatechange = function()
-		{
-			if (req.readyState === 4)
-			{
-				Map( req.response );
-			}
-		};
-		req.send(null);
-	}
-	loadFakeMap("tutorial.map")
+	loadMap("tutorial.map")
 
 	new THREE.FileLoader().load( "modelsAndMaps/tutorialGetBondsRepresentation.txt",
 		function( modelDataString )
@@ -23,6 +8,41 @@ function nonCootConnectedInit()
 			makeModelFromCootString( modelDataString);
 		}
 	);
+}
+
+function loadMap(filename, isolevel)
+{
+	//not just fileloader?
+	let req = new XMLHttpRequest();
+	req.open('GET', 'modelsAndMaps/' + filename, true);
+	req.responseType = 'arraybuffer';
+	req.onreadystatechange = function()
+	{
+		if (req.readyState === 4)
+		{
+			Map( req.response, isolevel );
+		}
+	};
+	req.send(null);
+}
+
+function nonCootConnectedInit()
+{
+	loadPdbIntoAssemblage("drugIsInteresting.pdb")
+	loadMap("drugIsInteresting.map")
+
+	// loadMap("kyle.map")
+	// new THREE.FileLoader().load( "modelsAndMaps/kyleGbr.txt",
+	// 	function( modelDataString )
+	// 	{
+	// 		makeModelFromCootString( modelDataString);
+	// 	}
+	// );
+
+	// loadMap("jp.map",3.4)
+	// assemblage.position.set(-0.6326659774326654,0.8330610470434914,-1.7592)
+	// assemblage.scale.setScalar(0.028)
+	// assemblage.quaternion.set(0.20453074142494626,0.7848390257791691,0.5651683410241131,-0.15092920).normalize()
 
 	//TODO until there's files in there, don't initialize and just have a sign
 
@@ -36,17 +56,7 @@ function nonCootConnectedInit()
 
 	MenuOnPanel([{string:"Export PDB", buttonFunction:function()
 	{
-		var data = new Blob([pdbString], {type: 'text/plain'});
-		var textFile = window.URL.createObjectURL(data);
-
-		//TODO actually change the thing
-
-		var downloadObject = document.createElement("a");
-		document.body.appendChild(downloadObject);
-		downloadObject.style = "display: none";
-		downloadObject.href = textFile;
-		downloadObject.download = "cootVRCreatedStructure.pdb";
-		downloadObject.click();
+		exportPdb()
 	}}])
 	
 	renderer.domElement.addEventListener('dragenter', function(e)
@@ -79,17 +89,15 @@ function nonCootConnectedInit()
 		{
 			reader.onload = function (evt)
 			{
-				let text = evt.target.result
-				pdbString = text
+				pdbString = evt.target.result
 
-				let loader = new THREE.PDBLoader()
-				let atomsAndBonds = loader.parsePDB( text );
-				loader.createModel( atomsAndBonds, function(carbonAlphas, geometryAtoms, geometryBonds)
-				{
-					let atoms = atomArrayFromElementsAndCoords(geometryAtoms.elements,geometryAtoms.attributes.position.array)
-					let model = makeMoleculeMesh( atoms, true );
-					putModelInAssemblage(model)
-				} )
+				let atomsAndBonds = parsePdb( pdbString );
+				let geometryAtoms = createModel( atomsAndBonds ).geometryAtoms
+
+				let atoms = atomArrayFromElementsAndCoords( geometryAtoms.elements, geometryAtoms.attributes.position.array)
+				let model = makeMoleculeMesh( atoms, true );
+
+				putModelInAssemblage(model)
 			};
 			reader.readAsText(file);
 		}

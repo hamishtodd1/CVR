@@ -1,31 +1,84 @@
+//CLEARLY the better thing to do is have spheres of the size that ramachandran used
 function initRamachandran()
 {
-	let rama = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(TAU,TAU),new THREE.MeshBasicMaterial())
-	rama.scale.multiplyScalar(0.01)
-	let resolution = 72
-	rama.position.z = -0.3
-	scene.add(rama)
-	
-	let ramaArray = new Uint8Array(sq(resolution)*3)
-	for(let i = 0; i < resolution; i++)
-	{
-		for(let j = 0; j < resolution; j++)
+	new THREE.FileLoader().load(
+		"data/Ala_Tau_110.txt",
+		function(data)
 		{
-			for(let k = 0; k < 3; k++)
+			var values = data.split(" "); //for some reason this handles the newlines as well
+			//WE WERE HERE
+			
+			let allowedPhiPsiArray = Array( 72 )
+			for(let i = 0; i < allowedPhiPsiArray.length; i++)
 			{
-				ramaArray[(i*resolution+j)*3+k] = Math.floor(Math.random()*256)
-				if(i>resolution/2)
-					ramaArray[(i*resolution+j)*3+k] = 0
+				allowedPhiPsiArray[i] = Array( 72 )
 			}
-		}
-	}
-	rama.material.map = new THREE.DataTexture( ramaArray, resolution, resolution, THREE.RGBFormat )
-	rama.material.map.needsUpdate = true
+			
+			for(var i = 0, il = Math.floor( values.length / 3 ); i < il; i++)
+			{
+				var phi = parseInt( values[i*3+0] );
+				var psi = parseInt( values[i*3+1] );
+				
+				//pair of hacks that Lynne said.
+				// psi += 180;
+				// phi *= -1;
+				
+				while(phi < 0)
+					phi += 360;
+				while(psi < 0)
+					psi += 360;
+				
+				allowedPhiPsiArray[phi / 5][psi / 5] = parseInt( values[i*3+2] );
+			}
 
-	let point = new THREE.Mesh(new THREE.SphereGeometry( TAU/resolution*2 ));
-	rama.add(point)
+			ramamachandranAllowed = function(phi,psi)
+			{
+				//for god's sake you could simulate it yourself
+				let phiEntry = Math.round(phi/5)
+				let psiEntry = Math.round(psi/5)
 
-	//CLEARLY the better thing to do is have spheres of the size that ramachandran used
+				while(phiEntry < 0)
+					phiEntry += 72;
+				while(psiEntry < 0)
+					psiEntry += 72;
+
+				while(phiEntry >= 72)
+					phiEntry -= 72;
+				while(psiEntry >= 72)
+					psiEntry -= 72;
+
+				return allowedPhiPsiArray[phiEntry][psiEntry] === 1
+			}
+
+			let rama = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(TAU,TAU),new THREE.MeshBasicMaterial())
+			rama.scale.multiplyScalar(0.03)
+			rama.position.z = -0.3
+			scene.add(rama)
+			
+			let resolution = 72
+			let ramaArray = new Uint8Array(sq(resolution)*3)
+			for(let i = 0; i < resolution; i++)
+			{
+				for(let j = 0; j < resolution; j++)
+				{
+					for(let k = 0; k < 3; k++)
+					{
+						//horizontal then vertical
+						ramaArray[(j*resolution+i)*3+k] = ramamachandranAllowed(i*5-180,j*5-180) ? 255 : 0
+					}
+				}
+			}
+			rama.material.map = new THREE.DataTexture( ramaArray, resolution, resolution, THREE.RGBFormat )
+			rama.material.map.needsUpdate = true
+
+			// let point = new THREE.Mesh(new THREE.SphereGeometry( TAU/resolution*2 ));
+			// rama.add(point)
+		},
+		function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load data" ); }
+	);
+
+	return
+
 
 	//donut stuff
 	if(0)
@@ -86,52 +139,6 @@ function initRamachandran()
 			var finalPosition = positionOnCircle( y / (1+2*innerRoundedness), virtualTubeCenter, tubeCenterTangent, circumferenceComponent );
 			return finalPosition;
 		}
-	}
-}
-
-function weirdLoaderThatStartedWithSocket()
-{
-	function loadAllowedArray(k, allowedPhiPsiArray )
-	{
-		var tauAngle = 105 + k * 5;
-		new THREE.FileLoader().load(
-			"Data/Ala_Tau_" + tauAngle.toString() + ".txt",
-			function(data)
-			{
-				var values = data.split(" "); //for some reason this handles the newlines as well
-				
-				for(var i = 0; i < allowedPhiPsiArray.length; i++)
-				{
-					allowedPhiPsiArray[i] = Array( 360 / 5 );
-				}
-				
-				for(var i = 0, il = Math.floor( values.length / 3 ); i < il; i++)
-				{
-					var phi = parseInt( values[i*3+0] );
-					var psi = parseInt( values[i*3+1] );
-					
-					//pair of hacks that Lynne said.
-					psi += 180;
-					phi *= -1;
-					
-					while(phi < 0)
-						phi += 360;
-					while(psi < 0)
-						psi += 360;
-					
-					allowedPhiPsiArray[phi / 5][psi / 5] = parseInt( values[i*3+2] );
-				}
-			},
-			function ( xhr ) {}, function ( xhr ) { console.error( "couldn't load data" ); }
-		);
-	}
-
-	var allowedArray = Array(3);	
-	for(var i = 0; i < 3; i++ )
-	{
-		allowedArray[i] = Array( 360 / 5 );
-		
-		loadAllowedArray(i, allowedArray[i] )
 	}
 }
 

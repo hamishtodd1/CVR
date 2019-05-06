@@ -1,3 +1,58 @@
+function getClosestAtomToWorldPosition(p, condition)
+{
+	if(condition === undefined)
+	{
+		condition = true
+	}
+
+	var closestAtom = null;
+	var closestDistSq = Infinity;
+	for(var i = 0; i < models.length; i++)
+	{
+		var localPosition = models[i].worldToLocal(p.clone());
+
+		for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
+		{
+			let distSq = models[i].atoms[j].position.distanceToSquared( localPosition )
+			if( distSq < closestDistSq && condition(models[i].atoms[j]) )
+			{
+				closestAtom = models[i].atoms[j];
+				closestDistSq = distSq
+			}
+		}
+	}
+	return closestAtom;
+}
+
+function padLeft(str, desiredLength)
+{
+	if(str.length >= desiredLength)
+	{
+		return str
+	}
+
+	let paddingAmt = desiredLength - str.length
+	for(let i = 0; i < paddingAmt; i++)
+	{
+		str = " " + str
+	}
+	return str
+}
+function padRight(str, desiredLength)
+{
+	if(str.length >= desiredLength)
+	{
+		return str
+	}
+
+	let paddingAmt = desiredLength - str.length
+	for(let i = 0; i < paddingAmt; i++)
+	{
+		str = str + " "
+	}
+	return str
+}
+
 function objectNotAppearingTest(obj)
 {
 	console.log("parent: ",obj.parent)
@@ -251,7 +306,7 @@ THREE.Quaternion.prototype.distanceTo = function(q2)
 }
 THREE.Quaternion.prototype.getAxisWithAngleAsLength = function()
 {
-	var scaleFactor = Math.sqrt(1-qw*qw);
+	var scaleFactor = Math.sqrt(1-this.w*this.w);
 	var axis = new THREE.Vector3(
 		this.x / scaleFactor,
 		this.y / scaleFactor,
@@ -259,6 +314,10 @@ THREE.Quaternion.prototype.getAxisWithAngleAsLength = function()
 		);
 	axis.setLength(2 * Math.acos(this.w));
 	return axis;
+}
+THREE.Quaternion.prototype.getInverse = function(scalar)
+{
+	return this.clone().conjugate()
 }
 THREE.Quaternion.prototype.multiplyScalar = function(scalar)
 {
@@ -350,11 +409,65 @@ function randomPerpVector(ourVector){
 
 function removeAndRecursivelyDispose(obj)
 {
-	obj.parent.remove(obj);
+	while( obj.children.length )
+	{
+		removeAndRecursivelyDispose(obj.children[0])
+	}
+	
+	if(obj.parent)
+	{
+		obj.parent.remove(obj);
+	}
 	if (obj.geometry) { obj.geometry.dispose(); }
 	if (obj.material) { obj.material.dispose(); }
-	for(var i = 0; i < obj.children.length; i++)
+}
+
+function tetrahedronTops(P1,P2,P3, r1,r2,r3)
+{
+	P3.sub(P1);
+	P2.sub(P1);
+	var cos_P3_P2_angle = P3.dot(P2)/P2.length()/P3.length();
+	var sin_P3_P2_angle = Math.sqrt(1-cos_P3_P2_angle*cos_P3_P2_angle);
+	
+	var P1_t = new THREE.Vector3(0,0,0);
+	var P2_t = new THREE.Vector3(P2.length(),0,0);
+	var P3_t = new THREE.Vector3(P3.length() * cos_P3_P2_angle, P3.length() * sin_P3_P2_angle,0);
+	
+	var cp_t = new THREE.Vector3(0,0,0);
+	cp_t.x = ( r1*r1 - r2*r2 + P2_t.x * P2_t.x ) / ( 2 * P2_t.x );
+	cp_t.y = ( r1*r1 - r3*r3 + P3_t.x * P3_t.x + P3_t.y * P3_t.y ) / ( P3_t.y * 2 ) - ( P3_t.x / P3_t.y ) * cp_t.x;
+	if(r1*r1 - cp_t.x*cp_t.x - cp_t.y*cp_t.y < 0)
 	{
-		removeAndRecursivelyDispose(obj.children[i])
+		return false;
 	}
+	cp_t.z = Math.sqrt(r1*r1 - cp_t.x*cp_t.x - cp_t.y*cp_t.y);
+	
+	let solutions = [new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,0)]
+	
+	var z_direction = new THREE.Vector3();
+	z_direction.crossVectors(P2,P3);
+	z_direction.normalize(); 
+	z_direction.multiplyScalar(cp_t.z);
+	solutions[0].add(z_direction)
+	solutions[1].sub(z_direction)
+	
+	var x_direction = P2.clone();
+	x_direction.normalize();
+	x_direction.multiplyScalar(cp_t.x);
+	solutions[0].add(x_direction);
+	solutions[1].add(x_direction);
+	
+	var y_direction = new THREE.Vector3();
+	y_direction.crossVectors(z_direction,x_direction);
+	y_direction.normalize();
+	y_direction.multiplyScalar(cp_t.y);
+	solutions[0].add(y_direction);		
+	solutions[1].add(y_direction);		
+	solutions[0].add(P1);
+	solutions[1].add(P1);
+	
+	P2.add(P1);
+	P3.add(P1);
+	
+	return solutions
 }

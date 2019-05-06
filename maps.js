@@ -34,8 +34,13 @@ function initMapCreationSystem()
 		maps[ event.data.mapIndex ].receiveMessageConcerningSelf( event.data );
 	}
 
-	Map = function(arrayBuffer)
+	Map = function(arrayBuffer, initialIsolevel)
 	{
+		if(initialIsolevel === undefined)
+		{
+			initialIsolevel = 3.0
+		}
+
 		let map = new THREE.Group();
 		maps.push(map);
 		assemblage.add(map);
@@ -44,14 +49,16 @@ function initMapCreationSystem()
 		map.toggleDiffMap = function()
 		{
 			isDiffMap = !isDiffMap
-			isolevel = isDiffMap ? 3.0 : 1.5;
+			isolevel = isDiffMap ? 1.5 : initialIsolevel;
 		}
 
-		let isolevel = isDiffMap ? 3.0 : 1.5;
+		let isolevel = isDiffMap ? 1.5 : initialIsolevel;
 
 		let latestUserCenterOnGrid = null;
 		let waitingOnResponse = false;
 		let mostRecentBlockIsolevel = Infinity; //we care because there might be some recent arrivals whose isolevel is better than most recent
+
+		let megaContouringToggled = false;
 
 		map.update = function()
 		{
@@ -59,18 +66,18 @@ function initMapCreationSystem()
 
 			if( !waitingOnResponse )
 			{
-				let center = new THREE.Vector3(0,0,-1 )
-				visiBox.localToWorld(center)
-				center.setLength((visiBox.scale.z + panel.scale.z )/2)
-				assemblage.updateMatrixWorld();
-				assemblage.worldToLocal( center );
+				let center = visiBox.getCenterInAssemblageSpace()
+				assemblage.localToWorld(center)
+				center.multiplyScalar(0.8)
+				assemblage.worldToLocal(center)
 
 				let msg = {
 					isolevel,
 					userCenterOffGrid: center.toArray(),
 					chickenWire: false,
 					currentCenterOnGrids: [],
-					isDiffMap:isDiffMap
+					isDiffMap:isDiffMap,
+					toggleMegaContouring:false
 				};
 
 				for(let i = 0; i < map.children.length; i++)
@@ -83,11 +90,19 @@ function initMapCreationSystem()
 					}
 				}
 
+				if(megaContouringToggled)
+				{
+					msg.toggleMegaContouring = true
+					msg.currentCenterOnGrids.length = 0;
+					megaContouringToggled = false
+				}
+
 				for(let i = 0; i < 2; i++)
 				{
 					if( Math.abs( handControllers[i].thumbStickAxes[1] ) > 0.1 )
 					{
-						isolevel += 0.06 * handControllers[i].thumbStickAxes[1] * handControllers[i].thumbStickAxes[1] * handControllers[i].thumbStickAxes[1];
+						isolevel += 0.06 * Math.pow(handControllers[i].thumbStickAxes[1],3)
+						isolevelSign.material.setText("isolevel (RMSD): " + isolevel.toFixed(4))
 						msg.currentCenterOnGrids.length = 0;
 					}
 				}
@@ -97,6 +112,7 @@ function initMapCreationSystem()
 			}
 		}
 
+		let isolevelSign = null
 		map.receiveMessageConcerningSelf = function(msg)
 		{
 			waitingOnResponse = false;
@@ -134,7 +150,32 @@ function initMapCreationSystem()
 
 				//so this is where we're "done" apparently, quite hacky
 				objectsToBeUpdated.push(map);
-				addMapDisplayManager(map)
+
+				//you assumed you'd do it coot style, but no reason to
+				let displayManagerMenu = MenuOnPanel([
+					{string:"		Map"}, //maybe filename
+					{string:"				Whole visible", 	switchObject:	map, 				switchProperty:"visible"},
+					{string:"				Unit cell visible", switchObject:	map.unitCellMesh, 	switchProperty:"visible"},
+					{string:"				Difference map", 	buttonFunction: map.toggleDiffMap },
+
+					{string:"				Chickenwire",buttonFunction:function()
+					{
+						for(let i = 0; i < map.children.length; i++)
+						{
+							if( map.children[i] !== map.unitCellMesh)
+							{
+								map.children[i].back.visible = !map.children[i].back.visible
+								// map.children[i].transparent.visible = !map.children[i].transparent.visible
+							}
+						}
+					}},
+					{string: "toggle mega-contouring (puke warning!)", buttonFunction:function()
+					{
+						megaContouringToggled = true
+					}},
+					{string: "isolevel in RMSD units: " + isolevel.toFixed(4)}
+				])
+				isolevelSign = displayManagerMenu.textMeshes[displayManagerMenu.textMeshes.length-1]
 			}
 		}
 

@@ -29,22 +29,34 @@
 
 function initRefiner()
 {
-	// startRefinement = function()
-	// {
-	// 	var dummyResidues = [['A',88,''],['A',89,''],['A',90,'']]
-	// 	var msg = {
-	// 		command: "commenceRefinement",
-	// 		imol: 0, //TODO CONTINGENT!!!!
-	// 		residues: dummyResidues
-	// 	};
-	// 	socket.send(JSON.stringify(msg));
-	// }
+	startRefinement = function()
+	{
+		var dummyResidues = [['A',88,''],['A',89,''],['A',90,'']]
+		var msg = {
+			command: "commence refinement",
+			imol: 0, //TODO
+			residues: dummyResidues
+		};
+		socket.send(JSON.stringify(msg));
+	}
 	stopRefinement = function()
 	{
-		var msg = { command: "ceaseRefinement" };
+		var msg = { command: "cease refinement" };
 		socket.send(JSON.stringify(msg));
 		//would be nice to display stats
 	}
+
+	console.log("commencing refinement")
+	startRefinement()
+
+	socket.commandReactions.intermediateAtoms = function(msg)
+	{
+		console.log("got intermediate atoms!", msg)
+		// stopRefinement()
+		socket.send(JSON.stringify({ command: "add restraint" }))
+	}
+
+	return
 
 	var autoRefiner = new THREE.Object3D();
 	
@@ -69,12 +81,6 @@ function initRefiner()
 
 		if(this.parent !== scene )
 		{
-			//oh what a terrible way to do it
-			// if( this.parent.button1 && frameCount % 10 === 0 )
-			// {
-			// 	socket.send(JSON.stringify({ command: "requestingIntermediateAtoms" }));
-			// }
-
 			if( this.parent.button1 && !this.parent.button1Old )
 			{
 				for(var i = 0; i < 1; i++)
@@ -115,7 +121,7 @@ function initRefiner()
 					if( residuesToRefine.length )
 					{
 						var msg = {
-							command: "commenceRefinement",
+							command: "commence refinement",
 							imol: 0, //TODO CONTINGENT!!!!
 							residues: residuesToRefine
 						};
@@ -162,25 +168,4 @@ function initRefiner()
 	autoRefiner.ordinaryParent = autoRefiner.parent;
 
 	return autoRefiner;
-}
-
-function getClosestAtomToWorldPosition(p)
-{
-	var closestAtom = null;
-	var closestDistSq = Infinity;
-	for(var i = 0; i < models.length; i++)
-	{
-		var localPosition = models[i].worldToLocal(p.clone());
-
-		for(var j = 0, jl = models[i].atoms.length; j < jl; j++)
-		{
-			let distSq = models[i].atoms[j].position.distanceToSquared( localPosition )
-			if( distSq < closestDistSq )
-			{
-				closestAtom = models[i].atoms[j];
-				closestDistSq = distSq
-			}
-		}
-	}
-	return closestAtom;
 }

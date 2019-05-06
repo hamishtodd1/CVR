@@ -274,6 +274,7 @@ function initPanel()
 		{
 			let outlineThickness = 0.2;
 			menu = new THREE.Mesh(new THREE.OriginCorneredPlaneGeometry(widestSignWidth+outlineThickness*2,totalElementsHeight+outlineThickness*2), new THREE.MeshBasicMaterial({color:0x262626}));
+			menu.textMeshes = textMeshes
 			menus.push(menu)
 			menu.matrixAutoUpdate = false;
 			menu.parentController = null;
@@ -404,6 +405,8 @@ function initPanel()
 
 					if( textMeshes[i].object3d )
 					{
+						let justPickedUp = false
+
 						if( handControllers[j].intersectLaserWithObject( textMeshes[i] ).length !== 0 ||
 							handControllers[j].intersectLaserWithObject( textMeshes[i].object3dFrame ).length !== 0 )
 						{
@@ -421,22 +424,25 @@ function initPanel()
 
 								textMeshes[i].object3d.position.set(0,0,0)
 								textMeshes[i].object3d.scale.setScalar(1)
+
+								justPickedUp = true
 							}
 						}
-					}
-					if( !handControllers[j].grippingTop && handControllers[j].grippingTopOld && 
-						textMeshes[i].object3d && textMeshes[i].object3d.parent === handControllers[j] )
-					{
-						handControllers[j].remove(textMeshes[i].object3d)
-						menu.add(textMeshes[i].object3d)
 
-						if(textMeshes[i].object3d.onLetGo !== undefined)
+						if( !justPickedUp && handControllers[j].grippingTop && !handControllers[j].grippingTopOld && 
+							textMeshes[i].object3d.parent === handControllers[j] )
 						{
-							textMeshes[i].object3d.onLetGo()
-						}
+							handControllers[j].remove(textMeshes[i].object3d)
+							menu.add(textMeshes[i].object3d)
 
-						textMeshes[i].object3d.position.copy(textMeshes[i].object3dOrdinaryPosition)
-						uniformlyScaleObject3dToMenuGapSize(textMeshes[i].object3d)
+							if(textMeshes[i].object3d.onLetGo !== undefined)
+							{
+								textMeshes[i].object3d.onLetGo()
+							}
+
+							textMeshes[i].object3d.position.copy(textMeshes[i].object3dOrdinaryPosition)
+							uniformlyScaleObject3dToMenuGapSize(textMeshes[i].object3d)
+						}
 					}
 				}
 			}
@@ -560,21 +566,29 @@ function initPanel()
 		objectsToBeUpdated.push(tool);
 		tool.update = function()
 		{
-			if(handControllers.indexOf(this.parent) !== -1)
+			if(handControllers.indexOf(tool.parent) !== -1)
 			{
-				var positionInAssemblage = this.getWorldPosition(new THREE.Vector3());
+				var positionInAssemblage = tool.getWorldPosition(new THREE.Vector3());
 				assemblage.updateMatrixWorld();
 				assemblage.worldToLocal(positionInAssemblage);
 
-				this.whileHeld(positionInAssemblage)
+				tool.whileHeld(positionInAssemblage)
 			}
 		}
 
-		// let s = console.trace()
-		// console.log(s)
-
-		let stack = new Error().stack;
-		let name = Math.random().toString()// (stack.split("at init"))[1].split(" (")[0]
+		let fakeError = new Error()
+		if(fakeError.stack)
+		{
+			var chromeStyleSplit = (fakeError.stack.split("at init"))
+			if(chromeStyleSplit.length > 1)
+			{
+				var name = chromeStyleSplit[1]
+			}
+			else
+			{
+				var name = (fakeError.stack.split("\ninit"))[1].split("@")[0]
+			}
+		}
 
 		MenuOnPanel([{string:name, object3d: tool }])
 

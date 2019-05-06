@@ -27,110 +27,6 @@
 
 
 
-var elementToNumber = {
-		C: 0,
-		S: 1,
-		O: 2,
-		N: 3,
-		Cl:4, //WARNING: NOT SURE ABOUT THIS!!!
-		P: 6,
-		H: 9,
-}
-
-function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc)
-{
-	this.position = position;
-
-	this.selected = false;
-
-	this.bondPartners = [];
-	this.bondFirstVertexIndices = [];
-
-	this.extraBondPartners = [];
-	this.extraBondFirstVertexIndices = [];
-
-	this.imol = imol;
-	this.chainId = chainId;
-	this.resNo = resNo;
-	this.insertionCode = insertionCode;
-	this.name = name;
-	this.altloc = altloc;
-
-	if(typeof element === "number") //there are a lot of these things, best to keep it as a number
-	{
-		this.element = element;
-	}
-	else
-	{
-		this.element = elementToNumber[ element ];
-	}
-
-	if(this.element === undefined)
-	{
-		console.error("unrecognized element: ", element)
-	}
-}
-Atom.prototype.assignAtomSpecToObject = function(msg)
-{
-	msg.imol = this.imol;
-	msg.chainId = this.chainId;
-	msg.resNo = this.resNo;
-	msg.insertionCode = this.insertionCode;
-	
-	msg.name = this.name;
-	msg.altloc = this.altloc;
-}
-Atom.prototype.assignResidueSpecToMessage = function(msg)
-{
-	msg.imol = this.imol;
-	msg.chainId = this.chainId;
-	msg.resNo = this.resNo;
-	msg.insertionCode = this.insertionCode;
-}
-Atom.prototype.setLabelVisibility = function(labelVisibility)
-{
-	if( this.label === undefined && labelVisibility)
-	{
-		var labelString = "";
-		labelString += this.imol + ",";
-		labelString += this.chainId + ",";
-		labelString += this.resNo + ",";
-		labelString += this.insertionCode + ",";
-		labelString += this.name + ",";
-		labelString += this.altloc + ",";
-
-		this.label = makeTextSign(labelString);
-		this.label.position.copy(this.position);
-		this.label.update = updateLabel;
-
-		var model = getModelWithImol(this.imol);
-		model.add( this.label );
-		objectsToBeUpdated.push(this.label.update);
-	}
-	
-	if(this.label !== undefined)
-	{
-		this.label.visible = labelVisibility;
-	}
-}
-function updateLabel()
-{
-	this.scale.setScalar( 0.06 * Math.sqrt(this.position.distanceTo(camera.position)));
-	
-	this.parent.updateMatrixWorld()
-	
-	camera.updateMatrix();
-	var cameraUp = yVector.clone().applyQuaternion(camera.quaternion);
-	var parentWorldPosition = new THREE.Vector3();
-	this.parent.getWorldPosition(parentWorldPosition);
-	cameraUp.add(parentWorldPosition)
-	this.parent.worldToLocal(cameraUp)
-	this.up.copy(cameraUp);
-
-	var localCameraPosition = camera.position.clone()
-	this.parent.worldToLocal(localCameraPosition);
-	this.lookAt(localCameraPosition);
-}
 function changeBondBetweenAtomsToDouble(bondData, atomA, atomB)
 {
 	for(var j = 0; j < bondData.length; j++)
@@ -193,13 +89,13 @@ function initModelCreationSystem()
 	    {
 	    	//we have a bunch of things, preceded by their names. Necessary given the label?
 	    	var modelNumber = cootArray[0]
-			var atomDataFromCoot = cootArray[1][0];
-			var bondDataFromCoot = cootArray[1][1];
+			var atomDataFromCoot = cootArray[1];
+			var bondDataFromCoot = cootArray[3];
 
-			if(cootArray.length>2)
-			{
-				console.error("got more than one model in there!")
-			}
+			// if(cootArray.length>2)
+			// {
+			// 	console.error("got more than one model in there!")
+			// }
 	    }
 	    else
 	    {
@@ -214,19 +110,23 @@ function initModelCreationSystem()
 		}
 		var modelAtoms = Array(numberOfAtoms);
 
-		for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //colors
+		let coordArray = null
+		let detailsArray = null
+		for(var i = 0, il = atomDataFromCoot.length; i < il; i++) //coot orders them by color, not us!
 		{
-			for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++)
-			{ 
+			for(var j = 0, jl = atomDataFromCoot[i].length; j < jl; j++) //atoms
+			{
+				coordArray = atomDataFromCoot[i][j][0]
+				detailsArray = atomDataFromCoot[i][j][2]
 				modelAtoms[atomDataFromCoot[i][j][3]] = new Atom(
 					i, 
-					new THREE.Vector3().fromArray(atomDataFromCoot[i][j][0]),
-					atomDataFromCoot[i][j][2][0],
-					atomDataFromCoot[i][j][2][1],
-					atomDataFromCoot[i][j][2][2],
-					atomDataFromCoot[i][j][2][3],
-					atomDataFromCoot[i][j][2][4],
-					atomDataFromCoot[i][j][2][5] );
+					new THREE.Vector3().fromArray(coordArray),
+					detailsArray[0],
+					detailsArray[1],
+					detailsArray[2],
+					detailsArray[3],
+					detailsArray[4],
+					detailsArray[5] );
 			}
 		}
 
@@ -284,12 +184,46 @@ function initModelCreationSystem()
 		return makeMoleculeMesh( atoms, false );
 	}
 
+	loadPdbIntoAssemblage = function(filename)
+	{
+		//uglymol has parser but not necessary probably
+		new THREE.FileLoader().load( "modelsAndMaps/" + filename, function ( pdbString )
+		{
+			let atomsAndResidues = parsePdb( pdbString );
+			let model = makeMoleculeMesh( atomsAndResidues.atoms, true )
+			model.residues = atomsAndResidues.residues
+
+			let lowestUnusedImol = 0
+			for(let i = 0; i < models.length; i++)
+			{
+				if(models[i].imol === lowestUnusedImol)
+				{
+					lowestUnusedImol++
+				}
+			}
+			model.imol = lowestUnusedImol
+
+			putModelInAssemblage(model)
+		} );
+	}
+
 	makeMoleculeMesh = function( atoms, clip, bondDataFromCoot )
 	{
 		var moleculeMesh = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial( { 
 			vertexColors: THREE.VertexColors
 		} ) );
 		moleculeMesh.atoms = atoms;
+
+		moleculeMesh.cloneWithAtoms = function()
+		{
+			let clone = moleculeMesh.clone()
+			clone.atoms = Array(moleculeMesh.atoms.length)
+			for(let i = 0; i < clone.atoms.length; i++)
+			{
+				clone.atoms[i] = moleculeMesh.atoms[i].clone()
+			}
+			return clone
+		}
 
 		if(clip)
 		{
@@ -322,10 +256,13 @@ function initModelCreationSystem()
 			{
 				bondData[i] = [];
 			}
-			if( atoms.length > 100 )
-			{
-				console.warn("We've been requested to calculate bond distances for ", atoms.length, " atoms =/")
 
+			// if( atoms.length > 100 )
+			// {
+			// 	console.warn("We've been requested to calculate bond distances for ", atoms.length, " atoms")
+			// }
+			// else
+			{
 				for( var i = 0, il = atoms.length; i < il; i++ )
 				{
 					for( var j = i+1, jl = atoms.length; j < jl; j++)
@@ -347,8 +284,6 @@ function initModelCreationSystem()
 					}
 				}
 			}
-
-			// console.error(JSON.stringify(bondData))
 		}
 
 		var numberOfCylinders = 0;
