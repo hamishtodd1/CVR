@@ -582,7 +582,7 @@ function initPanel()
 			var chromeStyleSplit = (fakeError.stack.split("at init"))
 			if(chromeStyleSplit.length > 1)
 			{
-				var name = chromeStyleSplit[1]
+				var name = chromeStyleSplit[1].split("(file")[0]
 			}
 			else
 			{

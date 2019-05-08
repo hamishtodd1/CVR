@@ -8,7 +8,7 @@ var typeColors = {
 	map_neg: 0x8B2E2E,
 }
 
-const defaultBlockRadius = 7;
+const defaultBlockRadius = 10;
 const megaContouringBlockRadius = 50;
 let blockRadius = defaultBlockRadius
 
