@@ -6,20 +6,8 @@
 			Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
 		The new, first, residue still gets put in the same place, but we move the assemblage into the right orientation
 
-	How to integrate this shit?
-
-	Should be able to grab any residue. It breaks off
-
 	Grab a terminal residue and you start working out of that
 	Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
-
-
-	Speedometer tau indication
-	
-
-	Take some supercomputer algorithms from 1980 and because moore's law they are consumer hardware today
-	Game design: writing algorithms that have to run in realtime on consumer hardware
-	HPC: writing algorithms that you can just about get to run on clusters
 	
 	Visualize the ramachandran in place.
 	Tau is set to 110, but if Lynne's data is to be believed it can do 105 and 115 too
@@ -39,11 +27,6 @@
 			if not, probably need to check update order
 		exported to pdb
 		only able to do it c-to-n, which is a problem
-
-	Education
-		together with the mutator, you can get anything
-		Can have an interactive version of the diagram above this monitor
-		Should be able to arbitrarily add atoms. In fact that should be how you make the sidechains
 */
 
 function initProteinPainter()
@@ -239,20 +222,6 @@ function initProteinPainter()
 	// assemblage.add(amidePlaneIndicator)
 
 	{
-		//might be better with a button to add
-
-		let capRadius = nextCAlpha.length()
-		var cap = new THREE.LineSegments( new THREE.WireframeGeometry( new THREE.SphereGeometry(capRadius,12,6,0,TAU,0,TAU/4) ),
-			new THREE.MeshLambertMaterial({color:0x00FFFF, side:THREE.DoubleSide}) )
-		cap.plane = new THREE.Mesh(new THREE.CircleBufferGeometry(capRadius*2, 32), new THREE.MeshLambertMaterial({color:0xFF0000, side:THREE.DoubleSide, transparent:true,opacity:0.3}))
-		cap.plane.rotation.x = TAU/4
-		cap.add(cap.plane)
-		assemblage.add(cap)
-		cap.position.z = -0.5
-		cap.position.y = 0.2
-
-		cap.visible = cap.plane.visible = false
-
 		var line = new THREE.Mesh(new THREE.CylinderBufferGeometryUncentered(0.13,1),
 			new THREE.MeshLambertMaterial(
 			{
@@ -281,28 +250,18 @@ function initProteinPainter()
 			handPositionInAssemblage.copy(this.parent.position)
 			assemblage.updateMatrixWorld()
 			assemblage.worldToLocal(handPositionInAssemblage)
-
 		}
 
-		if( this.parent.button1 && !this.parent.button1Old)
+		if( this.parent.button1 && !this.parent.button1Old && !laying )
 		{
-			if(laying)
-			{
-				addCTerminusAndcastOffNewChain();
-				laying = false
-			}
-			else
-			{
-				laying = true
-			}
-
-			line.visible = cap.visible = cap.plane.visible = laying
+			laying = true
+			line.visible = laying
+			// cap.visible = cap.plane.visible = laying
 		}
 
 		if(!laying)
 		{
 			//we're going to find the closest atom, we need its nitrogen and its carbon
-			//draw plane for that amide
 			//highlight
 			// let worldPosition = assemblage.localToWorld(handPositionInAssemblage.clone())
 			// let closestCAlpha = getClosestAtomToWorldPosition(worldPosition, function(atom)
@@ -330,7 +289,7 @@ function initProteinPainter()
 			let prevCAlphaAcrossAmide = nextCAlpha.clone().applyQuaternion(activeAmide.quaternion).normalize()
 			let prevCAlphaToHand = handPositionInAssemblage.clone().sub(activeAmide.position)
 			let lengthOnAmide = prevCAlphaToHand.dot(prevCAlphaAcrossAmide)
-			if( lengthOnAmide > amideDiagonalLength * 1.4 )
+			if( this.parent.button1 && !this.parent.button1Old )
 			{
 				let newAmidePosition = nextCAlpha.clone();
 				activeAmide.updateMatrixWorld();
@@ -359,7 +318,7 @@ function initProteinPainter()
 			
 			var prevNitrogen = carbon.clone().negate().applyQuaternion(amides[amides.indexOf(activeAmide)-1].quaternion)
 			let angleToSpindle = prevNitrogen.angleTo(prevCAlphaToHand)
-			if( angleToSpindle < TAU / 4 / 3 )
+			if( this.parent.button2 && !this.parent.button2Old )
 			{
 				let indexOfAmideToChangeTo = amides.indexOf(activeAmide)-1
 				if( indexOfAmideToChangeTo > -1 )
@@ -411,16 +370,15 @@ function initProteinPainter()
 				let closerIndex = possibleCarbons[0].distanceToSquared(currentCarbon) < possibleCarbons[1].distanceToSquared(currentCarbon)? 0:1
 
 				newCarbon = possibleCarbons[closerIndex]
-				if( this.parent.button2 && !this.parent.button2Old )
-				{
-					newCarbon = possibleCarbons[1-closerIndex]
-				}
+
+				//yeah this is nice, TODO bring it back somehow
+				// if( this.parent.button2 && !this.parent.button2Old )
+				// {
+				// 	newCarbon = possibleCarbons[1-closerIndex]
+				// }
 			}
 
 			redirectCylinder(line, activeAmideToNextCAlpha.clone().add(activeAmide.position), handPositionInAssemblage.clone().sub(activeAmideToNextCAlpha).sub(activeAmide.position))
-
-			cap.position.copy(activeAmide.position)
-			cap.quaternion.setFromUnitVectors(yVector,carbon.clone().applyQuaternion(activeAmide.quaternion))
 
 
 			{
@@ -519,7 +477,6 @@ function initProteinPainter()
 		activeSideChainAndHydrogen = null;
 		sideChainAndHydrogens = []
 
-		//HERE
 		// exportPdb()
 	}
 

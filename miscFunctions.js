@@ -1,3 +1,15 @@
+//assumes homogeneous
+function eigenvector(m)
+{
+	let e = m.elements
+
+	let v = new THREE.Vector3()
+	v.x = e[0] * e[12] + e[0] * e[12] + e[0] * e[12]
+	v.y = e[0] * e[12] + e[0] * e[12] + e[0] * e[12]
+	v.z = e[0] * e[12] + e[0] * e[12] + e[0] * e[12]
+}
+//binary search: view a, view b, permanently enter a, permanently enter b
+
 function getClosestAtomToWorldPosition(p, condition)
 {
 	if(condition === undefined)
@@ -296,6 +308,12 @@ function insertCylinderFaceIndices(bufferGeometry,cylinderSides, cylinderFirstFa
 			(k*2+2) % (cylinderSides*2) + cylinderFirstVertexIndex,
 			(k*2+3) % (cylinderSides*2) + cylinderFirstVertexIndex );
 	}
+}
+
+THREE.Vector4.prototype.distanceTo = function(v)
+{
+	let sq = v.x*this.x + v.y*this.y + v.z*this.z + v.w*this.w;
+	return Math.sqrt(sq)
 }
 
 THREE.Quaternion.prototype.distanceTo = function(q2)

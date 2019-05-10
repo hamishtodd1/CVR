@@ -150,7 +150,7 @@ function initVisiBox()
 		}
 	}
 
-	let rememberedScale = zeroVector.clone()
+	visiBox.planes.length = 0
 	MenuOnPanel([{
 		string:"Toggle clipping planes", buttonFunction:function()
 		{

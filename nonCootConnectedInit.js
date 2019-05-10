@@ -28,13 +28,13 @@ function loadMap(filename, isolevel)
 
 function nonCootConnectedInit()
 {
-	loadPdbIntoAssemblage("drugIsInteresting.pdb")
-	loadMap("drugIsInteresting.map")
+	// loadPdbIntoAssemblage("drugIsInteresting.pdb")
+	// loadMap("drugIsInteresting.map")
 
-	// loadMap("jp.map",3.4)
-	// assemblage.position.set(-0.6326659774326654,0.8330610470434914,-1.7592)
-	// assemblage.scale.setScalar(0.028)
-	// assemblage.quaternion.set(0.20453074142494626,0.7848390257791691,0.5651683410241131,-0.15092920).normalize()
+	loadMap("jp.map",3.4)
+	assemblage.position.set(-0.6326659774326654,0.8330610470434914,-1.7592)
+	assemblage.scale.setScalar(0.028)
+	assemblage.quaternion.set(0.20453074142494626,0.7848390257791691,0.5651683410241131,-0.15092920).normalize()
 
 	//TODO until there's files in there, don't initialize and just have a sign
 
