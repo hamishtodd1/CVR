@@ -44,7 +44,7 @@ function Atom(element,position,imol,chainId,resNo,insertionCode,name,altloc, occ
 	this.occupancyAndTemperatureFactor = occupancyAndTemperatureFactor
 
 	this.imol = imol;
-	this.chainId = chainId;
+	this.chainId = chainId || "A";
 	this.resNo = resNo;
 	this.insertionCode = insertionCode;
 	this.name = name;

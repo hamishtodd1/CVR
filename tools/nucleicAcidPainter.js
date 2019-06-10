@@ -1,9 +1,6 @@
 /*
-	RNA painting
-		https://www.rcsb.org/3d-view/4TNA/1
-		pucker of the ribose to the  base-phosphate perpendicular
-			http://x3dna.org/highlights/sugar-pucker-correlates-with-phosphorus-base-distance
-			http://fbio.uh.cu/sites/genmol/adic/na_arch.htm
+	pucker of the ribose to the base-phosphate perpendicular
+		http://x3dna.org/highlights/sugar-pucker-correlates-with-phosphorus-base-distance
 */
 
 function initNucleicAcidPainter()
@@ -273,21 +270,15 @@ function initNucleicAcidPainter()
 
 			/*
 				"User error mitigation":
-					Ideally we would work out "closest state that works". Haha.
+					Ideally we would work out "closest state that works".
 					Just keep previous state and the phosphate atoms apart from O5 all translate and rotate away
 					Take it further away than it can go and it "drags" the nucleotide? Or, hey, whole assemblage
-
-				It's not sufficient to make the bonds super long
-
-				Ok you can get C4 if you know the exact locations
 
 				Aaarg and what about the relationship between the phosphates?
 				What if you want to go back and change your mind about the previous phosphate?
 				No, we are assuming you can see tetrahedra for the phosphates
 				Folks can go back and reorient them
-				The point is that this is a first pass anyway
-				
-				want to get the positions of these atoms				
+				The point is that this is a first pass anyway		
 			*/
 		}
 	}

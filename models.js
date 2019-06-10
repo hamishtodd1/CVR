@@ -161,7 +161,10 @@ function initModelCreationSystem()
 				averagePosition.add(model.atoms[i].position);
 			}
 			averagePosition.multiplyScalar( 1 / model.atoms.length);
-			assemblage.position.sub( averagePosition.multiplyScalar(getAngstrom()) );
+			assemblage.localToWorld(averagePosition)
+			assemblage.position.sub( averagePosition )
+			let worldLocationTheyShouldBeAt = assemblage.localToWorld( visiBox.getCenterInAssemblageSpace() )
+			assemblage.position.add(worldLocationTheyShouldBeAt);
 		}
 
 		addModelDisplayManager(model)
@@ -184,27 +187,24 @@ function initModelCreationSystem()
 		return makeMoleculeMesh( atoms, false );
 	}
 
-	loadPdbIntoAssemblage = function(filename)
+	putPdbStringIntoAssemblage = function(pdbString)
 	{
 		//uglymol has parser but not necessary probably
-		new THREE.FileLoader().load( "modelsAndMaps/" + filename, function ( pdbString )
+		let atomsAndResidues = parsePdb( pdbString );
+		let model = makeMoleculeMesh( atomsAndResidues.atoms, true )
+		model.residues = atomsAndResidues.residues
+
+		let lowestUnusedImol = 0
+		for(let i = 0; i < models.length; i++)
 		{
-			let atomsAndResidues = parsePdb( pdbString );
-			let model = makeMoleculeMesh( atomsAndResidues.atoms, true )
-			model.residues = atomsAndResidues.residues
-
-			let lowestUnusedImol = 0
-			for(let i = 0; i < models.length; i++)
+			if(models[i].imol === lowestUnusedImol)
 			{
-				if(models[i].imol === lowestUnusedImol)
-				{
-					lowestUnusedImol++
-				}
+				lowestUnusedImol++
 			}
-			model.imol = lowestUnusedImol
+		}
+		model.imol = lowestUnusedImol
 
-			putModelInAssemblage(model)
-		} );
+		putModelInAssemblage(model)
 	}
 
 	makeMoleculeMesh = function( atoms, clip, bondDataFromCoot )

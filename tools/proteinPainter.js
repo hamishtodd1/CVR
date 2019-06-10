@@ -1,19 +1,16 @@
 /*
 	TODO (probably, might need to think more)
+		How do you know you're not doing it backwards?
+
+
 		When you want to lay down a new one, read the atoms near your hand.
 			Should be able to grab any residue. It breaks off
 			Grab a terminal residue and you start working out of that
 			Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
-		The new, first, residue still gets put in the same place, but we move the assemblage into the right orientation
-
-	Grab a terminal residue and you start working out of that
-	Overlap a residue, and it moves the last Calpha you put down such that it can connect nicely to the calpha of what you've touched
+		The new, first, residue still gets put in the same place, but we move the assemblage into the correct orientation
 	
 	Visualize the ramachandran in place.
-	Tau is set to 110, but if Lynne's data is to be believed it can do 105 and 115 too
-	There are only two degrees of freedom, phi and psi
 	"abstract over" the set of all rotamers:
-		You get a circle of psi's of different colors given the current phi, abstracting over position of next Calpha
 		You get a circle of phi's of different colors given the current psi, abstracting over position of next Calpha
 		And if you hold an extra button, a teeny bit of tau, a little lever. Is this all that's ever needed?
 		Like this is super interesting because it cooooould be protein design.
@@ -27,6 +24,12 @@
 			if not, probably need to check update order
 		exported to pdb
 		only able to do it c-to-n, which is a problem
+
+	Might be better without the tetrahedral angle
+		You certainly don't have it in good rama
+		Maybe have a range, Lynne's thing
+		The density is a distraction, again this is for EM
+		But look, you are nooooot thinking about those angles and that fit with density simultaneously
 */
 
 function initProteinPainter()
@@ -108,7 +111,7 @@ function initProteinPainter()
 
 		var sideChainAndHydrogenPdbRead = {
 			elements:["H","C","C"],
-			names:["H"," CB "," CA "],
+			names:[" H  "," CB "," CA "],
 			positions:[
 				new THREE.Vector3(-HS3,	0.5, 	0.0),
 				new THREE.Vector3(0.0,	-0.5,	HS3),
@@ -237,20 +240,20 @@ function initProteinPainter()
 	{
 		// amidePlaneIndicator.position.copy(handPositionInAssemblage)
 
-		if( Math.abs(assemblage.scale.x - 0.026) > 0.005 )
-		{
-			let centerInAssemblageSpace = visiBox.getCenterInAssemblageSpace()
-			let centerInWorld = assemblage.localToWorld( centerInAssemblageSpace.clone() )
+		// if( Math.abs(assemblage.scale.x - 0.026) > 0.005 )
+		// {
+		// 	let centerInAssemblageSpace = visiBox.getCenterInAssemblageSpace()
+		// 	let centerInWorld = assemblage.localToWorld( centerInAssemblageSpace.clone() )
 
-			assemblage.scale.setScalar( assemblage.scale.x + (0.026-assemblage.scale.x) * 0.1 )
-			assemblage.updateMatrixWorld()
-			let centerMovementDueToScale = assemblage.localToWorld(centerInAssemblageSpace.clone())
-			assemblage.position.sub(centerMovementDueToScale).add(centerInWorld)
+		// 	assemblage.scale.setScalar( assemblage.scale.x + (0.026-assemblage.scale.x) * 0.1 )
+		// 	assemblage.updateMatrixWorld()
+		// 	let centerMovementDueToScale = assemblage.localToWorld(centerInAssemblageSpace.clone())
+		// 	assemblage.position.sub(centerMovementDueToScale).add(centerInWorld)
 
-			handPositionInAssemblage.copy(this.parent.position)
-			assemblage.updateMatrixWorld()
-			assemblage.worldToLocal(handPositionInAssemblage)
-		}
+		// 	handPositionInAssemblage.copy(this.parent.position)
+		// 	assemblage.updateMatrixWorld()
+		// 	assemblage.worldToLocal(handPositionInAssemblage)
+		// }
 
 		if( this.parent.button1 && !this.parent.button1Old && !laying )
 		{
@@ -355,14 +358,21 @@ function initProteinPainter()
 
 			if(possibleCarbons === false)
 			{
+				let handAtTopOfLampShade = prevCAlphaToHand.angleTo(prevNitrogen) > TETRAHEDRAL_ANGLE ? 1:-1
+
 				let axis = prevNitrogen.clone().cross(prevCAlphaToHand).normalize()
-				
-				activeAmideToNextCAlpha.copy(prevNitrogen).setLength(nextCAlpha.length())
-				let directionToSway = prevCAlphaToHand.angleTo(prevNitrogen) > TETRAHEDRAL_ANGLE ? 1:-1
-				activeAmideToNextCAlpha.applyAxisAngle(axis, TETRAHEDRAL_ANGLE + directionToSway * carbon.angleTo(nextCAlpha) )
 
 				newCarbon = prevNitrogen.clone()
 				newCarbon.applyAxisAngle(axis, TETRAHEDRAL_ANGLE )
+
+				let allowance = THREE.Math.DEG2RAD * 15 //Feels right; Lynne Regan would say 5
+				let extraAttractionTowardHand = prevCAlphaToHand.angleTo(newCarbon) - carbon.angleTo(nextCAlpha)
+				extraAttractionTowardHand = clamp( extraAttractionTowardHand, 0, allowance )
+				extraAttractionTowardHand *= handAtTopOfLampShade
+				newCarbon.applyAxisAngle(axis, extraAttractionTowardHand )
+				
+				activeAmideToNextCAlpha.copy(newCarbon).setLength(nextCAlpha.length())
+				activeAmideToNextCAlpha.applyAxisAngle(axis, carbon.angleTo(nextCAlpha) * handAtTopOfLampShade )
 			}
 			else
 			{
@@ -414,16 +424,17 @@ function initProteinPainter()
 			return;
 		}
 
-		let allGroups = amides.concat(sideChainAndHydrogens)
-
 		if(amides.length > 1) //test retraction
 		{
 			{
-				assemblage.remove(activeAmide);
-				let newCTerminus = cTerminus.cloneWithAtoms();
+				assemblage.remove(activeAmide)
+				removeSingleElementFromArray(amides, activeAmide)
+				var allGroups = amides.concat( sideChainAndHydrogens )
+
+				let newCTerminus = cTerminus.cloneWithAtoms()
 				newCTerminus.quaternion.copy(activeAmide.quaternion)
 				newCTerminus.position.copy(activeAmide.position)
-				assemblage.add(newCTerminus);
+				assemblage.add(newCTerminus)
 				allGroups.push(newCTerminus)
 			}
 
@@ -464,12 +475,60 @@ function initProteinPainter()
 			let model = makeMoleculeMesh( allAtoms, true )
 			assemblage.add(model);
 			models.push(model);
-			log(model)
-		}
 
-		for(let i = allGroups.length-1; i >= 0; i--)
+			let imol = 0
+			for(let i = 0; i < models.length; i++)
+			{
+				if(models[i].imol === imol)
+				{
+					imol++
+					i = -1
+				}
+			}
+
+			model.residues = []
+			for(let i = 0; i < model.atoms.length; i++)
+			{
+				model.atoms[i].imol = imol
+				if( model.atoms[i].name === " CA ")
+				{
+					let cA = model.atoms[i]
+					model.residues.push("ALA") //dunno if we're going up chain or down
+					let resNo = model.residues.length-1
+
+					cA.resNo = resNo
+					for(let j = 0; j < cA.bondPartners.length; j++)
+					{
+						let atomDefinitelyInThisAa = cA.bondPartners[j]
+						atomDefinitelyInThisAa.resNo = resNo
+
+						for( var k = 0; k < atomDefinitelyInThisAa.bondPartners.length; k++)
+						{
+							let atomPossiblyInThisAa = atomDefinitelyInThisAa.bondPartners[k]
+							if( atomPossiblyInThisAa === cA )
+							{
+								continue
+							}
+							if( atomPossiblyInThisAa.name === " O  " ) //doesn't work hugely rigorously
+							{
+								atomPossiblyInThisAa.resNo = resNo
+							}
+						}
+					}
+				}
+			}
+			// for(let i = 0; i < model.atoms.length; i++)
+			// {
+			// 	log(model.atoms[i])
+			// }
+		}
+		else
 		{
-			removeAndRecursivelyDispose(allGroups[i])
+			let allGroups = amides.concat(sideChainAndHydrogens)
+			for(let i = allGroups.length-1; i >= 0; i--)
+			{
+				removeAndRecursivelyDispose( allGroups[i] )
+			}
 		}
 
 		activeAmide = null;

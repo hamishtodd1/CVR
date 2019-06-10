@@ -9,7 +9,7 @@ function initSurroundings()
 	//floor
 	var ourTextureLoader = new THREE.TextureLoader();
 	ourTextureLoader.crossOrigin = true;
-	var floorDimension = 8;				
+	var floorDimension = 2;				
 	var floorTile = new THREE.Mesh( new THREE.PlaneBufferGeometry( floorDimension, floorDimension ), new THREE.MeshLambertMaterial());
 	floorTile.position.y = -1.2;
 	floorTile.rotation.x = -TAU / 4;

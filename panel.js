@@ -127,7 +127,7 @@ function initPanel()
 		panel.geometry.vertices[i].copy( anglesToPanel(panel.geometry.vertices[i].x,panel.geometry.vertices[i].y,0) )
 	}
 	// panel.scale.set(0.84,1.24,0.64)
-	panel.scale.setScalar(0.84)
+	panel.scale.setScalar(1.5)
 	scene.add(panel)
 
 	let collisionPanel = new THREE.Mesh(

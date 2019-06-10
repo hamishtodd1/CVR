@@ -10,7 +10,7 @@ var typeColors = {
 
 const defaultBlockRadius = 10;
 const megaContouringBlockRadius = 50;
-let blockRadius = defaultBlockRadius
+let blockRadius = megaContouringBlockRadius
 
 var centerOffsets = null;
 function generateCenterOffsets()

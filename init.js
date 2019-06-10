@@ -1,17 +1,47 @@
 /*
-// Jeremy England thing
-// Heart/other 3D reaction diffusion view-source:https://pmneila.github.io/jsexp/grayscott/
-	// "orientation field" is something you can do very nicely and simply with VR and is of relevance to Ivan
-	// lower dimensional analogy is moving hand around 2D
+Release
+Finish JP's structure, it has 305 AAs
+That other map
+Time oneself
+Thesis
+Publication
+A picture for the cover of Acta D?
+Hodgkin/reaction diffusion/testosterone - lol
+
+You REALLY need perspective correction for volumetric ray casting, because it's already hard enough to figure out what is in front of what.
+While you're not holding it it should probably be rotating. And be close to the camera.
+Aaaaand ideally you want to render, not from the back, but from the back OR the place that the mesh begins
+Could be very helpful for wave functions.
+Surely useful for electromagnetism.
+Could put a "handle" at the back of it, i.e. a black box rendered with THREE.BackSide
+
+Dorothy Hodgkin thing
+Diffusive tensor imaging
+Heart. It's 3D reaction diffusion, you can draw the filaments, come on
+	Maaaaybe "orientation field" with Ivan
+	lower dimensional analogy is moving hand around 2D
 		It starts out all neutral orientation
 		So you draw some lines (or points) and those do get set in stone
 		Every point becomes a weighted average of the value at those curves nearest to it
 	Bunch of transparent copies of the controller mesh probably. instancing!
-// Diffusive tensor imaging
-// Want to do some biology while still here. Some VR lecture. But also something, you know, with puzzles
-// No, RD is nice because it is continuous and 2D. So best would be the extrusion thing
+	RD is nice because it is continuous and 2D
 
-Your thoughts about video processing might be silly. Likely there will be an api in future, an api for
+Maybe, since you're in the company of bloody biologists,
+	you should ask them about inference and bayesianism and priors and all that
+	and know more about how they're getting along with formalization!
+	Reasons it's hard
+		Ladder of abstraction stuff, everything matters at all length and time scales.
+		"chaotic" and overly "detailed" in the sense that you change one nucleotide and a lot changes
+		So you lose some rigor
+		abundance of data
+		there's just a lot of stuff happenning
+			Much of quantum mechanics worked for light then it worked for things other than light, was fine
+			An ideal mathematical biologist would be aware of everything - CS, information theory, PDEs...
+		Experiments can take a long time (though at least we can do them unlike geology or macroeconomics)
+		Cultural - this is the part that could be fixed
+			Different little fields
+			People don't like statistical inference
+			Or coding or equations
 
 TODO
 	Highlighting working better
