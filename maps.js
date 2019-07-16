@@ -145,7 +145,7 @@ function initMapCreationSystem()
 			{
 				map.unitCellMesh = UnitCellMesh( msg.orthogonalMatrix );
 				map.add(map.unitCellMesh);
-				map.unitCellMesh.visible = false;
+				// map.unitCellMesh.visible = false;
 				//TODO make it movable? Keep it centered in visibox?
 
 				//so this is where we're "done" apparently, quite hacky

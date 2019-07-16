@@ -8,9 +8,9 @@ var typeColors = {
 	map_neg: 0x8B2E2E,
 }
 
-const defaultBlockRadius = 10;
+const defaultBlockRadius = 20;
 const megaContouringBlockRadius = 50;
-let blockRadius = megaContouringBlockRadius
+let blockRadius = 0?megaContouringBlockRadius:defaultBlockRadius;
 
 var centerOffsets = null;
 function generateCenterOffsets()

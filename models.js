@@ -153,19 +153,19 @@ function initModelCreationSystem()
 		assemblage.add(model);
 		models.push(model);
 
-		if(models.length === 1)
-		{
-			var averagePosition = new THREE.Vector3();
-			for(var i = 0, il = model.atoms.length; i < il; i++)
-			{
-				averagePosition.add(model.atoms[i].position);
-			}
-			averagePosition.multiplyScalar( 1 / model.atoms.length);
-			assemblage.localToWorld(averagePosition)
-			assemblage.position.sub( averagePosition )
-			let worldLocationTheyShouldBeAt = assemblage.localToWorld( visiBox.getCenterInAssemblageSpace() )
-			assemblage.position.add(worldLocationTheyShouldBeAt);
-		}
+		// if(models.length === 1)
+		// {
+		// 	var averagePosition = new THREE.Vector3();
+		// 	for(var i = 0, il = model.atoms.length; i < il; i++)
+		// 	{
+		// 		averagePosition.add(model.atoms[i].position);
+		// 	}
+		// 	averagePosition.multiplyScalar( 1 / model.atoms.length);
+		// 	assemblage.localToWorld(averagePosition)
+		// 	assemblage.position.sub( averagePosition )
+		// 	let worldLocationTheyShouldBeAt = assemblage.localToWorld( visiBox.getCenterInAssemblageSpace() )
+		// 	assemblage.position.add(worldLocationTheyShouldBeAt);
+		// }
 
 		addModelDisplayManager(model)
 

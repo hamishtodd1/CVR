@@ -8,7 +8,6 @@ Publication
 A picture for the cover of Acta D?
 Hodgkin/reaction diffusion/testosterone - lol
 
-You REALLY need perspective correction for volumetric ray casting, because it's already hard enough to figure out what is in front of what.
 While you're not holding it it should probably be rotating. And be close to the camera.
 Aaaaand ideally you want to render, not from the back, but from the back OR the place that the mesh begins
 Could be very helpful for wave functions.
@@ -28,6 +27,7 @@ Heart. It's 3D reaction diffusion, you can draw the filaments, come on
 
 Maybe, since you're in the company of bloody biologists,
 	you should ask them about inference and bayesianism and priors and all that
+	They really could use a version of R.
 	and know more about how they're getting along with formalization!
 	Reasons it's hard
 		Ladder of abstraction stuff, everything matters at all length and time scales.
@@ -52,14 +52,6 @@ TODO
 	Would be nice to fix crap about being up or down =/
 	Deleter
 	Get it on web
-
-TODO to make it independent of coot
-	Loaded from a webpage (ask Ivan)
-	Socket not needed
-	Undo ;_; Not hard for protein painter at least
-	Correct PDB export
-		You are "just" modifying the positions of existing atoms, and...
-		adding a new chain
 	
 Ideals
 	Copy and paste 3D blocks of atoms
@@ -76,6 +68,7 @@ Ideals
 		Water, calcium, magnesium, Sodium, chlorine, bromine, SO4, PO4
 	Metrics (have to come from coot)
 	Mutate
+	Could "just" have the bonds all be springs
 	Coot tutorial including EM tutorial
 		Change map color
 		Unmodelled blobs

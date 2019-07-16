@@ -150,7 +150,7 @@ function initVisiBox()
 		}
 	}
 
-	visiBox.planes.length = 0
+	// visiBox.planes.length = 0
 	MenuOnPanel([{
 		string:"Toggle clipping planes", buttonFunction:function()
 		{

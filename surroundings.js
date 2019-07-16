@@ -15,7 +15,7 @@ function initSurroundings()
 	floorTile.rotation.x = -TAU / 4;
 	scene.add(floorTile);
 	ourTextureLoader.load(
-		"data/textures/Floor4.png",
+		"data/floor.png",
 		function(texture)
 		{
 			texture.magFilter = THREE.NearestFilter;

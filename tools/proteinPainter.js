@@ -381,11 +381,10 @@ function initProteinPainter()
 
 				newCarbon = possibleCarbons[closerIndex]
 
-				//yeah this is nice, TODO bring it back somehow
-				// if( this.parent.button2 && !this.parent.button2Old )
-				// {
-				// 	newCarbon = possibleCarbons[1-closerIndex]
-				// }
+				if( this.parent.thumbstickButton && !this.parent.thumbstickButtonOld )
+				{
+					newCarbon = possibleCarbons[1-closerIndex]
+				}
 			}
 
 			redirectCylinder(line, activeAmideToNextCAlpha.clone().add(activeAmide.position), handPositionInAssemblage.clone().sub(activeAmideToNextCAlpha).sub(activeAmide.position))
@@ -424,7 +423,7 @@ function initProteinPainter()
 			return;
 		}
 
-		if(amides.length > 1) //test retraction
+		if(amides.length > 1)
 		{
 			{
 				assemblage.remove(activeAmide)
